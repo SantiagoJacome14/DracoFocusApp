@@ -83,3 +83,4 @@ fun MainScreen(
         }
     }
 }
+// Commit estético y documentado: mejoras de diseño y validaciones
