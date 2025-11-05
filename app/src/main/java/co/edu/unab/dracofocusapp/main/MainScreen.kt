@@ -20,6 +20,9 @@ import co.edu.unab.dracofocusapp.auth.AuthViewModel
 import co.edu.unab.dracofocusapp.ui.MyProfileScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
 import co.edu.unab.dracofocusapp.ui.ProgressScreen
+import co.edu.unab.dracofocusapp.ui.HomeScreen
+
+
 
 // ---------------------- RUTAS DEL MENÚ INFERIOR ----------------------
 sealed class BottomNavItem(val route: String, val icon: Int, val label: String) {
@@ -54,23 +57,24 @@ fun MainScreen(
 }
 
 // ---------------------- BARRA DE NAVEGACIÓN INFERIOR ----------------------
+data class NavItem(val route: String, val icon: Int, val label: String)
+
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
-        BottomNavItem.Lecciones,
-        BottomNavItem.Pomodoro,
-        BottomNavItem.Draco,
-        BottomNavItem.Avances,
-        BottomNavItem.Perfil
+        NavItem(BottomNavItem.Lecciones.route, R.drawable.ic_book, "Lecciones"),
+        NavItem(BottomNavItem.Pomodoro.route, R.drawable.ic_timer, "Estudiar"),
+        NavItem(BottomNavItem.Draco.route, R.drawable.ic_home, "Draco"),
+        NavItem(BottomNavItem.Avances.route, R.drawable.ic_calendar, "Avances"),
+        NavItem(BottomNavItem.Perfil.route, R.drawable.ic_user, "Perfil")
     )
 
-    // la función es un *extension function* del navController
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
     NavigationBar(
-        containerColor = Color(0xFF1E1A3D), // Fondo violeta oscuro
-        tonalElevation = 8.dp
+        containerColor = Color(0xFF0F1A2A), // Fondo consistente con el app
+        tonalElevation = 0.dp
     ) {
         items.forEach { item ->
             NavigationBarItem(
@@ -78,10 +82,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 onClick = {
                     if (currentRoute != item.route) {
                         navController.navigate(item.route) {
-                            // Limpia la pila y evita duplicar pantallas
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
-                            }
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
@@ -90,20 +91,19 @@ fun BottomNavigationBar(navController: NavHostController) {
                 icon = {
                     Icon(
                         painter = painterResource(id = item.icon),
-                        contentDescription = item.label
+                        contentDescription = item.label,
+                        modifier = Modifier.size(24.dp)
                     )
                 },
                 label = {
-                    Text(
-                        text = item.label,
-                        color = Color.White,
-                        fontSize = 12.sp
-                    )
+                    Text(item.label, fontSize = 12.sp)
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Color.White,
-                    unselectedIconColor = Color.LightGray,
-                    indicatorColor = Color(0xFF5E17EB)
+                    selectedTextColor = Color.White,
+                    indicatorColor = Color(0xFF22DDF2), // Resaltado neón
+                    unselectedIconColor = Color(0xFF8FA3BD),
+                    unselectedTextColor = Color(0xFF8FA3BD)
                 )
             )
         }
@@ -126,10 +126,16 @@ fun BottomNavGraph(
             PlaceholderScreen("⏱️ Pomodoro en desarrollo")
         }
         composable(BottomNavItem.Draco.route) {
-            DracoWelcomeScreen(onNavigateToAuth, onNavigateToProfile, authViewModel)
+            HomeScreen(
+                onNavigateToStudy = {  },
+                onNavigateToLessons = {  },
+                onNavigateToMuseum = {  },
+                onNavigateToProgress = { navController.navigate(BottomNavItem.Avances.route) }
+            )
+
         }
         composable(BottomNavItem.Avances.route) {
-            ProgressScreen()
+            ProgressScreen(navController)
         }
         composable(BottomNavItem.Perfil.route) {
             MyProfileScreen()
