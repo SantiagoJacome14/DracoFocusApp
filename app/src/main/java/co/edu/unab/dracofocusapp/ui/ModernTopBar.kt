@@ -19,42 +19,32 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ModernTopBar(
     title: String,
-    onBackClick: () -> Unit
+    showBackButton: Boolean = true,
+    onBackClick: () -> Unit = {}
 ) {
     CenterAlignedTopAppBar(
-        modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .height(60.dp)
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(
-                        Color(0xFF001F3F), // azul oscuro
-                        Color(0xFF000814)  // casi negro
-                    )
-                )
-            ),
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = Color.Transparent,
-            titleContentColor = Color.White
-        ),
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Volver",
-                    tint = Color(0xFF00E6FF) // azul neón
-                )
-            }
-        },
         title = {
             Text(
                 text = title,
-                fontSize = 20.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                fontSize = 20.sp
             )
-        }
+        },
+        navigationIcon = {
+            if (showBackButton) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Volver",
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+        },
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            containerColor = Color.Transparent
+        )
     )
 }

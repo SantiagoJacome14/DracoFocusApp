@@ -55,7 +55,7 @@ fun MyProfileScreen(
         topBar = {
             ModernTopBar(
                 title = "Mi Perfil",
-                onBackClick = onBackToMain
+                showBackButton = false // sin flecha
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

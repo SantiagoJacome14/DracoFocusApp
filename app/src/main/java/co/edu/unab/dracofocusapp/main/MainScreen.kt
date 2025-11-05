@@ -19,6 +19,7 @@ import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.auth.AuthViewModel
 import co.edu.unab.dracofocusapp.ui.MyProfileScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
+import co.edu.unab.dracofocusapp.ui.ProgressScreen
 
 // ---------------------- RUTAS DEL MENÚ INFERIOR ----------------------
 sealed class BottomNavItem(val route: String, val icon: Int, val label: String) {
@@ -128,7 +129,7 @@ fun BottomNavGraph(
             DracoWelcomeScreen(onNavigateToAuth, onNavigateToProfile, authViewModel)
         }
         composable(BottomNavItem.Avances.route) {
-            PlaceholderScreen("📅 Avances próximamente")
+            ProgressScreen()
         }
         composable(BottomNavItem.Perfil.route) {
             MyProfileScreen()
