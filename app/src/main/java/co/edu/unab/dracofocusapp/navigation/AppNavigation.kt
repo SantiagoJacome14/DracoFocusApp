@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.composable
+
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +32,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.fillMaxWidth
+import co.edu.unab.dracofocusapp.ui.MyProfileScreen
 
 
 //Especificar Rutas
@@ -38,11 +42,27 @@ object AppRoutes { // este es para los String para evitar errores al escribir lo
     const val MAIN = "main" // ruta pantalla principal
     const val REGISTER = "register" // ruta pantalla de registro
     const val FORGOT_PASSWORD = "forgot_password" // ruta pantalla recuperacion de password
+    const val PROFILE = "profile" //ruta perfil
 }
 
 @Composable
 fun AppNavigation() { //crea el estado de navigation
     val navController = rememberNavController()
+    val auth = Firebase.auth
+    LaunchedEffect(auth) {
+        auth.addAuthStateListener { firebaseAuth ->
+            val user = firebaseAuth.currentUser
+            if (user == null) {
+                // usuario deslogeado
+                navController.navigate(AppRoutes.AUTH) { // vuelve al login
+                    popUpTo(0) { inclusive = true } // limpia toda la pila
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
+
+
 
     MaterialTheme(colorScheme = AppColorScheme) {
         NavHost(// es el componente para la navegacion
@@ -96,19 +116,33 @@ fun AppNavigation() { //crea el estado de navigation
             //  Pantalla de recuperacion de password
             composable(AppRoutes.FORGOT_PASSWORD) {
                 ForgotPasswordScreen(
-                    onBackToLogin = { //para no volver a la pantalla login
-                        navController.popBackStack()
+                    onBackToLogin = { navController.popBackStack() }
+                )
+            }
+
+            // Pantalla principal
+            composable(AppRoutes.MAIN) {
+                MainScreen(
+                    onNavigateToAuth = {
+                        navController.navigate(AppRoutes.AUTH) {
+                            popUpTo(AppRoutes.MAIN) { inclusive = true }
+                        }
+                    },
+                    onNavigateToProfile = {
+                        navController.navigate(AppRoutes.PROFILE)
                     }
                 )
             }
 
-            // Pantalla si esta logeado
-            composable(AppRoutes.MAIN) {
-                MainScreen(
+            // Pantalla de mi perfil
+            composable(AppRoutes.PROFILE) {
+                MyProfileScreen(
+                    onBackToMain = { navController.popBackStack() },
                     onNavigateToAuth = {
-                        // navega a la ruta auth y borra main del historial para que no pueda volver con la flechita
                         navController.navigate(AppRoutes.AUTH) {
-                            popUpTo(AppRoutes.MAIN) { inclusive = true }
+                            popUpTo(AppRoutes.MAIN) { inclusive = true } // elimina la pantalla principal
+                            launchSingleTop = true //evita duplicados
+
                         }
                     }
                 )
@@ -176,4 +210,5 @@ fun SplashScreen(navController: NavController) {
         }
     }
 }
+
 

@@ -24,6 +24,7 @@ fun ModernTopBar(
     CenterAlignedTopAppBar(
         modifier = Modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .height(60.dp)
             .background(
                 Brush.horizontalGradient(
