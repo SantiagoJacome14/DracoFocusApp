@@ -21,6 +21,7 @@ import co.edu.unab.dracofocusapp.ui.MyProfileScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
 import co.edu.unab.dracofocusapp.ui.ProgressScreen
 import co.edu.unab.dracofocusapp.ui.HomeScreen
+import co.edu.unab.dracofocusapp.ui.LeccionesDracosolitario
 
 
 
@@ -119,12 +120,6 @@ fun BottomNavGraph(
     authViewModel: AuthViewModel
 ) {
     NavHost(navController, startDestination = BottomNavItem.Draco.route) {
-        composable(BottomNavItem.Lecciones.route) {
-            PlaceholderScreen("📘 Lecciones en construcción")
-        }
-        composable(BottomNavItem.Pomodoro.route) {
-            PlaceholderScreen("⏱️ Pomodoro en desarrollo")
-        }
         composable(BottomNavItem.Draco.route) {
             HomeScreen(
                 onNavigateToStudy = {  },
@@ -139,6 +134,9 @@ fun BottomNavGraph(
         }
         composable(BottomNavItem.Perfil.route) {
             MyProfileScreen()
+        }
+        composable("lecciones_dracosolitario") {
+            LeccionesDracosolitario(navController)
         }
     }
 }

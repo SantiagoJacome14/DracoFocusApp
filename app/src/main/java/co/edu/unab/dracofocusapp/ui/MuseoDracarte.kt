@@ -18,10 +18,15 @@ import androidx.compose.material3.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
 
 @Composable
 fun MuseoDracArte(navController: NavController) {
+    val gradientBackground = Brush.verticalGradient(
+        listOf(Color(0xFF0B132B), Color(0xFF1C2541))
+    )
     // Estados
     var piezasCompletas by remember { mutableStateOf(0) }
     var pinturasCompletas by remember { mutableStateOf(0) }
@@ -33,12 +38,18 @@ fun MuseoDracArte(navController: NavController) {
     val progresoClamped = progreso.coerceAtMost(100f)
 
     Scaffold(
-       // bottomBar = { BottomNavigationBar(navController) }
+        modifier = Modifier.statusBarsPadding(),
+        topBar = {
+            ModernTopBar(
+                title = "Museo Dracarte",
+                showBackButton = true
+            )
+        },
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFcbc8c8))
+                .background(gradientBackground)
                 .padding(innerPadding),
             contentAlignment = Alignment.Center
         ) {
@@ -61,28 +72,22 @@ fun MuseoDracArte(navController: NavController) {
                 //Contenido principal
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
                 ) {
-                    Text(
-                        text = "Museo Dracarte",
-                        color = Color.White,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
+                    Spacer(modifier = Modifier.height(30.dp))
                     // Barra de progreso
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
+
                     ) {
                         Text("Progreso", color = Color.White)
                         Text("${pinturasCompletas}/4", color = Color.White)
                     }
-
+                    Spacer(modifier = Modifier.height(10.dp))
                     LinearProgressIndicator(
                         progress = progresoClamped / 100f,
                         color = Color(0xFFF44336),

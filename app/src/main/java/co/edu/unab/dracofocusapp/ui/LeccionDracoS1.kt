@@ -18,29 +18,33 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.material3.*
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontFamily
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.main.BottomNavigationBar
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 
-/*
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import android.util.Log*/
 
 @Composable
 fun LeccionDecisionesDeFuegoScreen(navController: NavController) {
+
+    val gradientBackground = Brush.verticalGradient(
+        listOf(Color(0xFF0B132B), Color(0xFF1C2541))
+    )
 
     //Estado para ver el código escrito por el usuario
     var codigoUsuario by remember { mutableStateOf("") }
 
     Scaffold(
-     //   bottomBar = { BottomNavigationBar(navController) }
+        bottomBar = {  }
     ) { innerPadding ->
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF3d62a4))
+                .background(gradientBackground)
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp, vertical = 10.dp)
         ) {
@@ -84,7 +88,7 @@ fun LeccionDecisionesDeFuegoScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF3D62A4), RoundedCornerShape(12.dp))
+                        .background(Color(0xFF0F1A2A), RoundedCornerShape(12.dp))
                         .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(12.dp))
                         .padding(14.dp)
                 ) {
@@ -94,7 +98,7 @@ fun LeccionDecisionesDeFuegoScreen(navController: NavController) {
                     ) {
                         Text(
                             text = "OBJETIVO: ",
-                            color = Color(0xFF0F2B5D),
+                            color = Color(0xFF22DDF2),
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
@@ -112,7 +116,7 @@ fun LeccionDecisionesDeFuegoScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF3D62A4), RoundedCornerShape(12.dp))
+                        .background(Color(0xFF0F1A2A), RoundedCornerShape(12.dp))
                         .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(12.dp))
                         .padding(14.dp)
                 ) {
@@ -167,7 +171,10 @@ fun LeccionDecisionesDeFuegoScreen(navController: NavController) {
                 ) {
                     Button(
                         onClick = { navController.navigate("lecciones") },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F2B5D)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF22DDF2),
+                            contentColor = Color.Black
+                        ),
                         modifier = Modifier.weight(1f).padding(end = 10.dp)
                     ) {
                         Text("Regresar", color = Color(0xFFEBFFFE))
@@ -180,21 +187,24 @@ fun LeccionDecisionesDeFuegoScreen(navController: NavController) {
                                     codigo = codigoUsuario,
                                     leccionId = "decisiones_de_fuego"
                                 )
-                                /*
-                                                                guardarCodigoEnFirestore(
-                                                                    respuesta,
-                                                                    onSuccess = {
-                                                                        Log.d("Firestore", "Enviado correctamente")
-                                                                    },
-                                                                    onError = { e ->
-                                                                        Log.e("Firestore", "Error al enviar", e)
-                                                                    }
-                                                                )*/
+                                Log.d("MiApp", "Validación")
+                                guardarCodigoEnFirestore(
+                                    respuesta,
+                                    onSuccess = {
+                                        Log.d("MiApp", "Enviado correctamente")
+                                                },
+                                    onError = { e ->
+                                        Log.e("MiApp", "Error al enviar", e)
+                                    }
+                                )
                             } else {
-                                Log.w("Firestore", "El código está vacío, no se envió.")
+                                Log.w("MiApp", "El código está vacío, no se envió.")
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F2B5D)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF22DDF2),
+                            contentColor = Color.Black
+                        ),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Enviar", color = Color(0xFFEBFFFE))
@@ -207,7 +217,7 @@ fun LeccionDecisionesDeFuegoScreen(navController: NavController) {
     }
 }
 
-/*
+
 fun guardarCodigoEnFirestore(
     respuesta: RespuestaLeccion,
     onSuccess: () -> Unit,
@@ -218,13 +228,13 @@ fun guardarCodigoEnFirestore(
         .add(respuesta)
         .addOnSuccessListener { documentReference ->
             val id = documentReference.id
-            Log.d("Firestore", "✅ Código guardado correctamente con ID: $id")
+            Log.d("Firestore", "Código guardado correctamente con ID: $id")
             onSuccess()
         }
         .addOnFailureListener { e ->
-            Log.w("Firestore", "❌ Error al guardar código", e)
+            Log.w("Firestore", "Error al guardar código", e)
             onError(e)
         }
 }
 
-*/
+

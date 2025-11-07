@@ -20,6 +20,7 @@ import androidx.compose.material3.*
 import kotlinx.coroutines.delay
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.main.BottomNavigationBar
 
@@ -47,6 +48,9 @@ fun DracomodoroScreen(navController: NavController) {
     val minutes = secondsLeft / 60
     val seconds = secondsLeft % 60
     val timeDisplay = String.format("%02d:%02d", minutes, seconds)
+    val gradientBackground = Brush.verticalGradient(
+        listOf(Color(0xFF0B132B), Color(0xFF1C2541))
+    )
 
     // Contenido
     Scaffold(
@@ -55,7 +59,7 @@ fun DracomodoroScreen(navController: NavController) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF2F5DA5))
+                .background(gradientBackground)
                 .padding(innerPadding),
             contentAlignment = Alignment.TopCenter
         ) {
@@ -76,7 +80,7 @@ fun DracomodoroScreen(navController: NavController) {
                     )
                     Text(
                         text = "Dracomodoro",
-                        color = Color(0xFFa2faf6),
+                        color = Color(0xFF22DDF2),
                         fontSize = 45.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -90,9 +94,9 @@ fun DracomodoroScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .size(220.dp)
-                        .border(10.dp, Color(0xFFa2faf6), shape = CircleShape)
+                        .border(10.dp, Color(0xFF22DDF2), shape = CircleShape)
                         .padding(25.dp)
-                        .border(5.dp, Color(0xFFa2faf6), shape = CircleShape),
+                        .border(5.dp, Color(0xFF22DDF2), shape = CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -115,12 +119,12 @@ fun DracomodoroScreen(navController: NavController) {
                             isRunning = true
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5a4abf)
+                            containerColor = Color(0xFF8A78FF)
                         ),
                         modifier = Modifier
                             .border(
                                 width = 2.dp,
-                                color = Color(0xFFA2FAF6),
+                                color = Color(0xFF22DDF2),
                                 shape = RoundedCornerShape(30.dp)
                             )
                     )
@@ -133,12 +137,12 @@ fun DracomodoroScreen(navController: NavController) {
                             isRunning = false
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5a4abf)
+                            containerColor = Color(0xFF8A78FF)
                         ),
                         modifier = Modifier
                             .border(
                                 width = 2.dp,
-                                color = Color(0xFFA2FAF6),
+                                color = Color(0xFF22DDF2),
                                 shape = RoundedCornerShape(30.dp)
                             )
                     ) {
@@ -151,12 +155,12 @@ fun DracomodoroScreen(navController: NavController) {
                             secondsLeft = if (isWorkMode) workMinutes * 60 else restMinutes * 60
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5a4abf)
+                            containerColor = Color(0xFF8A78FF)
                         ),
                         modifier = Modifier
                             .border(
                                 width = 2.dp,
-                                color = Color(0xFFA2FAF6),
+                                color = Color(0xFF22DDF2),
                                 shape = RoundedCornerShape(30.dp)
                             )
                     ) {
@@ -246,7 +250,7 @@ fun DracomodoroScreen(navController: NavController) {
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(80.dp))
+                    Spacer(modifier = Modifier.height(50.dp))
                 }
             }
         }
