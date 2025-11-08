@@ -18,29 +18,36 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.material3.*
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontFamily
 import co.edu.unab.dracofocusapp.R
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 
-/*
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import android.util.Log*/
+
 
 @Composable
-fun LeccionVueloInfinitoScreen(navController: NavController) {
+fun LeccionDecisionesDeFuegoScreen(
+    navController: NavController,
+    onBack: () -> Unit
+) {
 
-    // Estado para guardar el código escrito por el usuario
+    val gradientBackground = Brush.verticalGradient(
+        listOf(Color(0xFF0B132B), Color(0xFF1C2541))
+    )
+
+    //Estado para ver el código escrito por el usuario
     var codigoUsuario by remember { mutableStateOf("") }
 
     Scaffold(
-        //bottomBar = { BottomNavigationBar(navController) }
+        bottomBar = {  }
     ) { innerPadding ->
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF3d62a4)) // Fondo azul
+                .background(gradientBackground)
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp, vertical = 10.dp)
         ) {
@@ -50,15 +57,14 @@ fun LeccionVueloInfinitoScreen(navController: NavController) {
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
             ) {
-
-                // Contenido
+                //Info
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Lección\nVUELO INFINITO",
+                        text = "Lección\nDECISIONES DE FUEGO",
                         color = Color(0xFF57F5ED),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
@@ -75,7 +81,7 @@ fun LeccionVueloInfinitoScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Estructuras de control: Bucles for y while",
+                    text = "Estructuras de control: Condicionales",
                     color = Color(0xFFCDF4F2),
                     fontSize = 18.sp
                 )
@@ -85,7 +91,7 @@ fun LeccionVueloInfinitoScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF3D62A4), RoundedCornerShape(12.dp))
+                        .background(Color(0xFF0F1A2A), RoundedCornerShape(12.dp))
                         .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(12.dp))
                         .padding(14.dp)
                 ) {
@@ -95,12 +101,12 @@ fun LeccionVueloInfinitoScreen(navController: NavController) {
                     ) {
                         Text(
                             text = "OBJETIVO: ",
-                            color = Color(0xFF0F2B5D),
+                            color = Color(0xFF22DDF2),
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
                         Text(
-                            text = "Practicar iteraciones y control de flujo.",
+                            text = "Aplicar 'if, elif, else' para decidir qué hará Draco según su nivel de energía.",
                             color = Color(0xFFCBC8C8),
                             fontSize = 14.sp
                         )
@@ -109,10 +115,11 @@ fun LeccionVueloInfinitoScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                //Ejercicio
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF3D62A4), RoundedCornerShape(12.dp))
+                        .background(Color(0xFF0F1A2A), RoundedCornerShape(12.dp))
                         .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(12.dp))
                         .padding(14.dp)
                 ) {
@@ -127,14 +134,14 @@ fun LeccionVueloInfinitoScreen(navController: NavController) {
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Draco debe practicar vuelo 5 veces al día. Crea un programa que imprima los intentos de vuelo con su número ('Vuelo 1', 'Vuelo 2', …) y detén el ciclo si Draco se cansa (energía < 20).",
+                            text = "Draco tiene niveles de energía. Si su energía es menor a 30, debe descansar; si está entre 30 y 70, puede estudiar; si es mayor de 70, puede entrenar vuelo.\n\nCrea un programa que muestre lo que debe hacer Draco según su energía.",
                             color = Color(0xFFCBC8C8),
                             fontSize = 14.sp
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        //Editor de código
+                        // Campo de texto tipo editor de código
                         OutlinedTextField(
                             value = codigoUsuario,
                             onValueChange = { codigoUsuario = it },
@@ -160,17 +167,18 @@ fun LeccionVueloInfinitoScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                //Botones inferiores
+                //Botones
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Button(
                         onClick = { navController.navigate("lecciones") },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F2B5D)),
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 10.dp)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF22DDF2),
+                            contentColor = Color.Black
+                        ),
+                        modifier = Modifier.weight(1f).padding(end = 10.dp)
                     ) {
                         Text("Regresar", color = Color(0xFFEBFFFE))
                     }
@@ -178,16 +186,28 @@ fun LeccionVueloInfinitoScreen(navController: NavController) {
                     Button(
                         onClick = {
                             if (codigoUsuario.isNotBlank()) {
-                                val respuesta = RespuestaLeccion(
+                                val respuesta = RespuestaLeccionesClass(
                                     codigo = codigoUsuario,
-                                    leccionId = "vuelo_infinito"
+                                    leccionId = "decisiones_de_fuego"
                                 )
-                                //
+                                Log.d("MiApp", "Validación")
+                                guardarCodigoEnFirestore(
+                                    respuesta,
+                                    onSuccess = {
+                                        Log.d("MiApp", "Enviado correctamente")
+                                                },
+                                    onError = { e ->
+                                        Log.e("MiApp", "Error al enviar", e)
+                                    }
+                                )
                             } else {
-                                Log.w("Firestore", "El código está vacío, no se envió.")
+                                Log.w("MiApp", "El código está vacío, no se envió.")
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F2B5D)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF22DDF2),
+                            contentColor = Color.Black
+                        ),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Enviar", color = Color(0xFFEBFFFE))
@@ -199,3 +219,25 @@ fun LeccionVueloInfinitoScreen(navController: NavController) {
         }
     }
 }
+
+
+fun guardarCodigoEnFirestore(
+    respuesta: RespuestaLeccionesClass,
+    onSuccess: () -> Unit,
+    onError: (Exception) -> Unit
+) {
+    val db = Firebase.firestore
+    db.collection("respuestas_leccion")
+        .add(respuesta)
+        .addOnSuccessListener { documentReference ->
+            val id = documentReference.id
+            Log.d("Firestore", "Código guardado correctamente con ID: $id")
+            onSuccess()
+        }
+        .addOnFailureListener { e ->
+            Log.w("Firestore", "Error al guardar código", e)
+            onError(e)
+        }
+}
+
+

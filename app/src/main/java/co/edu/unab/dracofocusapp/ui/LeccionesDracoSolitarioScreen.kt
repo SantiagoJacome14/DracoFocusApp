@@ -20,23 +20,39 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
 
 
 @Composable
-fun LeccionesGrupales(navController: NavController) {
+fun LeccionesDracoSolitarioScreen(
+    navController: NavController,
+    onBack: () -> Unit
+) {
+
+    val gradientBackground = Brush.verticalGradient(
+        listOf(Color(0xFF0B132B), Color(0xFF1C2541))
+    )
     // Estados
     var leccionesCompletadas by remember { mutableStateOf(0) } // de 0 a 3
     val leccionesFaltantes = (3 - leccionesCompletadas).coerceAtLeast(0)
 
+
     Scaffold(
-        //bottomBar = { BottomNavigationBar(navController) }
-    ) { innerPadding ->
+        modifier = Modifier.statusBarsPadding(),
+        topBar = {
+            ModernTopBar(
+                title = "Lecciones DracoSolitario",
+                showBackButton = true
+            )
+        }
+    )  { innerPadding ->
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF3D62A4))
+                .background(gradientBackground)
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp, vertical = 10.dp)
         ) {
@@ -44,17 +60,6 @@ fun LeccionesGrupales(navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxSize()
             ) {
-                //Título e info inicial
-                Text(
-                    text = "Lecciones Grupales",
-                    color = Color(0xFFEBFFFE),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 10.dp)
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
                 Text(
                     text = "Avanza realizando ejercicios y completando los módulos para ganar XP mientras aprendes.",
                     color = Color(0xFFB3B3B3),
@@ -88,8 +93,8 @@ fun LeccionesGrupales(navController: NavController) {
                 //Lista de lecciones
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     LessonCard(
-                        titulo = "Guardianes del Tesoro",
-                        subtitulo = "Variables y condicionales",
+                        titulo = "Decisiones de Fuego",
+                        subtitulo = "Condicionales",
                         xp = "+ 90 XP",
                         navController = navController
                     ) {
@@ -97,8 +102,8 @@ fun LeccionesGrupales(navController: NavController) {
                     }
 
                     LessonCard(
-                        titulo = "Misión de Vuelo",
-                        subtitulo = "Ciclos, listas y acumuladores",
+                        titulo = "Vuelo Infinito",
+                        subtitulo = "Bucles",
                         xp = "+ 150 XP",
                         navController = navController
                     ) {
@@ -106,8 +111,8 @@ fun LeccionesGrupales(navController: NavController) {
                     }
 
                     LessonCard(
-                        titulo = "El reto de los acertijos",
-                        subtitulo = "Funciones y lógica condicional",
+                        titulo = "El Libro de las Tareas",
+                        subtitulo = "Arreglos",
                         xp = "+ 120 XP",
                         navController = navController
                     ) {
@@ -150,3 +155,75 @@ fun LeccionesGrupales(navController: NavController) {
         }
     }
 }
+@Composable
+fun LessonCard(
+    titulo: String,
+    subtitulo: String,
+    xp: String,
+    navController: NavController,
+    onComplete: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF2C4A7A), RoundedCornerShape(15.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.img_lec),
+                contentDescription = "Ícono de lección",
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(RoundedCornerShape(10.dp))
+            )
+
+            Column(
+                modifier = Modifier.weight(1f).padding(horizontal = 10.dp)
+            ) {
+                Text(
+                    text = titulo,
+                    color = Color(0xFFF2F2F2),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = subtitulo,
+                    color = Color(0xFFCBC8C8),
+                    fontSize = 13.sp
+                )
+            }
+
+            // XP + botón Play
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFF6A5CC4), RoundedCornerShape(50.dp))
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Text(xp, color = Color.White, fontSize = 13.sp)
+                }
+
+                IconButton(
+                    onClick = {
+                        onComplete()
+                        navController.navigate("leccion_detalle")
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Iniciar lección",
+                        tint = Color.White,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+

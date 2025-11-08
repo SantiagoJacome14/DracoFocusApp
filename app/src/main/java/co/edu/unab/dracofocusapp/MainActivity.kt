@@ -16,9 +16,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = AppColorScheme) {
                 Surface {
-                    // Creamos un NavController y lo pasamos como parámetro
-                    val navController = rememberNavController()
-                    LeccionDecisionesDeFuegoScreen(navController)
+                    AppNavigation()
                 }
             }
         }

@@ -1,7 +1,7 @@
 package co.edu.unab.dracofocusapp.ui
 
 //Documento que se guarda en Firebase
-data class RespuestaLeccion(
+data class RespuestaLeccionesClass(
     val codigo: String = "",
     val leccionId: String = "decisiones_de_fuego",
     val usuarioId: String = "",

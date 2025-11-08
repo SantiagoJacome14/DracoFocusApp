@@ -19,6 +19,13 @@ import co.edu.unab.dracofocusapp.auth.AuthScreen
 import co.edu.unab.dracofocusapp.auth.ForgotPasswordScreen
 import co.edu.unab.dracofocusapp.auth.RegisterScreen
 import co.edu.unab.dracofocusapp.main.MainScreen
+import co.edu.unab.dracofocusapp.ui.DracomodoroScreen
+import co.edu.unab.dracofocusapp.ui.LeccionDecisionesDeFuegoScreen
+import co.edu.unab.dracofocusapp.ui.LeccionVueloInfinitoScreen
+import co.edu.unab.dracofocusapp.ui.LeccionesDracoSolitarioScreen
+import co.edu.unab.dracofocusapp.ui.LeccionesGrupalesScreen
+import co.edu.unab.dracofocusapp.ui.MyProfileScreen
+import co.edu.unab.dracofocusapp.ui.RespuestaLeccionesScreen
 import co.edu.unab.dracofocusapp.theme.AppColorScheme
 import co.edu.unab.dracofocusapp.theme.DarkBlueBg
 import com.google.firebase.auth.ktx.auth
@@ -32,7 +39,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.fillMaxWidth
-import co.edu.unab.dracofocusapp.ui.MyProfileScreen
+import co.edu.unab.dracofocusapp.ui.MenuLeccionesScreen
 
 
 //Especificar Rutas
@@ -43,6 +50,17 @@ object AppRoutes { // este es para los String para evitar errores al escribir lo
     const val REGISTER = "register" // ruta pantalla de registro
     const val FORGOT_PASSWORD = "forgot_password" // ruta pantalla recuperacion de password
     const val PROFILE = "profile" //ruta perfil
+
+    const val DRACOMODORO = "dracomodoro"
+    const val LECCION_DECISIONES_DE_FUEGO = "leccion_decisiones_de_fuego"
+    const val LECCION_VUELO_INFINITO = "leccion_draco_s2"
+    const val MUSEO_DRACARTE = "museo_dracarte"
+    const val LECCIONES_SOLO = "lecciones_dracosolitario"
+    const val LECCIONES_GRUPALES = "lecciones_grupales"
+    const val RESPUESTA_LECCION_S = "respuesta_leccion_s"
+
+    const val MENU_LECCIONES = "menu_lecciones"
+
 }
 
 @Composable
@@ -95,8 +113,7 @@ fun AppNavigation() { //crea el estado de navigation
                     }
                 )
             }
-
-//  Pantalla de registro
+            //  Pantalla de registro
             composable(AppRoutes.REGISTER) {
                 RegisterScreen( // para volver a la pantalla anterior, la de login
                     onBackToLogin = {
@@ -133,6 +150,52 @@ fun AppNavigation() { //crea el estado de navigation
                     }
                 )
             }
+            // Pantalla Dracomodoro
+            composable(AppRoutes.DRACOMODORO) {
+                DracomodoroScreen(onBack = { navController.popBackStack() })
+            }
+            // Pantalla Elegir que tipo de leccion
+            composable(AppRoutes.MENU_LECCIONES) {
+                MenuLeccionesScreen(navController = navController)
+            }
+
+            // Pantallas de Lecciones
+            composable(AppRoutes.LECCION_DECISIONES_DE_FUEGO) {
+                LeccionDecisionesDeFuegoScreen(
+                    navController = navController,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(AppRoutes.LECCION_VUELO_INFINITO) {
+                LeccionVueloInfinitoScreen (
+                    navController = navController,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(AppRoutes.LECCIONES_SOLO) {
+                LeccionesDracoSolitarioScreen(
+                    navController = navController,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(AppRoutes.LECCIONES_GRUPALES) {
+                LeccionesGrupalesScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                )
+            }
+            composable(AppRoutes.RESPUESTA_LECCION_S) {
+                RespuestaLeccionesScreen(onBack = { navController.popBackStack() })
+            }
+            // Pantalla Museo
+            composable(AppRoutes.MUSEO_DRACARTE) {
+                MuseoDracoArteScreen(onBack = { navController.popBackStack() })
+            }
+
+
+
+
 
             // Pantalla de mi perfil
             composable(AppRoutes.PROFILE) {
@@ -149,6 +212,16 @@ fun AppNavigation() { //crea el estado de navigation
             }
         }
     }
+}
+
+@Composable
+fun RespuestasLeccionesScreen(onBack: () -> Boolean) {
+    TODO("Not yet implemented")
+}
+
+@Composable
+fun MuseoDracoArteScreen(onBack: () -> Boolean) {
+    TODO("Not yet implemented")
 }
 
 @Composable

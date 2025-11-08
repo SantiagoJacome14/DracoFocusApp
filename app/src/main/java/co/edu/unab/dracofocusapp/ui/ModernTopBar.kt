@@ -26,7 +26,7 @@ fun ModernTopBar(
         title = {
             Text(
                 text = title,
-                color = Color(0xFF22DDF2),
+                color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp
             )

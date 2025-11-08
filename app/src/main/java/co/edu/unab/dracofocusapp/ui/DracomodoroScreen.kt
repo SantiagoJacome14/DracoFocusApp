@@ -22,10 +22,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
-import co.edu.unab.dracofocusapp.main.BottomNavigationBar
 
 @Composable
-fun DracomodoroScreen(navController: NavController) {
+fun DracomodoroScreen(onBack: () -> Unit) {
     // Estados
     var workMinutes by remember { mutableStateOf(25) }
     var restMinutes by remember { mutableStateOf(5) }

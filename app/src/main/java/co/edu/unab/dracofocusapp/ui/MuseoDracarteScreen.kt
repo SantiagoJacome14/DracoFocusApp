@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -23,7 +22,7 @@ import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
 
 @Composable
-fun MuseoDracArte(navController: NavController) {
+fun MuseoDracArteScreen(navController: NavController) {
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
