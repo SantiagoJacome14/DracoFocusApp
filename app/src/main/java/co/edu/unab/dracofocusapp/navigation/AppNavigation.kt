@@ -41,7 +41,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.fillMaxWidth
 import co.edu.unab.dracofocusapp.ui.MenuLeccionesScreen
 
-
+//borrar este comentario prueba
 //Especificar Rutas
 object AppRoutes { // este es para los String para evitar errores al escribir los nombers de las rutas
     const val SPLASH = "splash" //ruta para la verificacion de login
