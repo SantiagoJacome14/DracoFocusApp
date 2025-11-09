@@ -23,6 +23,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontFamily
 import co.edu.unab.dracofocusapp.R
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 
 
@@ -193,22 +195,26 @@ fun LeccionDecisionesDeFuegoScreen(
                     Button(
                         onClick = {
                             if (codigoUsuario.isNotBlank()) {
-                                val respuesta = RespuestaLeccionesClass(
-                                    codigo = codigoUsuario,
-                                    leccionId = "decisiones_de_fuego"
+                                val db = FirebaseFirestore.getInstance()
+                                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
+
+                                val respuesta = hashMapOf(
+                                    "codigo" to codigoUsuario,
+                                    "leccionId" to "decisiones_de_fuego",
+                                    "usuarioId" to userId,
+                                    "fecha" to System.currentTimeMillis()
                                 )
-                                Log.d("MiApp", "Validación")
-                                guardarCodigoEnFirestore(
-                                    respuesta,
-                                    onSuccess = {
-                                        Log.d("MiApp", "Enviado correctamente")
-                                                },
-                                    onError = { e ->
-                                        Log.e("MiApp", "Error al enviar", e)
+
+                                db.collection("respuestas_lecciones")
+                                    .add(respuesta)
+                                    .addOnSuccessListener {
+                                        Log.d("Firestore", "✅ Respuesta guardada correctamente")
                                     }
-                                )
+                                    .addOnFailureListener { e ->
+                                        Log.e("Firestore", "❌ Error al guardar: ${e.message}")
+                                    }
                             } else {
-                                Log.w("MiApp", "El código está vacío, no se envió.")
+                                Log.w("Firestore", "⚠️ El código está vacío, no se envió.")
                             }
                         },
                         colors = ButtonDefaults.buttonColors(

@@ -186,27 +186,11 @@ fun LeccionVueloInfinitoScreen(
                         Text("Regresar", color = Color(0xFFEBFFFE))
                     }
 
-                    Button(
-                        onClick = {
-                            if (codigoUsuario.isNotBlank()) {
-                                val respuesta = RespuestaLeccionesClass(
-                                    codigo = codigoUsuario,
-                                    leccionId = "vuelo_infinito"
-                                )
-                                //
-                            } else {
-                                Log.w("Firestore", "El código está vacío, no se envió.")
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F2B5D)),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Enviar", color = Color(0xFFEBFFFE))
-                    }
+                }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
-}
+

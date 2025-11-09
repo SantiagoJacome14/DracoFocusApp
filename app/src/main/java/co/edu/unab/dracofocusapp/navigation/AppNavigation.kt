@@ -1,6 +1,9 @@
 package co.edu.unab.dracofocusapp.navigation
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -25,12 +28,12 @@ import co.edu.unab.dracofocusapp.ui.LeccionVueloInfinitoScreen
 import co.edu.unab.dracofocusapp.ui.LeccionesDracoSolitarioScreen
 import co.edu.unab.dracofocusapp.ui.LeccionesGrupalesScreen
 import co.edu.unab.dracofocusapp.ui.MyProfileScreen
-import co.edu.unab.dracofocusapp.ui.RespuestaLeccionesScreen
 import co.edu.unab.dracofocusapp.theme.AppColorScheme
 import co.edu.unab.dracofocusapp.theme.DarkBlueBg
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import androidx.compose.foundation.text.KeyboardOptions
+import co.edu.unab.dracofocusapp.ui.RespuestaLeccionesScreen
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
@@ -39,6 +42,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import co.edu.unab.dracofocusapp.ui.MenuLeccionesScreen
 
 //borrar este comentario prueba
@@ -188,14 +193,11 @@ fun AppNavigation() { //crea el estado de navigation
             composable(AppRoutes.RESPUESTA_LECCION_S) {
                 RespuestaLeccionesScreen(onBack = { navController.popBackStack() })
             }
+
             // Pantalla Museo
             composable(AppRoutes.MUSEO_DRACARTE) {
                 MuseoDracoArteScreen(onBack = { navController.popBackStack() })
             }
-
-
-
-
 
             // Pantalla de mi perfil
             composable(AppRoutes.PROFILE) {
@@ -214,10 +216,6 @@ fun AppNavigation() { //crea el estado de navigation
     }
 }
 
-@Composable
-fun RespuestasLeccionesScreen(onBack: () -> Boolean) {
-    TODO("Not yet implemented")
-}
 
 @Composable
 fun MuseoDracoArteScreen(onBack: () -> Boolean) {

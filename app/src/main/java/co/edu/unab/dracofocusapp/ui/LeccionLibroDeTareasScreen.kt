@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.R
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun LeccionElLibroDeTareasScreen(
@@ -177,25 +179,41 @@ fun LeccionElLibroDeTareasScreen(
                     Button(
                         onClick = {
                             if (codigoUsuario.isNotBlank()) {
-                                val respuesta = RespuestaLeccionesClass(
-                                    codigo = codigoUsuario,
-                                    leccionId = "libro_tareas"
+                                val db = FirebaseFirestore.getInstance()
+                                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
+
+                                val respuesta = hashMapOf(
+                                    "codigo" to codigoUsuario,
+                                    "leccionId" to "decisiones_de_fuego",
+                                    "usuarioId" to userId,
+                                    "fecha" to System.currentTimeMillis()
                                 )
-                                Log.d("Firestore", "Respuesta lista para enviar: $respuesta")
+
+                                db.collection("respuestas_lecciones")
+                                    .add(respuesta)
+                                    .addOnSuccessListener {
+                                        Log.d("Firestore", "✅ Respuesta guardada correctamente")
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.e("Firestore", "❌ Error al guardar: ${e.message}")
+                                    }
                             } else {
-                                Log.w("Firestore", "El código está vacío, no se envió.")
+                                Log.w("Firestore", "⚠️ El código está vacío, no se envió.")
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F2B5D)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF22DDF2),
+                            contentColor = Color.Black
+                        ),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Enviar", color = Color(0xFFEBFFFE))
                     }
+                }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
-}
 
