@@ -22,32 +22,32 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontFamily
 import co.edu.unab.dracofocusapp.R
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
 
-
+/*
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import android.util.Log*/
 
 @Composable
-fun LeccionDecisionesDeFuegoScreen(
+fun LeccionVueloInfinitoScreen(
     navController: NavController,
     onBack: () -> Unit
 ) {
 
+    // Estado para guardar el código escrito por el usuario
+    var codigoUsuario by remember { mutableStateOf("") }
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
 
-    //Estado para ver el código escrito por el usuario
-    var codigoUsuario by remember { mutableStateOf("") }
-
     Scaffold(
-        bottomBar = {  }
+        //bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(gradientBackground)
+                .background(gradientBackground) // Fondo azul
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp, vertical = 10.dp)
         ) {
@@ -57,14 +57,15 @@ fun LeccionDecisionesDeFuegoScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
             ) {
-                //Info
+
+                // Contenido
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Lección\nDECISIONES DE FUEGO",
+                        text = "Lección\nVUELO INFINITO",
                         color = Color(0xFF57F5ED),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
@@ -81,7 +82,7 @@ fun LeccionDecisionesDeFuegoScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Estructuras de control: Condicionales",
+                    text = "Estructuras de control: Bucles for y while",
                     color = Color(0xFFCDF4F2),
                     fontSize = 18.sp
                 )
@@ -101,12 +102,12 @@ fun LeccionDecisionesDeFuegoScreen(
                     ) {
                         Text(
                             text = "OBJETIVO: ",
-                            color = Color(0xFF22DDF2),
+                            color = Color(0xFF0F2B5D),
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
                         Text(
-                            text = "Aplicar 'if, elif, else' para decidir qué hará Draco según su nivel de energía.",
+                            text = "Practicar iteraciones y control de flujo.",
                             color = Color(0xFFCBC8C8),
                             fontSize = 14.sp
                         )
@@ -115,7 +116,6 @@ fun LeccionDecisionesDeFuegoScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                //Ejercicio
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -134,14 +134,14 @@ fun LeccionDecisionesDeFuegoScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Draco tiene niveles de energía. Si su energía es menor a 30, debe descansar; si está entre 30 y 70, puede estudiar; si es mayor de 70, puede entrenar vuelo.\n\nCrea un programa que muestre lo que debe hacer Draco según su energía.",
+                            text = "Draco debe practicar vuelo 5 veces al día. Crea un programa que imprima los intentos de vuelo con su número ('Vuelo 1', 'Vuelo 2', …) y detén el ciclo si Draco se cansa (energía < 20).",
                             color = Color(0xFFCBC8C8),
                             fontSize = 14.sp
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Campo de texto tipo editor de código
+                        //Editor de código
                         OutlinedTextField(
                             value = codigoUsuario,
                             onValueChange = { codigoUsuario = it },
@@ -167,7 +167,7 @@ fun LeccionDecisionesDeFuegoScreen(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                //Botones
+                //Botones inferiores
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
@@ -175,13 +175,10 @@ fun LeccionDecisionesDeFuegoScreen(
                     Button(
                         onClick = {
                             navController.navigate("lecciones_solitario") {
-                                popUpTo("leccion_decisiones_fuego") { inclusive = true }
+                                popUpTo("leccion_vuelo_infinito") { inclusive = true }
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF22DDF2),
-                            contentColor = Color.Black
-                        ),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F2B5D)),
                         modifier = Modifier
                             .weight(1f)
                             .padding(end = 10.dp)
@@ -189,32 +186,19 @@ fun LeccionDecisionesDeFuegoScreen(
                         Text("Regresar", color = Color(0xFFEBFFFE))
                     }
 
-
                     Button(
                         onClick = {
                             if (codigoUsuario.isNotBlank()) {
                                 val respuesta = RespuestaLeccionesClass(
                                     codigo = codigoUsuario,
-                                    leccionId = "decisiones_de_fuego"
+                                    leccionId = "vuelo_infinito"
                                 )
-                                Log.d("MiApp", "Validación")
-                                guardarCodigoEnFirestore(
-                                    respuesta,
-                                    onSuccess = {
-                                        Log.d("MiApp", "Enviado correctamente")
-                                                },
-                                    onError = { e ->
-                                        Log.e("MiApp", "Error al enviar", e)
-                                    }
-                                )
+                                //
                             } else {
-                                Log.w("MiApp", "El código está vacío, no se envió.")
+                                Log.w("Firestore", "El código está vacío, no se envió.")
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF22DDF2),
-                            contentColor = Color.Black
-                        ),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F2B5D)),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Enviar", color = Color(0xFFEBFFFE))
@@ -226,25 +210,3 @@ fun LeccionDecisionesDeFuegoScreen(
         }
     }
 }
-
-
-fun guardarCodigoEnFirestore(
-    respuesta: RespuestaLeccionesClass,
-    onSuccess: () -> Unit,
-    onError: (Exception) -> Unit
-) {
-    val db = Firebase.firestore
-    db.collection("respuestas_leccion")
-        .add(respuesta)
-        .addOnSuccessListener { documentReference ->
-            val id = documentReference.id
-            Log.d("Firestore", "Código guardado correctamente con ID: $id")
-            onSuccess()
-        }
-        .addOnFailureListener { e ->
-            Log.w("Firestore", "Error al guardar código", e)
-            onError(e)
-        }
-}
-
-

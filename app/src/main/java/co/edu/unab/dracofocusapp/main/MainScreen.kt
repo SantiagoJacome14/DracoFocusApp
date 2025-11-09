@@ -21,8 +21,11 @@ import co.edu.unab.dracofocusapp.ui.MyProfileScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
 import co.edu.unab.dracofocusapp.ui.ProgressScreen
 import co.edu.unab.dracofocusapp.ui.HomeScreen
-
-
+import co.edu.unab.dracofocusapp.ui.LeccionDecisionesDeFuegoScreen
+import co.edu.unab.dracofocusapp.ui.LeccionElLibroDeTareasScreen
+import co.edu.unab.dracofocusapp.ui.LeccionVueloInfinitoScreen
+import co.edu.unab.dracofocusapp.ui.LeccionesDracoSolitarioScreen
+import co.edu.unab.dracofocusapp.ui.MenuLeccionesScreen
 
 
 // ---------------------- RUTAS DEL MENÚ INFERIOR ----------------------
@@ -138,119 +141,38 @@ fun BottomNavGraph(
 
         // ---------- Pantalla de elección de modo ----------
         composable("menu_lecciones") {
-            MenuLeccionesScreen(
-                onSoloClick = { navController.navigate("lecciones_solitario") },
-                onDuoClick = { /* próximamente */ },
-                onBackClick = { navController.popBackStack() }
-            )
+            MenuLeccionesScreen(navController = navController)
         }
+        composable("lecciones_solitario"){LeccionesDracoSolitarioScreen(
+            navController = navController,
+            onBack = { navController.popBackStack() }
+        )}
 
-        // ---------- Pantalla Modo Solitario ----------
-        composable("lecciones_solitario") {
-            LeccionesDracoSolitarioScreen(
-                onSelectDecisiones = { navController.navigate("leccion_decisiones_fuego") },
-                onSelectVuelo = { navController.navigate("leccion_vuelo_infinito") },
-                onBackClick = { navController.popBackStack() }
-            )
-        }
-
-        // ---------- Pantallas individuales de lecciones ----------
         composable("leccion_decisiones_fuego") {
-            LeccionDecisionesDeFuegoScreen(onBackClick = { navController.popBackStack() })
+            LeccionDecisionesDeFuegoScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable("leccion_vuelo_infinito") {
-            LeccionVueloInfinitoScreen(onBackClick = { navController.popBackStack() })
+            LeccionVueloInfinitoScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
         }
+
+        composable("leccion_libro_tareas") {
+            LeccionElLibroDeTareasScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+
     }
 }
 
-// ---------------------- PANTALLA: ELECCIÓN DE MODO ----------------------
-@Composable
-fun MenuLeccionesScreen(
-    onSoloClick: () -> Unit,
-    onDuoClick: () -> Unit,
-    onBackClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF1E1E2F)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Elige tu modo de estudio", color = Color.White, fontSize = 22.sp)
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onSoloClick) { Text("Modo Solitario") }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onDuoClick) { Text("Modo en Grupo") }
-            Spacer(modifier = Modifier.height(32.dp))
-            TextButton(onClick = onBackClick) { Text("Volver", color = Color.Gray) }
-        }
-    }
-}
-
-// ---------------------- PANTALLA: LECCIONES SOLITARIO ----------------------
-@Composable
-fun LeccionesDracoSolitarioScreen(
-    onSelectDecisiones: () -> Unit,
-    onSelectVuelo: () -> Unit,
-    onBackClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF12122A)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Selecciona una lección", color = Color.White, fontSize = 22.sp)
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onSelectDecisiones) { Text("🔥 Decisiones de Fuego") }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onSelectVuelo) { Text("🕊️ Vuelo Infinito") }
-            Spacer(modifier = Modifier.height(32.dp))
-            TextButton(onClick = onBackClick) { Text("Volver", color = Color.Gray) }
-        }
-    }
-}
-
-// ---------------------- LECCIONES INDIVIDUALES ----------------------
-@Composable
-fun LeccionDecisionesDeFuegoScreen(onBackClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF260A0A)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("🔥 Lección: Decisiones de Fuego 🔥", color = Color.White, fontSize = 24.sp)
-            Spacer(modifier = Modifier.height(24.dp))
-            Text("Contenido de la lección aquí...", color = Color.White)
-            Spacer(modifier = Modifier.height(48.dp))
-            Button(onClick = onBackClick) { Text("Volver") }
-        }
-    }
-}
-
-@Composable
-fun LeccionVueloInfinitoScreen(onBackClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0A1A2A)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("🕊️ Lección: Vuelo Infinito 🕊️", color = Color.White, fontSize = 24.sp)
-            Spacer(modifier = Modifier.height(24.dp))
-            Text("Contenido de la lección aquí...", color = Color.White)
-            Spacer(modifier = Modifier.height(48.dp))
-            Button(onClick = onBackClick) { Text("Volver") }
-        }
-    }
-}
 // ---------------------- PANTALLA “DRACO” (Bienvenida) ----------------------
 @Composable
 fun DracoWelcomeScreen(

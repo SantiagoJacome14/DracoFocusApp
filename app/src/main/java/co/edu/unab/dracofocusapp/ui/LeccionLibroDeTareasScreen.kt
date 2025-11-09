@@ -8,42 +8,36 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.runtime.*
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.compose.material3.*
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.font.FontFamily
 import co.edu.unab.dracofocusapp.R
 
-/*
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import android.util.Log*/
-
 @Composable
-fun LeccionVueloInfinitoScreen(
+fun LeccionElLibroDeTareasScreen(
     navController: NavController,
     onBack: () -> Unit
 ) {
-
-    // Estado para guardar el código escrito por el usuario
     var codigoUsuario by remember { mutableStateOf("") }
+    val gradientBackground = Brush.verticalGradient(
+        listOf(Color(0xFF0B132B), Color(0xFF1C2541))
+    )
 
-    Scaffold(
-        //bottomBar = { BottomNavigationBar(navController) }
-    ) { innerPadding ->
-
+    Scaffold { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF3d62a4)) // Fondo azul
+                .background(gradientBackground)
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp, vertical = 10.dp)
         ) {
@@ -53,15 +47,14 @@ fun LeccionVueloInfinitoScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
             ) {
-
-                // Contenido
+                // Encabezado
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Lección\nVUELO INFINITO",
+                        text = "Lección\nEL LIBRO DE LAS TAREAS",
                         color = Color(0xFF57F5ED),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
@@ -78,17 +71,18 @@ fun LeccionVueloInfinitoScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Estructuras de control: Bucles for y while",
+                    text = "Estructuras de control: Listas y recorridos",
                     color = Color(0xFFCDF4F2),
                     fontSize = 18.sp
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Objetivo
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF3D62A4), RoundedCornerShape(12.dp))
+                        .background(Color(0xFF0F1A2A), RoundedCornerShape(12.dp))
                         .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(12.dp))
                         .padding(14.dp)
                 ) {
@@ -103,7 +97,7 @@ fun LeccionVueloInfinitoScreen(
                             fontSize = 16.sp
                         )
                         Text(
-                            text = "Practicar iteraciones y control de flujo.",
+                            text = "Almacenar datos y recorrerlos.",
                             color = Color(0xFFCBC8C8),
                             fontSize = 14.sp
                         )
@@ -112,10 +106,11 @@ fun LeccionVueloInfinitoScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Ejercicio
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF3D62A4), RoundedCornerShape(12.dp))
+                        .background(Color(0xFF0F1A2A), RoundedCornerShape(12.dp))
                         .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(12.dp))
                         .padding(14.dp)
                 ) {
@@ -130,18 +125,19 @@ fun LeccionVueloInfinitoScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Draco debe practicar vuelo 5 veces al día. Crea un programa que imprima los intentos de vuelo con su número ('Vuelo 1', 'Vuelo 2', …) y detén el ciclo si Draco se cansa (energía < 20).",
+                            text = "Crea una lista con las tareas de Draco: ['estudiar', 'volar', 'descansar', 'tomar café']. " +
+                                    "Haz que el programa imprima cada tarea con un número de orden.",
                             color = Color(0xFFCBC8C8),
                             fontSize = 14.sp
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        //Editor de código
+                        // Editor de código
                         OutlinedTextField(
                             value = codigoUsuario,
                             onValueChange = { codigoUsuario = it },
-                            label = { Text("#Escribe tus líneas de código aquí") },
+                            label = { Text("# Escribe tus líneas de código aquí") },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(160.dp),
@@ -163,13 +159,13 @@ fun LeccionVueloInfinitoScreen(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                //Botones inferiores
+                // Botones inferiores
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Button(
-                        onClick = { navController.navigate("lecciones") },
+                        onClick = { navController.navigate("lecciones_solitario") },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F2B5D)),
                         modifier = Modifier
                             .weight(1f)
@@ -183,9 +179,9 @@ fun LeccionVueloInfinitoScreen(
                             if (codigoUsuario.isNotBlank()) {
                                 val respuesta = RespuestaLeccionesClass(
                                     codigo = codigoUsuario,
-                                    leccionId = "vuelo_infinito"
+                                    leccionId = "libro_tareas"
                                 )
-                                //
+                                Log.d("Firestore", "Respuesta lista para enviar: $respuesta")
                             } else {
                                 Log.w("Firestore", "El código está vacío, no se envió.")
                             }
@@ -202,3 +198,4 @@ fun LeccionVueloInfinitoScreen(
         }
     }
 }
+

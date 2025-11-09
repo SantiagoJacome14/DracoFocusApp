@@ -44,10 +44,15 @@ fun LeccionesDracoSolitarioScreen(
         topBar = {
             ModernTopBar(
                 title = "Lecciones DracoSolitario",
-                showBackButton = true
+                showBackButton = true,
+                onBackClick = {
+                    navController.navigate("menu_lecciones") {
+                        popUpTo("lecciones_solitario") { inclusive = true }
+                    }
+                }
             )
         }
-    )  { innerPadding ->
+    ) { innerPadding ->
 
         Box(
             modifier = Modifier
@@ -210,10 +215,15 @@ fun LessonCard(
 
                 IconButton(
                     onClick = {
-                        onComplete()
-                        navController.navigate("leccion_detalle")
+                        when (titulo) {
+                            "Decisiones de Fuego" -> navController.navigate("leccion_decisiones_fuego")
+                            "Vuelo Infinito" -> navController.navigate("leccion_vuelo_infinito")
+                            "El Libro de las Tareas" -> navController.navigate("leccion_libro_tareas")
+
+                        }
                     }
-                ) {
+                )
+                    {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = "Iniciar lección",

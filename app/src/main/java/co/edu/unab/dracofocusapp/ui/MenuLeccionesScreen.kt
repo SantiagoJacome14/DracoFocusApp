@@ -16,14 +16,14 @@ import androidx.navigation.NavController
 @Composable
 fun MenuLeccionesScreen(navController: NavController) {
 
-    val gradient = Brush.verticalGradient(
-        colors = listOf(Color(0xFF0B132B), Color(0xFF1C2541))
+    val gradientBackground = Brush.verticalGradient(
+        listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(gradient)
+            .background(gradientBackground)
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -44,11 +44,11 @@ fun MenuLeccionesScreen(navController: NavController) {
                 onClick = { navController.navigate("lecciones_solitario") },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF22DDF2),
-                    contentColor = Color.Black
+                    contentColor = Color.White
                 ),
                 modifier = Modifier.fillMaxWidth(0.7f)
             ) {
-                Text("🧠 Modo Solitario", fontSize = 18.sp)
+                Text("Modo DracoSolitario", fontSize = 18.sp)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -56,19 +56,26 @@ fun MenuLeccionesScreen(navController: NavController) {
             Button(
                 onClick = { navController.navigate("lecciones_grupales") },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF7B61FF),
+                    containerColor = Color(0xFF22DDF2),
                     contentColor = Color.White
                 ),
                 modifier = Modifier.fillMaxWidth(0.7f)
             ) {
-                Text("⚔️ Modo en Grupo", fontSize = 18.sp)
+                Text("Modo en Grupo", fontSize = 18.sp)
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
-            TextButton(onClick = { navController.popBackStack() }) {
-                Text("← Volver", color = Color.LightGray, fontSize = 16.sp)
+            TextButton(
+                onClick = {
+                    navController.navigate("draco") {
+                        popUpTo("menu_lecciones") { inclusive = true }
+                    }
+                }
+            ) {
+                Text("Volver", color = Color.LightGray, fontSize = 16.sp)
             }
+
         }
     }
 }

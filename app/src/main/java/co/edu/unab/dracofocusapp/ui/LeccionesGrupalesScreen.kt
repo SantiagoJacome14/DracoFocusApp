@@ -114,38 +114,6 @@ fun LeccionesGrupalesScreen(
                         leccionesCompletadas++
                     }
                 }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                //Recuadro del sobre de piezas
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF0F2B5D), RoundedCornerShape(15.dp))
-                        .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(15.dp))
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Image(
-                            painter = painterResource(id = R.drawable.img_sobre),
-                            contentDescription = "Sobre de piezas",
-                            modifier = Modifier
-                                .size(70.dp)
-                                .align(Alignment.CenterHorizontally)
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Text(
-                            text = "¡Te faltan solo $leccionesFaltantes lecciones para desbloquear un sobre de piezas misteriosas y seguir completando su galería!",
-                            color = Color(0xFF12D2CA),
-                            textAlign = TextAlign.Center,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
             }
         }
     }
