@@ -1,13 +1,15 @@
 package co.edu.unab.dracofocusapp.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -15,7 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.edu.unab.dracofocusapp.R
-import androidx.compose.ui.draw.clip
 
 @Composable
 fun HomeScreen(
@@ -29,99 +30,126 @@ fun HomeScreen(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(gradientBackground)
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
 
-        Spacer(Modifier.height(12.dp))
-
-        Image(
-            painter = painterResource(id = R.drawable.dragon_dracofocus1),
-            contentDescription = "Draco",
-            modifier = Modifier.size(190.dp)
-        )
-
-        Spacer(Modifier.height(10.dp))
-
-        Text(
-            text = "¡Excelente trabajo! 🎉 Draco está muy orgulloso de ti.",
-            color = Color.White,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(horizontal = 10.dp)
-        )
-
-        Spacer(Modifier.height(6.dp))
-
-        Text(
-            text = "¡Sigue estudiando para ayudarlo a completar su museo de arte pieza por pieza! 🪄⭐",
-            color = Color(0xFFBBD8F4),
-            fontSize = 14.sp,
-            modifier = Modifier.padding(horizontal = 10.dp),
-            lineHeight = 20.sp
-        )
-
-        Spacer(Modifier.height(24.dp))
-
-        // Barra de progreso
-        Text("Objetivo Diario", color = Color.White, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(4.dp))
-        LinearProgressIndicator(
-            progress = 0.8f,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(10.dp)
-                .clip(RoundedCornerShape(12.dp)),
-            color = Color(0xFF22DDF2)
-        )
-        Spacer(Modifier.height(6.dp))
-        Text("80%", color = Color(0xFF22DDF2), fontWeight = FontWeight.Bold)
-
-        Spacer(Modifier.height(28.dp))
-
-        // BOTONES
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier.fillMaxSize()
         ) {
-            MainActionButton("ESTUDIO", R.drawable.ic_study, Color(0xFF8A78FF), onNavigateToStudy)
-            MainActionButton("LECCIÓN", R.drawable.ic_book, Color(0xFF22DDF2), onNavigateToLessons)
-        }
 
-        Spacer(Modifier.height(18.dp))
+            // -CARD INICIAL
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(Color(0xFF0F1A2A)),
+                border = BorderStroke(2.dp, Color(0xFF22DDF2))
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.dragon_dracofocus1),
+                        contentDescription = "Draco",
+                        modifier = Modifier.size(180.dp)
+                    )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            MainActionButton("MUSEO", R.drawable.ic_museum, Color(0xFF22DDF2), onNavigateToMuseum)
-            MainActionButton("AVANCES", R.drawable.ic_calendar, Color(0xFF8A78FF), onNavigateToProgress)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text(
+                        text = "¡Bienvenido de nuevo! 🎉",
+                        color = Color.White,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Text(
+                        text = "Draco está feliz de verte. Cada estudio te acerca a completar su museo mágico 🪄",
+                        color = Color(0xFFBBD8F4),
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            // ---------- OBJETIVO DIARIO ----------
+            Text("Objetivo Diario", color = Color(0xFF22DDF2), fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
+            LinearProgressIndicator(
+                progress = 0.8f,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(10.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                color = Color(0xFF22DDF2)
+            )
+            Spacer(Modifier.height(4.dp))
+            Text("80% completado", color = Color.White, fontSize = 13.sp)
+
+            Spacer(Modifier.height(30.dp))
+
+            // ---------- BOTONES MEJORADOS ----------
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                MejorButton("ESTUDIAR", R.drawable.ic_study, Color(0xFF8A78FF), onNavigateToStudy)
+                MejorButton("LECCIONES", R.drawable.ic_book, Color(0xFF22DDF2), onNavigateToLessons)
+            }
+
+            Spacer(Modifier.height(18.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                MejorButton("MUSEO", R.drawable.ic_museum, Color(0xFF22DDF2), onNavigateToMuseum)
+                MejorButton("AVANCES", R.drawable.ic_calendar, Color(0xFF8A78FF), onNavigateToProgress)
+            }
         }
     }
 }
 
 @Composable
-fun MainActionButton(text: String, icon: Int, color: Color, onClick: () -> Unit) {
+fun MejorButton(text: String, icon: Int, color: Color, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = color),
+        shape = RoundedCornerShape(16.dp),
         modifier = Modifier
-            .width(150.dp)
-            .height(70.dp),
-        shape = RoundedCornerShape(18.dp)
+            .width(170.dp)
+            .height(70.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Image(
                 painter = painterResource(id = icon),
                 contentDescription = null,
-                modifier = Modifier.size(26.dp)
+                modifier = Modifier.size(22.dp)
             )
-            Spacer(Modifier.width(10.dp))
-            Text(text, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp
+            )
         }
     }
 }
