@@ -45,6 +45,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import co.edu.unab.dracofocusapp.ui.FeedbackScreen
+import co.edu.unab.dracofocusapp.ui.LeccionAcertijosScreen
+import co.edu.unab.dracofocusapp.ui.LeccionTesoroScreen
+import co.edu.unab.dracofocusapp.ui.LeccionVueloScreen
 import co.edu.unab.dracofocusapp.ui.MenuLeccionesScreen
 
 //borrar este comentario prueba
@@ -204,6 +207,20 @@ fun AppNavigation() { //crea el estado de navigation
             composable(AppRoutes.MUSEO_DRACARTE) {
                 MuseoDracoArteScreen(onBack = { navController.popBackStack() })
             }
+
+            // Pantalla Lecciones Grupales
+            composable("leccion_tesoro") {
+                LeccionTesoroScreen(navController) {}
+            }
+
+            composable("leccion_vuelo") {
+                LeccionVueloScreen(navController) { }
+            }
+
+            composable("leccion_acertijos") {
+                LeccionAcertijosScreen(navController) { }
+            }
+
 
             // Pantalla de mi perfil
             composable(AppRoutes.PROFILE) {

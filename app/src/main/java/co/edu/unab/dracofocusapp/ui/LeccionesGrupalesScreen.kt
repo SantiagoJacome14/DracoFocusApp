@@ -15,104 +15,150 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.material3.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.ui.components.ModernLessonCard
+import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
 
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeccionesGrupalesScreen(
-    navController: NavController,
-    onBack: () -> Unit
-) {
+            navController: NavController,
+            onBack: () -> Unit = {}
+        ) {
+    val gradientBackground = Brush.verticalGradient(
+        listOf(Color(0xFF0B132B), Color(0xFF1C2541))
+    )
 
-    // Estados
-    var leccionesCompletadas by remember { mutableStateOf(0) } // de 0 a 3
+    var lecciones = remember { mutableStateListOf(false, false, false) } // 3 lecciones
+    val leccionesCompletadas = lecciones.count { it }
     val leccionesFaltantes = (3 - leccionesCompletadas).coerceAtLeast(0)
 
     Scaffold(
-        //bottomBar = { BottomNavigationBar(navController) }
+        modifier = Modifier.statusBarsPadding(),
+        topBar = {
+            ModernTopBar(
+                title = "Lecciones Grupales",
+                showBackButton = true,
+                onBackClick = onBack
+            )
+        }
     ) { innerPadding ->
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF3D62A4))
+                .background(gradientBackground)
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp, vertical = 10.dp)
+                .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxSize()
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                //Título e info inicial
+                // Descripción general
                 Text(
-                    text = "Lecciones Grupales",
-                    color = Color(0xFFEBFFFE),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 10.dp)
+                    text = "Avanza completando misiones y gana XP.",
+                    color = Color(0xFFB0BEC5),
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = "Avanza realizando ejercicios y completando los módulos para ganar XP mientras aprendes.",
-                    color = Color(0xFFB3B3B3),
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
+                // Título de curso
                 Text(
                     text = "Fundamentos de Programación",
-                    color = Color(0xFF12D2CA),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 10.dp)
+                    color = Color(0xFF22DDF2),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                //Progreso de lecciones
+                // Estado de progreso
                 Text(
-                    text = "${leccionesCompletadas}/3 completadas",
-                    color = Color(0xFFB3B3B3),
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(bottom = 10.dp)
+                    text = "${leccionesCompletadas}/3 lecciones completadas",
+                    color = Color.White,
+                    fontSize = 14.sp
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                // Tarjeta de progreso general
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color(0xFF22DDF2), RoundedCornerShape(16.dp))
+                        .background(Color(0xFF0F1A2A), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        LinearProgressIndicator(
+                            progress = leccionesCompletadas / 3f,
+                            color = Color(0xFF22DDF2),
+                            trackColor = Color(0xFF1C2541),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(50))
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = if (leccionesFaltantes == 0)
+                                "¡Curso completado! 🎉"
+                            else
+                                "$leccionesFaltantes lecciones restantes",
+                            color = Color(0xFFB0BEC5),
+                            fontSize = 13.sp
+                        )
+                    }
+                }
 
-                //Lista de lecciones
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    LessonCard(
+                // Tarjetas de lecciones
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+
+                    ModernLessonCard (
+                        icon = R.drawable.ic_tesoro,
                         titulo = "Guardianes del Tesoro",
                         subtitulo = "Variables y condicionales",
                         xp = "+ 90 XP",
-                        navController = navController
-                    ) {
-                        leccionesCompletadas++
-                    }
+                        navController = navController,
+                        isCompleted = lecciones[0],
+                        onStart = { navController.navigate("leccion_tesoro") },
+                        onComplete = {
+                            if (!lecciones[0]) {
+                                lecciones[0] = true    // marcar como terminada
+                            }
+                        }
+                    )
 
-                    LessonCard(
+                    ModernLessonCard(
+                        icon = R.drawable.ic_navegacion,
                         titulo = "Misión de Vuelo",
                         subtitulo = "Ciclos, listas y acumuladores",
                         xp = "+ 150 XP",
-                        navController = navController
-                    ) {
-                        leccionesCompletadas++
-                    }
+                        navController = navController,
+                        isCompleted = lecciones[1],
+                        onStart = { navController.navigate("leccion_vuelo") },
+                        onComplete = {
+                            if (!lecciones[1]) {
+                                lecciones[1] = true
+                            }
+                        }
+                    )
 
-                    LessonCard(
-                        titulo = "El reto de los acertijos",
+                    ModernLessonCard(
+                        icon = R.drawable.ic_analizar,
+                        titulo = "El Reto de los Acertijos",
                         subtitulo = "Funciones y lógica condicional",
                         xp = "+ 120 XP",
-                        navController = navController
-                    ) {
-                        leccionesCompletadas++
-                    }
+                        navController = navController,
+                        isCompleted = lecciones[2],
+                        onStart = { navController.navigate("leccion_acertijos")},
+                        onComplete = {
+                            if (!lecciones[2]) {
+                                lecciones[2] = true
+                            }
+                        }
+                    )
                 }
             }
         }

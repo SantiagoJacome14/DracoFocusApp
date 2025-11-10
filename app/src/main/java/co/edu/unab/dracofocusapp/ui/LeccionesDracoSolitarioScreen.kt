@@ -23,37 +23,34 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
+import co.edu.unab.dracofocusapp.ui.components.ModernLessonCard
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeccionesDracoSolitarioScreen(
     navController: NavController,
     onBack: () -> Unit
 ) {
-
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
-    // Estados
-    var leccionesCompletadas by remember { mutableStateOf(0) } // de 0 a 3
-    val leccionesFaltantes = (3 - leccionesCompletadas).coerceAtLeast(0)
 
+    // Estados de las lecciones
+    var lecciones = remember { mutableStateListOf(false, false, false) }
+    val leccionesCompletadas = lecciones.count { it }
+    val leccionesFaltantes = (3 - leccionesCompletadas).coerceAtLeast(0)
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
         topBar = {
             ModernTopBar(
-                title = "Lecciones DracoSolitario",
+                title = "Lecciones Draco Solitario",
                 showBackButton = true,
-                onBackClick = {
-                    navController.navigate("menu_lecciones") {
-                        popUpTo("lecciones_solitario") { inclusive = true }
-                    }
-                }
+                onBackClick = { onBack() }
             )
         }
     ) { innerPadding ->
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -61,73 +58,115 @@ fun LeccionesDracoSolitarioScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp, vertical = 10.dp)
         ) {
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxSize()
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Text(
-                    text = "Avanza realizando ejercicios y completando los módulos para ganar XP mientras aprendes.",
-                    color = Color(0xFFB3B3B3),
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    "Avanza completando misiones y gana XP.",
+                    color = Color(0xFFB3B3B3),
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Center
+                )
 
                 Text(
                     text = "Fundamentos de Programación",
-                    color = Color(0xFF12D2CA),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 10.dp)
+                    color = Color(0xFF22DDF2),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                //Progreso de lecciones
+                // Barra de progreso
                 Text(
-                    text = "${leccionesCompletadas}/3 completadas",
-                    color = Color(0xFFB3B3B3),
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(bottom = 10.dp)
+                    "${leccionesCompletadas}/3 completadas",
+                    color = Color.White,
+                    fontSize = 14.sp
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color(0xFF22DDF2), RoundedCornerShape(16.dp))
+                        .background(Color(0xFF0F1A2A), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
 
-                //Lista de lecciones
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    LessonCard(
-                        titulo = "Decisiones de Fuego",
-                        subtitulo = "Condicionales",
-                        xp = "+ 90 XP",
-                        navController = navController
-                    ) {
-                        leccionesCompletadas++
-                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        LinearProgressIndicator(
+                            progress = leccionesCompletadas / 3f,
+                            color = Color(0xFF22DDF2),
+                            trackColor = Color(0xFF1C2541),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(50))
+                        )
 
-                    LessonCard(
-                        titulo = "Vuelo Infinito",
-                        subtitulo = "Bucles",
-                        xp = "+ 150 XP",
-                        navController = navController
-                    ) {
-                        leccionesCompletadas++
-                    }
+                        Spacer(modifier = Modifier.height(6.dp))
 
-                    LessonCard(
-                        titulo = "El Libro de las Tareas",
-                        subtitulo = "Arreglos",
-                        xp = "+ 120 XP",
-                        navController = navController
-                    ) {
-                        leccionesCompletadas++
+                        Text(
+                            if (leccionesFaltantes == 0)
+                                "¡Curso completado! 🎉"
+                            else
+                                "$leccionesFaltantes lecciones restantes",
+                            color = Color(0xFFB3B3B3),
+                            fontSize = 13.sp
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                // TARJETAS DE LECCIONES
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
 
-                //Recuadro del sobre de piezas
+                    ModernLessonCard(
+                        icon = R.drawable.ic_decisiones_fuego,
+                        titulo = "Decisiones de Fuego",
+                        subtitulo = "Condicionales",
+                        xp = "+ 90 XP",
+                        navController = navController,
+                        isCompleted = lecciones[0],
+                        onStart = {
+                            navController.navigate("solo_decisiones_fuego")
+                        },
+                        onComplete = {
+                            if (!lecciones[0]) lecciones[0] = true
+                        }
+                    )
+
+                    ModernLessonCard(
+                        icon = R.drawable.ic_vuelo_infinito,
+                        titulo = "Vuelo Infinito",
+                        subtitulo = "Bucles",
+                        xp = "+ 150 XP",
+                        navController = navController,
+                        isCompleted = lecciones[1],
+                        onStart = {
+                            navController.navigate("solo_vuelo_infinito")
+                        },
+                        onComplete = {
+                            if (!lecciones[1]) lecciones[1] = true
+                        }
+                    )
+
+                    ModernLessonCard(
+                        icon = R.drawable.ic_libro_tareas,
+                        titulo = "El Libro de las Tareas",
+                        subtitulo = "Arreglos",
+                        xp = "+ 120 XP",
+                        navController = navController,
+                        isCompleted = lecciones[2],
+                        onStart = {
+                            navController.navigate("solo_libro_tareas")
+                        },
+                        onComplete = {
+                            if (!lecciones[2]) lecciones[2] = true
+                        }
+                    )
+                }
+
+                // Caja de recompensa
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -138,18 +177,16 @@ fun LeccionesDracoSolitarioScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Image(
-                            painter = painterResource(id = R.drawable.img_sobre),
-                            contentDescription = "Sobre de piezas",
-                            modifier = Modifier
-                                .size(70.dp)
-                                .align(Alignment.CenterHorizontally)
+                            painter = painterResource(R.drawable.img_sobre),
+                            contentDescription = "Sobre misterioso",
+                            modifier = Modifier.size(70.dp)
                         )
 
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "¡Te faltan solo $leccionesFaltantes lecciones para desbloquear un sobre de piezas misteriosas y seguir completando su galería!",
-                            color = Color(0xFF12D2CA),
+                            "¡Te faltan solo $leccionesFaltantes para un sobre misterioso!",
+                            color = Color(0xFF22DDF2),
                             textAlign = TextAlign.Center,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
@@ -160,80 +197,3 @@ fun LeccionesDracoSolitarioScreen(
         }
     }
 }
-@Composable
-fun LessonCard(
-    titulo: String,
-    subtitulo: String,
-    xp: String,
-    navController: NavController,
-    onComplete: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF2C4A7A), RoundedCornerShape(15.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.img_lec),
-                contentDescription = "Ícono de lección",
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(RoundedCornerShape(10.dp))
-            )
-
-            Column(
-                modifier = Modifier.weight(1f).padding(horizontal = 10.dp)
-            ) {
-                Text(
-                    text = titulo,
-                    color = Color(0xFFF2F2F2),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = subtitulo,
-                    color = Color(0xFFCBC8C8),
-                    fontSize = 13.sp
-                )
-            }
-
-            // XP + botón Play
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xFF6A5CC4), RoundedCornerShape(50.dp))
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                ) {
-                    Text(xp, color = Color.White, fontSize = 13.sp)
-                }
-
-                IconButton(
-                    onClick = {
-                        when (titulo) {
-                            "Decisiones de Fuego" -> navController.navigate("leccion_decisiones_fuego")
-                            "Vuelo Infinito" -> navController.navigate("leccion_vuelo_infinito")
-                            "El Libro de las Tareas" -> navController.navigate("leccion_libro_tareas")
-
-                        }
-                    }
-                )
-                    {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Iniciar lección",
-                        tint = Color.White,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-

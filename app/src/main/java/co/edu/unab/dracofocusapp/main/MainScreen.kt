@@ -27,6 +27,7 @@ import co.edu.unab.dracofocusapp.ui.LeccionVueloInfinitoScreen
 import co.edu.unab.dracofocusapp.ui.LeccionesDracoSolitarioScreen
 import co.edu.unab.dracofocusapp.ui.MenuLeccionesScreen
 import co.edu.unab.dracofocusapp.ui.DracomodoroScreen
+import co.edu.unab.dracofocusapp.ui.CicloCompletadoScreen
 
 
 // ---------------------- RUTAS DEL MENÚ INFERIOR ----------------------
@@ -128,6 +129,7 @@ fun BottomNavGraph(
 ) {
     NavHost(navController, startDestination = BottomNavItem.Draco.route) {
 
+
         // ---------- Pestañas del menú inferior ----------
         composable(BottomNavItem.Draco.route) {
             HomeScreen(
@@ -142,9 +144,11 @@ fun BottomNavGraph(
         composable(BottomNavItem.Perfil.route) { MyProfileScreen() }
 
         composable("pomodoro") {
-            DracomodoroScreen(
-                onBack = { navController.popBackStack() }
-            )
+            DracomodoroScreen(navController = navController)
+        }
+        // Navegacion de cuando termina el modo de trabajo y modo descanso pasa a ciclo completado
+        composable("ciclo_completado") {
+            CicloCompletadoScreen(navController)
         }
         composable("menu_lecciones") { MenuLeccionesScreen(navController = navController) }
 
