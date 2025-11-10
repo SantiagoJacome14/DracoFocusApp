@@ -26,6 +26,7 @@ import co.edu.unab.dracofocusapp.ui.LeccionElLibroDeTareasScreen
 import co.edu.unab.dracofocusapp.ui.LeccionVueloInfinitoScreen
 import co.edu.unab.dracofocusapp.ui.LeccionesDracoSolitarioScreen
 import co.edu.unab.dracofocusapp.ui.MenuLeccionesScreen
+import co.edu.unab.dracofocusapp.ui.DracomodoroScreen
 
 
 // ---------------------- RUTAS DEL MENÚ INFERIOR ----------------------
@@ -35,6 +36,7 @@ sealed class BottomNavItem(val route: String, val icon: Int, val label: String) 
     object Draco : BottomNavItem("draco", R.drawable.ic_home, "Draco")
     object Avances : BottomNavItem("avances", R.drawable.ic_calendar, "Avances")
     object Perfil : BottomNavItem("perfil", R.drawable.ic_user, "Perfil")
+
 
 
 }
@@ -138,6 +140,20 @@ fun BottomNavGraph(
 
         composable(BottomNavItem.Avances.route) { ProgressScreen(navController) }
         composable(BottomNavItem.Perfil.route) { MyProfileScreen() }
+
+        composable("pomodoro") {
+            DracomodoroScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("menu_lecciones") { MenuLeccionesScreen(navController = navController) }
+
+        composable("lecciones_solitario") {
+            LeccionesDracoSolitarioScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
 
         // ---------- Pantalla de elección de modo ----------
         composable("menu_lecciones") {
