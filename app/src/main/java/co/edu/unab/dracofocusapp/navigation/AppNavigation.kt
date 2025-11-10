@@ -44,6 +44,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import co.edu.unab.dracofocusapp.ui.FeedbackScreen
 import co.edu.unab.dracofocusapp.ui.MenuLeccionesScreen
 
 //borrar este comentario prueba
@@ -192,6 +193,11 @@ fun AppNavigation() { //crea el estado de navigation
             }
             composable(AppRoutes.RESPUESTA_LECCION_S) {
                 RespuestaLeccionesScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable("feedback_screen/{retroalimentacion}") { backStackEntry ->
+                val feedback = backStackEntry.arguments?.getString("retroalimentacion") ?: ""
+                FeedbackScreen(navController = navController, retroalimentacion = feedback)
             }
 
             // Pantalla Museo

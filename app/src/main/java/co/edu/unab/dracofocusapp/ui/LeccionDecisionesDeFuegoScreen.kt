@@ -22,10 +22,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontFamily
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.api.enviarCodigoALaIA
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.launch
 
 
 
@@ -41,6 +43,9 @@ fun LeccionDecisionesDeFuegoScreen(
 
     //Estado para ver el código escrito por el usuario
     var codigoUsuario by remember { mutableStateOf("") }
+
+    var isLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         bottomBar = {  }
@@ -194,27 +199,27 @@ fun LeccionDecisionesDeFuegoScreen(
 
                     Button(
                         onClick = {
+                            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
+
                             if (codigoUsuario.isNotBlank()) {
-                                val db = FirebaseFirestore.getInstance()
-                                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
+                                isLoading = true  //  Activa el indicador de carga
 
-                                val respuesta = hashMapOf(
-                                    "codigo" to codigoUsuario,
-                                    "leccionId" to "decisiones_de_fuego",
-                                    "usuarioId" to userId,
-                                    "fecha" to System.currentTimeMillis()
-                                )
-
-                                db.collection("respuestas_lecciones")
-                                    .add(respuesta)
-                                    .addOnSuccessListener {
-                                        Log.d("Firestore", "✅ Respuesta guardada correctamente")
+                                scope.launch {
+                                    try {
+                                        enviarCodigoALaIA(
+                                            navController = navController,
+                                            userId = userId,
+                                            leccionId = "decisiones_de_fuego",
+                                            codigo = codigoUsuario
+                                        )
+                                    } catch (e: Exception) {
+                                        Log.e("API", "Error al enviar código: ${e.message}")
+                                    } finally {
+                                        isLoading = false  // 🟢 Oculta el indicador
                                     }
-                                    .addOnFailureListener { e ->
-                                        Log.e("Firestore", "❌ Error al guardar: ${e.message}")
-                                    }
+                                }
                             } else {
-                                Log.w("Firestore", "⚠️ El código está vacío, no se envió.")
+                                Log.w("API", "⚠ Código vacío, no se envió.")
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
@@ -225,9 +230,29 @@ fun LeccionDecisionesDeFuegoScreen(
                     ) {
                         Text("Enviar", color = Color(0xFFEBFFFE))
                     }
+
+
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
+            }
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xAA000000)), // Fondo semitransparente
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = Color(0xFF22DDF2))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Draco está revisando tu código...",
+                            color = Color.White,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
             }
         }
     }

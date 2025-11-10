@@ -22,6 +22,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontFamily
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.api.enviarCodigoALaIA
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 /*
 import com.google.firebase.firestore.ktx.firestore
@@ -134,7 +137,7 @@ fun LeccionVueloInfinitoScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Draco debe practicar vuelo 5 veces al día. Crea un programa que imprima los intentos de vuelo con su número ('Vuelo 1', 'Vuelo 2', …) y detén el ciclo si Draco se cansa (energía < 20).",
+                            text = "Draco debe practicar vuelo 5 veces al día. Crea un programa que imprima los intentos de vuelo con su número ('Vuelo 1', 'Vuelo 2', …) y detén el ciclo si Draco se cansa (energía < 20). Puedes iniciar la energia de Draco en 100",
                             color = Color(0xFFCBC8C8),
                             fontSize = 14.sp
                         )
@@ -185,10 +188,39 @@ fun LeccionVueloInfinitoScreen(
                     ) {
                         Text("Regresar", color = Color(0xFFEBFFFE))
                     }
-
                 }
+                Button(
+                    onClick = {
+                        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
+
+                        if (codigoUsuario.isNotBlank()) {
+                            // Llama a la API con Retrofit y muestra FeedbackScreen
+                            kotlinx.coroutines.GlobalScope.launch {
+                                try {
+                                    enviarCodigoALaIA(
+                                        navController = navController,
+                                        userId = userId,
+                                        leccionId = "vuelo_infinito",
+                                        codigo = codigoUsuario
+                                    )
+                                } catch (e: Exception) {
+                                    Log.e("API", "Error al enviar código: ${e.message}")
+                                }
+                            }
+                        } else {
+                            Log.w("API", "⚠ Código vacío, no se envió.")
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF22DDF2),
+                        contentColor = Color.Black
+                    ),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Enviar", color = Color(0xFFEBFFFE))
                 }
 
+            }
                 Spacer(modifier = Modifier.height(20.dp))
             }
         }

@@ -22,8 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.api.enviarCodigoALaIA
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 
 @Composable
 fun LeccionElLibroDeTareasScreen(
@@ -178,27 +180,24 @@ fun LeccionElLibroDeTareasScreen(
 
                     Button(
                         onClick = {
+                            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
+
                             if (codigoUsuario.isNotBlank()) {
-                                val db = FirebaseFirestore.getInstance()
-                                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
-
-                                val respuesta = hashMapOf(
-                                    "codigo" to codigoUsuario,
-                                    "leccionId" to "decisiones_de_fuego",
-                                    "usuarioId" to userId,
-                                    "fecha" to System.currentTimeMillis()
-                                )
-
-                                db.collection("respuestas_lecciones")
-                                    .add(respuesta)
-                                    .addOnSuccessListener {
-                                        Log.d("Firestore", "✅ Respuesta guardada correctamente")
+                                // Llama a la API con Retrofit y muestra FeedbackScreen
+                                kotlinx.coroutines.GlobalScope.launch {
+                                    try {
+                                        enviarCodigoALaIA(
+                                            navController = navController,
+                                            userId = userId,
+                                            leccionId = "el_libro_de_tareas",
+                                            codigo = codigoUsuario
+                                        )
+                                    } catch (e: Exception) {
+                                        Log.e("API", "Error al enviar código: ${e.message}")
                                     }
-                                    .addOnFailureListener { e ->
-                                        Log.e("Firestore", "❌ Error al guardar: ${e.message}")
-                                    }
+                                }
                             } else {
-                                Log.w("Firestore", "⚠️ El código está vacío, no se envió.")
+                                Log.w("API", "⚠ Código vacío, no se envió.")
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
@@ -209,6 +208,7 @@ fun LeccionElLibroDeTareasScreen(
                     ) {
                         Text("Enviar", color = Color(0xFFEBFFFE))
                     }
+
                 }
                 }
 
