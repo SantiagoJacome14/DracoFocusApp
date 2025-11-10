@@ -20,12 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = AppColorScheme) {
                 Surface {
-                    val navController = rememberNavController()
-
-                    LeccionesGrupalesScreen(
-                        navController = navController,
-                        onBack = { navController.popBackStack() }
-                    )
+                    AppNavigation()
                 }
             }
         }

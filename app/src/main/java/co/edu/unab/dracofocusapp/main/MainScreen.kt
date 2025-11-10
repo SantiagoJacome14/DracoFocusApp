@@ -90,7 +90,15 @@ fun BottomNavigationBar(navController: NavHostController) {
                 selected = currentRoute == item.route,
                 onClick = {
                     if (currentRoute != item.route) {
-                        navController.navigate(item.route) {
+
+                        // abre el menú de lecciones
+                        val targetRoute = if (item.route == BottomNavItem.Lecciones.route) {
+                            "menu_lecciones"
+                        } else {
+                            item.route
+                        }
+
+                        navController.navigate(targetRoute) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
@@ -130,66 +138,60 @@ fun BottomNavGraph(
     NavHost(navController, startDestination = BottomNavItem.Draco.route) {
 
 
-        // ---------- Pestañas del menú inferior ----------
+        // ---------- Pestaña Draco (Home) ----------
         composable(BottomNavItem.Draco.route) {
             HomeScreen(
-                onNavigateToStudy = { },
                 onNavigateToLessons = { navController.navigate("menu_lecciones") },
-                onNavigateToMuseum = { },
+                onNavigateToStudy = {},
+                onNavigateToMuseum = {},
                 onNavigateToProgress = { navController.navigate(BottomNavItem.Avances.route) }
             )
         }
 
-        composable(BottomNavItem.Avances.route) { ProgressScreen(navController) }
+        // ---------- Abiertos desde navegación inferior ----------
+        composable(BottomNavItem.Avances.route) { ProgressScreen(navController = navController) }
         composable(BottomNavItem.Perfil.route) { MyProfileScreen() }
+        composable(BottomNavItem.Pomodoro.route) { DracomodoroScreen() }
 
-        composable("pomodoro") {
-            DracomodoroScreen(navController = navController)
-        }
-        // Navegacion de cuando termina el modo de trabajo y modo descanso pasa a ciclo completado
-        composable("ciclo_completado") {
-            CicloCompletadoScreen(navController)
-        }
-        composable("menu_lecciones") { MenuLeccionesScreen(navController = navController) }
-
-        composable("lecciones_solitario") {
-            LeccionesDracoSolitarioScreen(
-                navController = navController,
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        // ---------- Pantalla de elección de modo ----------
+        // ---------- Menú de Lecciones ----------
         composable("menu_lecciones") {
             MenuLeccionesScreen(navController = navController)
         }
-        composable("lecciones_solitario"){LeccionesDracoSolitarioScreen(
-            navController = navController,
-            onBack = { navController.popBackStack() }
-        )}
 
+        // ---------- Modo Solitario ----------
+        composable("lecciones_solitario") {
+            LeccionesDracoSolitarioScreen(
+                navController = navController,
+                onBack = { navController.navigate("menu_lecciones") }
+            )
+        }
+
+        // Screens de lecciones
         composable("leccion_decisiones_fuego") {
             LeccionDecisionesDeFuegoScreen(
                 navController = navController,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.navigate("lecciones_solitario") }
             )
         }
 
         composable("leccion_vuelo_infinito") {
             LeccionVueloInfinitoScreen(
                 navController = navController,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.navigate("lecciones_solitario") }
             )
         }
 
         composable("leccion_libro_tareas") {
             LeccionElLibroDeTareasScreen(
                 navController = navController,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.navigate("lecciones_solitario") }
             )
         }
 
-
+        // ---------- Ciclo Completado (Pomodoro) ----------
+        composable("ciclo_completado") {
+            CicloCompletadoScreen(navController)
+        }
     }
 }
 

@@ -27,9 +27,11 @@ fun MenuLeccionesScreen(navController: NavController) {
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(
                 text = "Elige tu modo de estudio",
@@ -40,42 +42,51 @@ fun MenuLeccionesScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // --- BOTÓN MODO SOLITARIO ---
             Button(
                 onClick = { navController.navigate("lecciones_solitario") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF22DDF2),
-                    contentColor = Color.White
-                ),
-                modifier = Modifier.fillMaxWidth(0.7f)
+                    contentColor = Color.Black
+                )
             ) {
-                Text("Modo DracoSolitario", fontSize = 18.sp)
+                Text("Modo Solitario", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // --- BOTÓN MODO GRUPAL ---
             Button(
-                onClick = { navController.navigate("lecciones_grupales") },
+                onClick = { navController.navigate("grupo_codigo") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF22DDF2),
-                    contentColor = Color.White
-                ),
-                modifier = Modifier.fillMaxWidth(0.7f)
+                    contentColor = Color.Black
+                )
             ) {
-                Text("Modo en Grupo", fontSize = 18.sp)
+                Text("Modo en Grupo", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
+            // --- BOTÓN VOLVER ---
             TextButton(
                 onClick = {
-                    navController.navigate("draco") {
+                    navController.navigate("main") {
                         popUpTo("menu_lecciones") { inclusive = true }
                     }
                 }
             ) {
                 Text("Volver", color = Color.LightGray, fontSize = 16.sp)
             }
-
         }
     }
 }
+

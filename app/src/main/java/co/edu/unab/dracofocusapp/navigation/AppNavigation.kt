@@ -45,6 +45,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import co.edu.unab.dracofocusapp.ui.FeedbackScreen
+import co.edu.unab.dracofocusapp.ui.IngresarCodigoGrupoScreen
 import co.edu.unab.dracofocusapp.ui.LeccionAcertijosScreen
 import co.edu.unab.dracofocusapp.ui.LeccionTesoroScreen
 import co.edu.unab.dracofocusapp.ui.LeccionVueloScreen
@@ -97,6 +98,7 @@ fun AppNavigation() { //crea el estado de navigation
             startDestination = AppRoutes.SPLASH // la pantalla que se muestra al iniciar
         ) {
             // Rutas
+
             //  Pantalla verifica si hay usuario logueado
             composable(AppRoutes.SPLASH) {
                 SplashScreen(navController = navController)
@@ -207,19 +209,22 @@ fun AppNavigation() { //crea el estado de navigation
             composable(AppRoutes.MUSEO_DRACARTE) {
                 MuseoDracoArteScreen(onBack = { navController.popBackStack() })
             }
-
-            // Pantalla Lecciones Grupales
-            composable("leccion_tesoro") {
-                LeccionTesoroScreen(navController) {}
+            // Pantalla para el codigo de lecciones en grupo
+            composable("grupo_codigo") {
+                IngresarCodigoGrupoScreen(
+                    navController = navController,
+                    onBack = { navController.navigate("menu_lecciones") }
+                )
             }
 
-            composable("leccion_vuelo") {
-                LeccionVueloScreen(navController) { }
+            composable("lecciones_grupales") {
+                LeccionesGrupalesScreen(
+                    navController = navController,
+                    onBack = { navController.navigate("grupo_codigo") }
+                )
             }
 
-            composable("leccion_acertijos") {
-                LeccionAcertijosScreen(navController) { }
-            }
+
 
 
             // Pantalla de mi perfil

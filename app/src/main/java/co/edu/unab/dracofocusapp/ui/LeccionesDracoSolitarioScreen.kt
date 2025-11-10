@@ -127,9 +127,7 @@ fun LeccionesDracoSolitarioScreen(
                         xp = "+ 90 XP",
                         navController = navController,
                         isCompleted = lecciones[0],
-                        onStart = {
-                            navController.navigate("solo_decisiones_fuego")
-                        },
+                        onStart = { navController.navigate("leccion_decisiones_fuego") },
                         onComplete = {
                             if (!lecciones[0]) lecciones[0] = true
                         }
@@ -142,9 +140,7 @@ fun LeccionesDracoSolitarioScreen(
                         xp = "+ 150 XP",
                         navController = navController,
                         isCompleted = lecciones[1],
-                        onStart = {
-                            navController.navigate("solo_vuelo_infinito")
-                        },
+                        onStart = { navController.navigate("leccion_vuelo_infinito") },
                         onComplete = {
                             if (!lecciones[1]) lecciones[1] = true
                         }
@@ -157,9 +153,7 @@ fun LeccionesDracoSolitarioScreen(
                         xp = "+ 120 XP",
                         navController = navController,
                         isCompleted = lecciones[2],
-                        onStart = {
-                            navController.navigate("solo_libro_tareas")
-                        },
+                        onStart = { navController.navigate("leccion_libro_tareas") },
                         onComplete = {
                             if (!lecciones[2]) lecciones[2] = true
                         }
