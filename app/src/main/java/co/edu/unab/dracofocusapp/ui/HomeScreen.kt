@@ -16,15 +16,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.main.BottomNavItem
 
 @Composable
-fun HomeScreen(
-    onNavigateToStudy: () -> Unit = {},
-    onNavigateToLessons: () -> Unit = {},
-    onNavigateToMuseum: () -> Unit = {},
-    onNavigateToProgress: () -> Unit = {}
-) {
+fun HomeScreen(navController: NavController) {
 
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
@@ -43,7 +40,7 @@ fun HomeScreen(
             modifier = Modifier.fillMaxSize()
         ) {
 
-            // -CARD INICIAL
+            // CARD INICIAL
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -101,13 +98,26 @@ fun HomeScreen(
 
             Spacer(Modifier.height(30.dp))
 
-            // ---------- BOTONES MEJORADOS ----------
+            // ---------- BOTONES  ----------
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                MejorButton("ESTUDIAR", R.drawable.ic_study, Color(0xFF8A78FF), onNavigateToStudy)
-                MejorButton("LECCIONES", R.drawable.ic_book, Color(0xFF22DDF2), onNavigateToLessons)
+                MejorButton("ESTUDIAR", R.drawable.ic_study, Color(0xFF8A78FF)) {
+                    navController.navigate(BottomNavItem.Pomodoro.route) {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+
+                MejorButton("LECCIONES", R.drawable.ic_book, Color(0xFF22DDF2)) {
+                    navController.navigate("menu_lecciones") {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             }
 
             Spacer(Modifier.height(18.dp))
@@ -116,8 +126,21 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                MejorButton("MUSEO", R.drawable.ic_museum, Color(0xFF22DDF2), onNavigateToMuseum)
-                MejorButton("AVANCES", R.drawable.ic_calendar, Color(0xFF8A78FF), onNavigateToProgress)
+                MejorButton("MUSEO", R.drawable.ic_museum, Color(0xFF22DDF2)) {
+                    navController.navigate("museo_dracarte") {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+
+                MejorButton("AVANCES", R.drawable.ic_calendar, Color(0xFF8A78FF)) {
+                    navController.navigate(BottomNavItem.Avances.route) {
+                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             }
         }
     }

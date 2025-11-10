@@ -24,7 +24,8 @@ fun MenuLeccionesScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(gradientBackground)
-            .padding(24.dp),
+            .padding(horizontal = 24.dp, vertical = 24.dp)
+            .padding(bottom = 70.dp),
         contentAlignment = Alignment.Center
     ) {
 
@@ -76,17 +77,14 @@ fun MenuLeccionesScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- BOTÓN VOLVER ---
+            // --- VOLVER al Home ---
             TextButton(
-                onClick = {
-                    navController.navigate("main") {
-                        popUpTo("menu_lecciones") { inclusive = true }
-                    }
-                }
+                onClick = { navController.navigate("draco") {
+                    popUpTo("draco") { inclusive = false }
+                }}
             ) {
                 Text("Volver", color = Color.LightGray, fontSize = 16.sp)
             }
         }
     }
 }
-

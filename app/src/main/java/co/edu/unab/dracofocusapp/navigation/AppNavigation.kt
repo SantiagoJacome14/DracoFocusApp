@@ -206,9 +206,11 @@ fun AppNavigation() { //crea el estado de navigation
             }
 
             // Pantalla Museo
-            composable(AppRoutes.MUSEO_DRACARTE) {
+            composable("museo_dracarte") {
                 MuseoDracoArteScreen(onBack = { navController.popBackStack() })
-            }
+
+
+        }
             // Pantalla para el codigo de lecciones en grupo
             composable("grupo_codigo") {
                 IngresarCodigoGrupoScreen(

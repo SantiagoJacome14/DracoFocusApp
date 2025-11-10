@@ -28,6 +28,7 @@ import co.edu.unab.dracofocusapp.ui.LeccionesDracoSolitarioScreen
 import co.edu.unab.dracofocusapp.ui.MenuLeccionesScreen
 import co.edu.unab.dracofocusapp.ui.DracomodoroScreen
 import co.edu.unab.dracofocusapp.ui.CicloCompletadoScreen
+import co.edu.unab.dracofocusapp.ui.MuseoDracArteScreen
 
 
 // ---------------------- RUTAS DEL MENÚ INFERIOR ----------------------
@@ -70,6 +71,10 @@ data class NavItem(val route: String, val icon: Int, val label: String)
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
     val items = listOf(
         NavItem(BottomNavItem.Lecciones.route, R.drawable.ic_book, "Lecciones"),
         NavItem(BottomNavItem.Pomodoro.route, R.drawable.ic_timer, "Estudiar"),
@@ -78,26 +83,36 @@ fun BottomNavigationBar(navController: NavHostController) {
         NavItem(BottomNavItem.Perfil.route, R.drawable.ic_user, "Perfil")
     )
 
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    // Rutas Lecciones
+    val leccionesRoutes = listOf(
+        "menu_lecciones",
+        "lecciones_solitario",
+        "grupo_codigo",
+        "leccion_decisiones_fuego",
+        "leccion_vuelo_infinito",
+        "leccion_libro_tareas"
+    )
 
     NavigationBar(
-        containerColor = Color(0xFF0F1A2A), // Fondo consistente con el app
+        containerColor = Color(0xFF0F1A2A),
         tonalElevation = 0.dp
     ) {
         items.forEach { item ->
+
+            val isSelected =
+                currentRoute == item.route ||
+                        (item.route == BottomNavItem.Lecciones.route && currentRoute in leccionesRoutes)
+
             NavigationBarItem(
-                selected = currentRoute == item.route,
+                selected = isSelected,
                 onClick = {
-                    if (currentRoute != item.route) {
+                    val targetRoute = if (item.route == BottomNavItem.Lecciones.route) {
+                        "menu_lecciones"
+                    } else {
+                        item.route
+                    }
 
-                        // abre el menú de lecciones
-                        val targetRoute = if (item.route == BottomNavItem.Lecciones.route) {
-                            "menu_lecciones"
-                        } else {
-                            item.route
-                        }
-
+                    if (currentRoute != targetRoute) {
                         navController.navigate(targetRoute) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
@@ -112,13 +127,11 @@ fun BottomNavigationBar(navController: NavHostController) {
                         modifier = Modifier.size(24.dp)
                     )
                 },
-                label = {
-                    Text(item.label, fontSize = 12.sp)
-                },
+                label = { Text(item.label, fontSize = 12.sp) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Color.White,
                     selectedTextColor = Color.White,
-                    indicatorColor = Color(0xFF22DDF2), // Resaltado neón
+                    indicatorColor = Color(0xFF22DDF2),
                     unselectedIconColor = Color(0xFF8FA3BD),
                     unselectedTextColor = Color(0xFF8FA3BD)
                 )
@@ -140,22 +153,24 @@ fun BottomNavGraph(
 
         // ---------- Pestaña Draco (Home) ----------
         composable(BottomNavItem.Draco.route) {
-            HomeScreen(
-                onNavigateToLessons = { navController.navigate("menu_lecciones") },
-                onNavigateToStudy = {},
-                onNavigateToMuseum = {},
-                onNavigateToProgress = { navController.navigate(BottomNavItem.Avances.route) }
-            )
+            HomeScreen(navController)
         }
+
+
 
         // ---------- Abiertos desde navegación inferior ----------
         composable(BottomNavItem.Avances.route) { ProgressScreen(navController = navController) }
         composable(BottomNavItem.Perfil.route) { MyProfileScreen() }
+
         composable(BottomNavItem.Pomodoro.route) { DracomodoroScreen() }
 
         // ---------- Menú de Lecciones ----------
         composable("menu_lecciones") {
             MenuLeccionesScreen(navController = navController)
+        }
+        //  MUSEO
+        composable("museo_dracarte") {
+            MuseoDracArteScreen(navController)
         }
 
         // ---------- Modo Solitario ----------
