@@ -22,15 +22,33 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
+import androidx.compose.ui.platform.LocalContext
+
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+
+
 
 @Composable
-fun DracomodoroScreen(onBack: () -> Unit) {
+fun DracomodoroScreen(
+    onBack: () -> Unit = {},
+    navController: NavController? = null  // navegar a pantalla ciclo completado dracomodoro
+) {
     // Estados
     var workMinutes by remember { mutableStateOf(25) }
     var restMinutes by remember { mutableStateOf(5) }
     var secondsLeft by remember { mutableStateOf(workMinutes * 60) }
     var isRunning by remember { mutableStateOf(false) }
     var isWorkMode by remember { mutableStateOf(true) }
+    var completedCycles by remember { mutableStateOf(0) }
+
+    val context = LocalContext.current
+
+    // Animación del tamaño del círculo
+    val circleSize by animateDpAsState(
+        targetValue = if (isWorkMode) 220.dp else 250.dp,
+        animationSpec = tween(durationMillis = 800)
+    )
 
     // Temporizador
     LaunchedEffect(isRunning, secondsLeft, isWorkMode) {
@@ -38,8 +56,13 @@ fun DracomodoroScreen(onBack: () -> Unit) {
             delay(1000L)
             secondsLeft--
         } else if (isRunning && secondsLeft == 0) {
-            // Cuando se termina el tiempo, cambia entre trabajo y descanso
             isWorkMode = !isWorkMode
+            // Si regresa a trabajo es un ciclo completado
+            if (isWorkMode) {
+                completedCycles++
+                navController?.navigate("ciclo_completado")   //  Navega a pantalla final
+            }
+
             secondsLeft = if (isWorkMode) workMinutes * 60 else restMinutes * 60
         }
     }
@@ -47,14 +70,19 @@ fun DracomodoroScreen(onBack: () -> Unit) {
     val minutes = secondsLeft / 60
     val seconds = secondsLeft % 60
     val timeDisplay = String.format("%02d:%02d", minutes, seconds)
+
+    //cambia el fondo segun el modo que este, trabajo o descanso
     val gradientBackground = Brush.verticalGradient(
-        listOf(Color(0xFF0B132B), Color(0xFF1C2541))
+        if (isWorkMode)
+            listOf(Color(0xFF0B132B), Color(0xFF1C2541)) // TRABAJO
+        else
+            listOf(Color(0xFF003022), Color(0xFF005C41)) // DESCANSO
     )
+    // Color dinámico del borde
+    val borderColor = if (isWorkMode) Color(0xFF22DDF2) else Color(0xFF58FF99)
 
     // Contenido
-    Scaffold(
-        //bottomBar = { BottomNavigationBar(navController) }
-    ) { innerPadding ->
+    Scaffold { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -77,12 +105,7 @@ fun DracomodoroScreen(onBack: () -> Unit) {
                         contentDescription = "Draco",
                         modifier = Modifier.size(130.dp)
                     )
-                    Text(
-                        text = "Dracomodoro",
-                        color = Color(0xFF22DDF2),
-                        fontSize = 45.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Dracomodoro", color = Color(0xFF22DDF2), fontSize = 45.sp, fontWeight = FontWeight.Bold)
                     Text(
                         text = if (isWorkMode) "Modo Trabajo" else "Modo Descanso",
                         color = Color(0xFFa2faf6),
@@ -90,20 +113,16 @@ fun DracomodoroScreen(onBack: () -> Unit) {
                     )
                 }
 
+                // Temporizador con animacion
                 Box(
                     modifier = Modifier
-                        .size(220.dp)
-                        .border(10.dp, Color(0xFF22DDF2), shape = CircleShape)
+                        .size(circleSize)
+                        .border(10.dp, borderColor, shape = CircleShape)
                         .padding(25.dp)
-                        .border(5.dp, Color(0xFF22DDF2), shape = CircleShape),
+                        .border(5.dp, borderColor, shape = CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = timeDisplay,
-                        color = Color.White,
-                        fontSize = 48.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(timeDisplay, color = Color.White, fontSize = 48.sp, fontWeight = FontWeight.Bold)
                 }
 
                 // Botones
@@ -114,64 +133,30 @@ fun DracomodoroScreen(onBack: () -> Unit) {
                         .padding(horizontal = 16.dp)
                 ) {
                     Button(
-                        onClick = {
-                            isRunning = true
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8A78FF)
-                        ),
-                        modifier = Modifier
-                            .border(
-                                width = 2.dp,
-                                color = Color(0xFF22DDF2),
-                                shape = RoundedCornerShape(30.dp)
-                            )
-                    )
-                    {
-                        Text(text = "+ Iniciar", color = Color.White)
-                    }
+                        onClick = { isRunning = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A78FF)),
+                        modifier = Modifier.border(2.dp, borderColor, shape = RoundedCornerShape(30.dp))
+                    ) { Text("+ Iniciar", color = Color.White) }
 
                     Button(
-                        onClick = {
-                            isRunning = false
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8A78FF)
-                        ),
-                        modifier = Modifier
-                            .border(
-                                width = 2.dp,
-                                color = Color(0xFF22DDF2),
-                                shape = RoundedCornerShape(30.dp)
-                            )
-                    ) {
-                        Text(text = "❚❚ Pausar", color = Color.White)
-                    }
+                        onClick = { isRunning = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A78FF)),
+                        modifier = Modifier.border(2.dp, borderColor, shape = RoundedCornerShape(30.dp))
+                    ) { Text("❚❚ Pausar", color = Color.White) }
 
                     Button(
                         onClick = {
                             isRunning = false
                             secondsLeft = if (isWorkMode) workMinutes * 60 else restMinutes * 60
                         },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8A78FF)
-                        ),
-                        modifier = Modifier
-                            .border(
-                                width = 2.dp,
-                                color = Color(0xFF22DDF2),
-                                shape = RoundedCornerShape(30.dp)
-                            )
-                    ) {
-                        Text(text = "↻ Reiniciar", color = Color.White)
-                    }
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A78FF)),
+                        modifier = Modifier.border(2.dp, borderColor, shape = RoundedCornerShape(30.dp))
+                    ) { Text("↻ Reiniciar", color = Color.White) }
                 }
-
-                // Trabajo y descanso
+                // Trabajo y descanso tiempos
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier
-                        .padding(20.dp)
+                    modifier = Modifier.padding(20.dp)
                 ) {
                     Box(
                         modifier = Modifier
@@ -180,13 +165,8 @@ fun DracomodoroScreen(onBack: () -> Unit) {
                             .background(Color(0xFF6a5cc4)),
                         contentAlignment = Alignment.Center
                     ) {
-
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "Trabajo",
-                                color = Color(0xFFb6b6b6),
-                                fontWeight = FontWeight.Bold
-                            )
+                            Text("Trabajo", color = Color(0xFFb6b6b6), fontWeight = FontWeight.Bold)
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = {
                                     if (workMinutes > 1) {
@@ -196,7 +176,7 @@ fun DracomodoroScreen(onBack: () -> Unit) {
                                 }) {
                                     Icon(Icons.Filled.Remove, contentDescription = "Disminuir", tint = Color.White)
                                 }
-                                Text(text = "$workMinutes min", color = Color.White)
+                                Text("$workMinutes min", color = Color.White)
                                 IconButton(onClick = {
                                     workMinutes++
                                     if (isWorkMode) secondsLeft = workMinutes * 60
@@ -206,7 +186,9 @@ fun DracomodoroScreen(onBack: () -> Unit) {
                             }
                         }
                     }
+
                     Spacer(modifier = Modifier.width(20.dp))
+
                     Box(
                         modifier = Modifier
                             .weight(2f)
@@ -215,13 +197,8 @@ fun DracomodoroScreen(onBack: () -> Unit) {
                             .padding(innerPadding),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Descanso
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "Descanso",
-                                color = Color(0xFFb6b6b6),
-                                fontWeight = FontWeight.Bold
-                            )
+                            Text("Descanso", color = Color(0xFFb6b6b6), fontWeight = FontWeight.Bold)
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = {
                                     if (restMinutes > 1) {
@@ -229,29 +206,23 @@ fun DracomodoroScreen(onBack: () -> Unit) {
                                         if (!isWorkMode) secondsLeft = restMinutes * 60
                                     }
                                 }) {
-                                    Icon(
-                                        Icons.Filled.Remove,
-                                        contentDescription = "Disminuir",
-                                        tint = Color.White
-                                    )
+                                    Icon(Icons.Filled.Remove, contentDescription = "Disminuir", tint = Color.White)
                                 }
-                                Text(text = "$restMinutes min", color = Color.White)
+                                Text("$restMinutes min", color = Color.White)
                                 IconButton(onClick = {
                                     restMinutes++
                                     if (!isWorkMode) secondsLeft = restMinutes * 60
                                 }) {
-                                    Icon(
-                                        Icons.Filled.Add,
-                                        contentDescription = "Aumentar",
-                                        tint = Color.White
-                                    )
+                                    Icon(Icons.Filled.Add, contentDescription = "Aumentar", tint = Color.White)
                                 }
                             }
                         }
                     }
+
                     Spacer(modifier = Modifier.height(50.dp))
                 }
             }
         }
     }
 }
+
