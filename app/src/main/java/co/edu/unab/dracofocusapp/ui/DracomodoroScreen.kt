@@ -35,12 +35,14 @@ fun DracomodoroScreen(
     navController: NavController? = null  // navegar a pantalla ciclo completado dracomodoro
 ) {
     // Estados
+
     var workMinutes by remember { mutableStateOf(25) }
     var restMinutes by remember { mutableStateOf(5) }
     var secondsLeft by remember { mutableStateOf(workMinutes * 60) }
     var isRunning by remember { mutableStateOf(false) }
     var isWorkMode by remember { mutableStateOf(true) }
     var completedCycles by remember { mutableStateOf(0) }
+
 
     val context = LocalContext.current
 
@@ -55,18 +57,22 @@ fun DracomodoroScreen(
         if (isRunning && secondsLeft > 0) {
             delay(1000L)
             secondsLeft--
-        } else if (isRunning && secondsLeft == 0) {
-            isWorkMode = !isWorkMode
-            // Si regresa a trabajo es un ciclo completado
-            if (isWorkMode) {
+        }
+        else if (isRunning && secondsLeft == 0) {
+
+            // Cuando termina de modo descanso hace el ciclo completo terminado
+            if (!isWorkMode) {
                 completedCycles++
-                navController?.navigate("ciclo_completado")   //  Navega a pantalla final
+                navController?.navigate("ciclo_completado")
             }
 
+            // Cambia modo
+            isWorkMode = !isWorkMode
+
+            // Nuevo tiempo
             secondsLeft = if (isWorkMode) workMinutes * 60 else restMinutes * 60
         }
     }
-
     val minutes = secondsLeft / 60
     val seconds = secondsLeft % 60
     val timeDisplay = String.format("%02d:%02d", minutes, seconds)
