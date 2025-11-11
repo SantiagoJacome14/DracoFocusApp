@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -31,7 +33,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import androidx.compose.runtime.Composable
 
-@OptIn(ExperimentalMaterial3Api::class) // necesario por el uso de CenterAlignedTopAppBar
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModernTopBar(
     title: String,
@@ -65,25 +67,25 @@ fun ModernTopBar(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class) //Es necesario para usar material3
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    onBackToLogin: () -> Unit, // Para volver a la pantalla de login
-    onRegisterSuccess: () -> Unit // se llama cuando el registro en firebase es exitoso
+    onBackToLogin: () -> Unit,
+    onRegisterSuccess: () -> Unit
 ) {
-    val auth = Firebase.auth // Para la autenticacion de firebase
-    val db = Firebase.firestore // para la base de datos de firebase
-// estados para campos de login y register, y el remeber y mutablestateof para controlarlo local
+    val auth = Firebase.auth
+    val db = Firebase.firestore
+
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var semester by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-// estados para la logica
-    var focusedField by remember { mutableStateOf("") } //este es para mostrar mensajes de ayuda
-    var isLoading by remember { mutableStateOf(false) } // indica si esta en curso y empieza el  cargando...
-    var errorMessage by remember { mutableStateOf<String?>(null) } // el mensaje de error si lo hay
-// fondo degradado
+
+    var focusedField by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
@@ -92,10 +94,10 @@ fun RegisterScreen(
         topBar = {
             ModernTopBar(
                 title = "Registro",
-                onBackClick = onBackToLogin //boton para volver al login
+                onBackClick = onBackToLogin
             )
         }
-    ) { innerPadding -> //espacio q ocupa el topbar
+    ) { innerPadding ->
 
         Box(
             modifier = Modifier
@@ -105,9 +107,12 @@ fun RegisterScreen(
                 .padding(24.dp),
             contentAlignment = Alignment.TopCenter
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // ✅ Activamos scroll aquí
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
 
-                //Imagen de Draco
                 Image(
                     painter = painterResource(id = R.drawable.dragon_dracofocus1),
                     contentDescription = "Mascota Draco",
@@ -129,31 +134,27 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Caja del campo del formulario
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color(0xFF22DDF2), shape = MaterialTheme.shapes.medium) //borde
-                        .background(Color(0xFF0F1A2A), MaterialTheme.shapes.medium) //fondo oscuro
+                        .border(1.dp, Color(0xFF22DDF2), shape = MaterialTheme.shapes.medium)
+                        .background(Color(0xFF0F1A2A), MaterialTheme.shapes.medium)
                         .padding(20.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                        // Todos los campos del formulario
-                        //  Nombre
                         CustomRegisterField(
                             value = fullName,
-                            onValueChange = { if (it.all { c -> c.isLetter() || c.isWhitespace() }) fullName = it }, //solo permite letras y espacios
+                            onValueChange = { if (it.all { c -> c.isLetter() || c.isWhitespace() }) fullName = it },
                             label = "Nombre Completo",
                             icon = R.drawable.ic_user,
-                            onFocus = { focusedField = "nombre" } //estar enfocado en nombre
+                            onFocus = { focusedField = "nombre" }
                         )
-                        if (focusedField == "nombre") //muestra cuando se le da click a este lado y sale el mensaje
+                        if (focusedField == "nombre")
                             Text("Pon tu nombre completo", color = Color.Gray, fontSize = 12.sp)
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Correo
                         CustomRegisterField(
                             value = email,
                             onValueChange = { email = it },
@@ -167,10 +168,9 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        //  Semestre
                         CustomRegisterField(
                             value = semester,
-                            onValueChange = { if (it.all { c -> c.isDigit() }) semester = it }, //solo permite numeros
+                            onValueChange = { if (it.all { c -> c.isDigit() }) semester = it },
                             label = "Semestre",
                             icon = R.drawable.ic_school,
                             keyboardType = KeyboardType.Number,
@@ -181,13 +181,12 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Contraseña
                         CustomRegisterField(
                             value = password,
                             onValueChange = { password = it },
                             label = "Contraseña",
                             icon = R.drawable.ic_password,
-                            isPassword = true, //activa si ocultar o mostrar
+                            isPassword = true,
                             keyboardType = KeyboardType.Password,
                             onFocus = { focusedField = "contrasena" }
                         )
@@ -196,7 +195,6 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Confirmar contraseña
                         CustomRegisterField(
                             value = confirmPassword,
                             onValueChange = { confirmPassword = it },
@@ -207,53 +205,47 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // Boton registro
                         Button(
-                            onClick = { //validacion y registro
-                                if (fullName.isBlank() || email.isBlank() || semester.isBlank() || //valida si hay campos vacios
-                                    password.isBlank() || confirmPassword.isBlank() //valida si hay campos vacios
+                            onClick = {
+                                if (fullName.isBlank() || email.isBlank() || semester.isBlank() ||
+                                    password.isBlank() || confirmPassword.isBlank()
                                 ) {
                                     errorMessage = "Por favor completa todos los campos."
-                                    return@Button // detiene la ejecucion si
+                                    return@Button
                                 }
                                 if (!email.contains("@")) {
                                     errorMessage = "El correo debe contener '@'."
-                                    return@Button //detiene la ejecucion si
+                                    return@Button
                                 }
                                 if (password != confirmPassword) {
                                     errorMessage = "Las contraseñas no coinciden."
-                                    return@Button //detiene la ejecucion si
+                                    return@Button
                                 }
 
-                                isLoading = true //muestra carga
-                                errorMessage = null //limpia errores
+                                isLoading = true
+                                errorMessage = null
 
-                                val userData = hashMapOf( //datos para guardar en firestore
+                                val userData = hashMapOf(
                                     "nombre" to fullName,
                                     "correo" to email.trim(),
                                     "semestre" to semester
                                 )
 
-                                // Registro en Firebase Auth + Firestore
                                 auth.createUserWithEmailAndPassword(email.trim(), password)
                                     .addOnCompleteListener { task ->
                                         if (task.isSuccessful) {
-                                            //id unico del usuario recien creado
                                             val uid = auth.currentUser?.uid ?: return@addOnCompleteListener
-                                            Firebase.firestore.collection("usuarios")
-                                                .document(uid)
+                                            db.collection("usuarios").document(uid)
                                                 .set(userData)
                                                 .addOnSuccessListener {
-                                                    isLoading = false //exito completado
-                                                    onRegisterSuccess() //llama la navigation
+                                                    isLoading = false
+                                                    onRegisterSuccess()
                                                 }
                                                 .addOnFailureListener {
-                                                    //fallo al guardar
                                                     isLoading = false
                                                     errorMessage = "Error guardando datos."
                                                 }
                                         } else {
-                                            //fallo si el correo ya existe o una password debil
                                             isLoading = false
                                             errorMessage = task.exception?.message ?: "Error al registrar usuario."
                                         }
@@ -268,20 +260,19 @@ fun RegisterScreen(
                                 contentColor = Color.Black
                             )
                         ) {
-                            if (isLoading) //muestra el cargando...
+                            if (isLoading)
                                 CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(20.dp))
-                            else //muestra el texto si no esta cargando
+                            else
                                 Text("Crear Cuenta", fontWeight = FontWeight.Bold)
                         }
-                        //muestra el error si existe
-                        errorMessage?.let { //el .let es para nulos
+
+                        errorMessage?.let {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(it, color = Color.Red, fontSize = 13.sp)
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        //enlace para volver al login
                         Text(
                             text = "¿Ya tienes cuenta? Inicia sesión",
                             color = Color(0xFF22DDF2),
@@ -290,6 +281,7 @@ fun RegisterScreen(
                         )
                     }
                 }
+                Spacer(modifier = Modifier.height(40.dp))
             }
         }
     }
