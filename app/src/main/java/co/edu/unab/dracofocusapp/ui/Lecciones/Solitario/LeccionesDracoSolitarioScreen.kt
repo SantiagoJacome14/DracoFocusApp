@@ -121,12 +121,11 @@ fun LeccionesDracoSolitarioScreen(
                         icon = R.drawable.ic_decisiones_fuego,
                         titulo = "Decisiones de Fuego",
                         subtitulo = "Condicionales",
-                        xp = "+ 90 XP",
-                        navController = navController,
                         isCompleted = lecciones[0],
-                        onStart = { navController.navigate("leccion_decisiones_fuego") },
-                        onComplete = {
-                            if (!lecciones[0]) lecciones[0] = true
+                        onStart = {
+                            navController.navigate("leccion_decisiones_fuego") {
+                                launchSingleTop = true
+                            }
                         }
                     )
 
@@ -134,12 +133,11 @@ fun LeccionesDracoSolitarioScreen(
                         icon = R.drawable.ic_vuelo_infinito,
                         titulo = "Vuelo Infinito",
                         subtitulo = "Bucles",
-                        xp = "+ 150 XP",
-                        navController = navController,
                         isCompleted = lecciones[1],
-                        onStart = { navController.navigate("leccion_vuelo_infinito") },
-                        onComplete = {
-                            if (!lecciones[1]) lecciones[1] = true
+                        onStart = {
+                            navController.navigate("leccion_vuelo_infinito") {
+                                launchSingleTop = true
+                            }
                         }
                     )
 
@@ -147,41 +145,43 @@ fun LeccionesDracoSolitarioScreen(
                         icon = R.drawable.ic_libro_tareas,
                         titulo = "El Libro de las Tareas",
                         subtitulo = "Arreglos",
-                        xp = "+ 120 XP",
-                        navController = navController,
                         isCompleted = lecciones[2],
-                        onStart = { navController.navigate("leccion_libro_tareas") },
-                        onComplete = {
-                            if (!lecciones[2]) lecciones[2] = true
+                        onStart = {
+                            navController.navigate("leccion_libro_tareas") {
+                                launchSingleTop = true
+                            }
                         }
                     )
-                }
 
-                // Caja de recompensa
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF0F2B5D), RoundedCornerShape(15.dp))
-                        .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(15.dp))
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Image(
-                            painter = painterResource(R.drawable.img_sobre),
-                            contentDescription = "Sobre misterioso",
-                            modifier = Modifier.size(70.dp)
-                        )
 
-                        Spacer(modifier = Modifier.height(10.dp))
 
-                        Text(
-                            "¡Te faltan solo $leccionesFaltantes para un sobre misterioso!",
-                            color = Color(0xFF22DDF2),
-                            textAlign = TextAlign.Center,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+
+                    // Caja de recompensa
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFF0F2B5D), RoundedCornerShape(15.dp))
+                            .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(15.dp))
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Image(
+                                painter = painterResource(R.drawable.img_sobre),
+                                contentDescription = "Sobre misterioso",
+                                modifier = Modifier.size(70.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Text(
+                                "¡Te faltan solo $leccionesFaltantes para un sobre misterioso!",
+                                color = Color(0xFF22DDF2),
+                                textAlign = TextAlign.Center,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }

@@ -27,11 +27,8 @@ fun ModernLessonCard(
     icon: Int? = null,
     titulo: String,
     subtitulo: String,
-    xp: String,
-    navController: NavController,
     isCompleted: Boolean,
-    onStart: () -> Unit,
-    onComplete: () -> Unit
+    onStart: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -58,38 +55,36 @@ fun ModernLessonCard(
                 Text(subtitulo, color = Color(0xFFB3B3B3), fontSize = 13.sp)
             }
 
-            IconButton(
-                onClick = { onStart() },
-                enabled = !isCompleted
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_play),
-                    contentDescription = "Iniciar lección",
-                    tint = if (isCompleted) Color.Gray else Color(0xFF22DDF2),
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-
-            Button(
-                onClick = { onComplete() },
-                enabled = !isCompleted,
-                colors = if (isCompleted)
-                    ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF455A64),
-                        contentColor = Color.White
+            // SOLO PLAY, hasta que este conectado
+            if (!isCompleted) {
+                IconButton(
+                    onClick = onStart
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_play),
+                        contentDescription = "Iniciar lección",
+                        tint = Color(0xFF22DDF2),
+                        modifier = Modifier.size(28.dp)
                     )
-                else
-                    ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF22DDF2),
-                        contentColor = Color.Black
+                }
+            } else {
+                //  HECHO cuando la lección esté terminada
+                Button(
+                    onClick = {},
+                    enabled = false,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Gray,
+                        contentColor = Color.White
                     ),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(if (isCompleted) "Hecho" else xp, fontWeight = FontWeight.Bold)
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Hecho", fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeccionesGrupalesScreen(
@@ -181,48 +176,33 @@ fun LeccionesGrupalesScreen(
                 // Tarjetas de lecciones
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
 
-                    ModernLessonCard (
+                    ModernLessonCard(
                         icon = R.drawable.ic_tesoro,
                         titulo = "Guardianes del Tesoro",
                         subtitulo = "Variables y condicionales",
-                        xp = "+ 90 XP",
-                        navController = navController,
                         isCompleted = lecciones[0],
-                        onStart = { navController.navigate("leccion_tesoro") },
-                        onComplete = {
-                            if (!lecciones[0]) {
-                                lecciones[0] = true    // marcar como terminada
-                            }
+                        onStart = {
+                            navController.navigate("leccion_tesoro")
                         }
                     )
 
                     ModernLessonCard(
                         icon = R.drawable.ic_navegacion,
                         titulo = "Misión de Vuelo",
-                        subtitulo = "Ciclos, listas y acumuladores",
-                        xp = "+ 150 XP",
-                        navController = navController,
+                        subtitulo = "Ciclos, acumuladores",
                         isCompleted = lecciones[1],
-                        onStart = { navController.navigate("leccion_vuelo") },
-                        onComplete = {
-                            if (!lecciones[1]) {
-                                lecciones[1] = true
-                            }
+                        onStart = {
+                            navController.navigate("leccion_vuelo")
                         }
                     )
 
                     ModernLessonCard(
                         icon = R.drawable.ic_analizar,
-                        titulo = "El Reto de los Acertijos",
-                        subtitulo = "Funciones y lógica condicional",
-                        xp = "+ 120 XP",
-                        navController = navController,
+                        titulo = "Reto de los Acertijos",
+                        subtitulo = "Funciones y lógica",
                         isCompleted = lecciones[2],
-                        onStart = { navController.navigate("leccion_acertijos")},
-                        onComplete = {
-                            if (!lecciones[2]) {
-                                lecciones[2] = true
-                            }
+                        onStart = {
+                            navController.navigate("leccion_acertijos")
                         }
                     )
                 }

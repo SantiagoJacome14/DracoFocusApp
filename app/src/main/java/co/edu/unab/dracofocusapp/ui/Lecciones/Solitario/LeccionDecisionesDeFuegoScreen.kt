@@ -30,7 +30,6 @@ import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.edu.unab.dracofocusapp.viewmodel.FeedbackViewModel
 import androidx.compose.runtime.saveable.rememberSaveable
-import co.edu.unab.dracofocusapp.navigation.AppRoutes
 
 @Composable
 fun LeccionDecisionesDeFuegoScreen(
@@ -45,15 +44,13 @@ fun LeccionDecisionesDeFuegoScreen(
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    // 🟢 === INICIO BLOQUE NUEVO FIRESTORE ===
     val db = FirebaseFirestore.getInstance()
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
     var yaNavego by rememberSaveable { mutableStateOf(false) }
 
-
-// Obtenemos el ViewModel de feedback (persistente entre pantallas)
     val feedbackViewModel: FeedbackViewModel = viewModel()
 
+    // ✅ LISTENER FIRESTORE PARA SABER CUANDO LA IA RESPONDE
     DisposableEffect(Unit) {
         val listenerRegistration = db.collection("feedback_lecciones")
             .whereEqualTo("user_id", userId)
@@ -67,10 +64,14 @@ fun LeccionDecisionesDeFuegoScreen(
                         yaNavego = true
                         feedbackViewModel.retroalimentacion.value = feedback
 
-                        // Aseguramos que la navegación se ejecute en el hilo principal de Compose
+                        // ✅ Marca la lección como completa al regresar
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("leccion_completada", 0)
+
                         scope.launch {
                             delay(300)
-                            navController.navigate(AppRoutes.FEEDBACK_SCREEN) {
+                            navController.navigate("feedback_screen") {
                                 popUpTo("leccion_decisiones_de_fuego") { inclusive = true }
                             }
                         }
@@ -78,17 +79,12 @@ fun LeccionDecisionesDeFuegoScreen(
                 }
             }
 
-        // Limpieza automática al salir de la pantalla
         onDispose {
             listenerRegistration.remove()
         }
     }
 
-
-    Scaffold(
-        bottomBar = { }
-    ) { innerPadding ->
-
+    Scaffold(bottomBar = {}) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -102,7 +98,8 @@ fun LeccionDecisionesDeFuegoScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
             ) {
-                // 🔥 TÍTULO DE LECCIÓN
+
+                // ✅ UI DE LA LECCIÓN
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
@@ -133,7 +130,7 @@ fun LeccionDecisionesDeFuegoScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 🧠 OBJETIVO
+                // ✅ OBJETIVO DE LA LECCIÓN
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -141,16 +138,26 @@ fun LeccionDecisionesDeFuegoScreen(
                         .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(12.dp))
                         .padding(14.dp)
                 ) {
-                    Text(
-                        text = "OBJETIVO: Aplicar 'if, elif, else' para decidir qué hará Draco según su nivel de energía.",
-                        color = Color(0xFFCBC8C8),
-                        fontSize = 14.sp
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "OBJETIVO: ",
+                            color = Color(0xFFCDF4F2),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = "Aplicar 'if, elif, else' para decidir qué hará Draco según su nivel de energía.",
+                            color = Color(0xFFCBC8C8),
+                            fontSize = 14.sp
+                        )
+                    }
                 }
-
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 🧩 EJERCICIO
+                // EJERCICIO
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -176,7 +183,6 @@ fun LeccionDecisionesDeFuegoScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // ✏️ CAMPO DE CÓDIGO
                         OutlinedTextField(
                             value = codigoUsuario,
                             onValueChange = { codigoUsuario = it },
@@ -202,7 +208,7 @@ fun LeccionDecisionesDeFuegoScreen(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                // 🧠 BOTONES
+                // ✅ BOTONES
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
@@ -210,7 +216,7 @@ fun LeccionDecisionesDeFuegoScreen(
                     Button(
                         onClick = {
                             navController.navigate("lecciones_solitario") {
-                                popUpTo("leccion_decisiones_fuego") { inclusive = true }
+                                popUpTo("leccion_decisiones_de_fuego") { inclusive = true }
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
@@ -224,7 +230,6 @@ fun LeccionDecisionesDeFuegoScreen(
                         Text("Regresar", color = Color(0xFFEBFFFE))
                     }
 
-                    // 🟢 BOTÓN ENVIAR A FIREBASE
                     Button(
                         onClick = {
                             if (codigoUsuario.isNotBlank()) {
@@ -242,13 +247,13 @@ fun LeccionDecisionesDeFuegoScreen(
                                         db.collection("respuestas_pendientes")
                                             .add(respuesta)
                                             .addOnSuccessListener {
-                                                Log.d("Firebase", "✅ Respuesta enviada a Firestore")
+                                                Log.d("Firebase", "✅ Enviado correctamente")
                                             }
                                             .addOnFailureListener { e ->
                                                 Log.e("Firebase", "❌ Error: ${e.message}")
                                             }
                                     } catch (e: Exception) {
-                                        Log.e("Envio", "Error general: ${e.message}")
+                                        Log.e("Envio", "Error: ${e.message}")
                                     } finally {
                                         isLoading = false
                                     }
@@ -270,7 +275,7 @@ fun LeccionDecisionesDeFuegoScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // 🌀 INDICADOR DE CARGA
+            // ✅ LOADING
             if (isLoading) {
                 Box(
                     modifier = Modifier
