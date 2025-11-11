@@ -23,9 +23,12 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
 import androidx.compose.ui.platform.LocalContext
-
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FieldValue
+
 
 
 
@@ -43,7 +46,6 @@ fun DracomodoroScreen(
     var isWorkMode by remember { mutableStateOf(true) }
     var completedCycles by remember { mutableStateOf(0) }
 
-
     val context = LocalContext.current
 
     // Animación del tamaño del círculo
@@ -51,6 +53,26 @@ fun DracomodoroScreen(
         targetValue = if (isWorkMode) 220.dp else 250.dp,
         animationSpec = tween(durationMillis = 800)
     )
+
+    // Guardar en Firebase
+    fun registrarEstudioEnFirebase(minutosSesion: Int) {
+        val db = FirebaseFirestore.getInstance()
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val minutosSesion = 25.0  // ejemplo fijo
+        val usuarioRef = db.collection("usuarios_estadisticas").document(userId)
+        usuarioRef.update(
+            mapOf(
+                "cantidad_estudio" to FieldValue.increment(1),
+                "minutos_estudiados_semanal" to FieldValue.increment(minutosSesion),
+                "horas_estudio" to FieldValue.increment(minutosSesion / 60.0),
+                "dia" to FieldValue.serverTimestamp()
+            )
+        ).addOnSuccessListener {
+            println("✅ Sesión de estudio registrada correctamente")
+        }.addOnFailureListener { e ->
+            println("❌ Error al registrar estudio: ${e.message}")
+        }
+    }
 
     // Temporizador
     LaunchedEffect(isRunning, secondsLeft, isWorkMode) {
@@ -63,6 +85,7 @@ fun DracomodoroScreen(
             // Cuando termina de modo descanso hace el ciclo completo terminado
             if (!isWorkMode) {
                 completedCycles++
+                registrarEstudioEnFirebase(workMinutes)
                 navController?.navigate("ciclo_completado")
             }
 

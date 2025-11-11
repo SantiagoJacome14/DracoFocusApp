@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.edu.unab.dracofocusapp.viewmodel.FeedbackViewModel
 import androidx.compose.runtime.saveable.rememberSaveable
+import co.edu.unab.dracofocusapp.navigation.AppRoutes
 
 @Composable
 fun LeccionDecisionesDeFuegoScreen(
@@ -69,7 +70,7 @@ fun LeccionDecisionesDeFuegoScreen(
                         // 🚀 Aseguramos que la navegación se ejecute en el hilo principal de Compose
                         scope.launch {
                             delay(300)
-                            navController.navigate("feedback_screen") {
+                            navController.navigate(AppRoutes.FEEDBACK_SCREEN) {
                                 popUpTo("leccion_decisiones_de_fuego") { inclusive = true }
                             }
                         }
@@ -82,8 +83,6 @@ fun LeccionDecisionesDeFuegoScreen(
             listenerRegistration.remove()
         }
     }
-
-
 
 
     Scaffold(

@@ -4,7 +4,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Notifications
@@ -34,15 +36,16 @@ fun MyProfileScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    // Obtener usuario desde firebase
+
+    // Usuario desde Firebase
     val user = Firebase.auth.currentUser
     val userName = user?.displayName ?: "Usuario"
     val userEmail = user?.email ?: "Sin correo"
 
-
     var notificationsEnabled by remember { mutableStateOf(true) }
     var soundEnabled by remember { mutableStateOf(true) }
-    //Fondo degradado
+
+    // Fondo degradado
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
@@ -52,11 +55,12 @@ fun MyProfileScreen(
         topBar = {
             ModernTopBar(
                 title = "Mi Perfil",
-                showBackButton = false // sin flecha
+                showBackButton = false
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -64,7 +68,11 @@ fun MyProfileScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
+            // ✅ Scroll vertical completo
             Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
@@ -93,7 +101,10 @@ fun MyProfileScreen(
                         Text("1670 XP", color = Color.White, fontSize = 14.sp)
 
                         Spacer(modifier = Modifier.height(18.dp))
-                        Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             StatItem("9", "Racha")
                             StatItem("6", "Cursos")
                             StatItem("17h", "Estudio")
@@ -141,13 +152,16 @@ fun MyProfileScreen(
                     )
                 }
 
-                // cerrar sesion
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 🔒 Botón Cerrar sesión
                 Button(
                     onClick = {
                         Firebase.auth.signOut()
                         scope.launch {
                             snackbarHostState.showSnackbar("Sesión cerrada correctamente")
                         }
+                        onNavigateToAuth()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -161,11 +175,13 @@ fun MyProfileScreen(
                     Text("Cerrar sesión", fontWeight = FontWeight.Bold)
                 }
 
+                Spacer(modifier = Modifier.height(50.dp))
             }
         }
     }
 }
 
+// 📊 COMPONENTES AUXILIARES
 @Composable
 fun StatItem(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {

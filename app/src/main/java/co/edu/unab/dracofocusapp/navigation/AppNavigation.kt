@@ -65,6 +65,8 @@ object AppRoutes { // este es para los String para evitar errores al escribir lo
     const val RESPUESTA_LECCION_S = "respuesta_leccion_s"
 
     const val MENU_LECCIONES = "menu_lecciones"
+    const val FEEDBACK_SCREEN = "feedback_screen"
+
 
 }
 
@@ -195,7 +197,7 @@ fun AppNavigation() { //crea el estado de navigation
                 RespuestaLeccionesScreen(onBack = { navController.popBackStack() })
             }
 
-            composable("feedback_screen") {
+            composable(AppRoutes.FEEDBACK_SCREEN) {
                 val feedbackViewModel: FeedbackViewModel = viewModel()
                 FeedbackScreen(
                     navController = navController,
