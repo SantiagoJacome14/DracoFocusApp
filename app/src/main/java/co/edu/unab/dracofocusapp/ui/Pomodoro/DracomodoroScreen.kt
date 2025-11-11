@@ -25,6 +25,8 @@ import co.edu.unab.dracofocusapp.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
@@ -119,12 +121,17 @@ fun DracomodoroScreen(
                 .padding(innerPadding),
             contentAlignment = Alignment.TopCenter
         ) {
+            // ✅ Scroll activado
             Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 30.dp), // margen final
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxSize()
+                verticalArrangement = Arrangement.Top
             ) {
 
+                // 🐉 Imagen + título
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(top = 10.dp)
@@ -134,7 +141,12 @@ fun DracomodoroScreen(
                         contentDescription = "Draco",
                         modifier = Modifier.size(130.dp)
                     )
-                    Text("Dracomodoro", color = Color(0xFF22DDF2), fontSize = 45.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Dracomodoro",
+                        color = Color(0xFF22DDF2),
+                        fontSize = 45.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                     Text(
                         text = if (isWorkMode) "Modo Trabajo" else "Modo Descanso",
                         color = Color(0xFFa2faf6),
@@ -142,7 +154,9 @@ fun DracomodoroScreen(
                     )
                 }
 
-                // Temporizador con animacion
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // ⏱ Temporizador animado
                 Box(
                     modifier = Modifier
                         .size(circleSize)
@@ -151,10 +165,17 @@ fun DracomodoroScreen(
                         .border(5.dp, borderColor, shape = CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(timeDisplay, color = Color.White, fontSize = 48.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        timeDisplay,
+                        color = Color.White,
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
-                // Botones
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 🎮 Botones de control
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier
@@ -165,13 +186,17 @@ fun DracomodoroScreen(
                         onClick = { isRunning = true },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A78FF)),
                         modifier = Modifier.border(2.dp, borderColor, shape = RoundedCornerShape(30.dp))
-                    ) { Text("+ Iniciar", color = Color.White) }
+                    ) {
+                        Text("+ Iniciar", color = Color.White)
+                    }
 
                     Button(
                         onClick = { isRunning = false },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A78FF)),
                         modifier = Modifier.border(2.dp, borderColor, shape = RoundedCornerShape(30.dp))
-                    ) { Text("❚❚ Pausar", color = Color.White) }
+                    ) {
+                        Text("❚❚ Pausar", color = Color.White)
+                    }
 
                     Button(
                         onClick = {
@@ -180,13 +205,21 @@ fun DracomodoroScreen(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A78FF)),
                         modifier = Modifier.border(2.dp, borderColor, shape = RoundedCornerShape(30.dp))
-                    ) { Text("↻ Reiniciar", color = Color.White) }
+                    ) {
+                        Text("↻ Reiniciar", color = Color.White)
+                    }
                 }
-                // Trabajo y descanso tiempos
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // ⚙️ Configuración trabajo/descanso
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.padding(20.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
                 ) {
+                    // Trabajo
                     Box(
                         modifier = Modifier
                             .weight(2f)
@@ -218,12 +251,12 @@ fun DracomodoroScreen(
 
                     Spacer(modifier = Modifier.width(20.dp))
 
+                    // Descanso
                     Box(
                         modifier = Modifier
                             .weight(2f)
                             .height(65.dp)
-                            .background(Color(0xFF6a5cc4))
-                            .padding(innerPadding),
+                            .background(Color(0xFF6a5cc4)),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -247,11 +280,10 @@ fun DracomodoroScreen(
                             }
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(50.dp))
                 }
+
+                Spacer(modifier = Modifier.height(50.dp))
             }
         }
     }
 }
-

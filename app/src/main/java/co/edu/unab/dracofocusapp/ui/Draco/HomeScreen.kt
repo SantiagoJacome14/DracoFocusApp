@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.main.BottomNavItem
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -34,13 +36,14 @@ fun HomeScreen(navController: NavController) {
             .background(gradientBackground)
             .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
-
+        // ✅ Scroll habilitado
         Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()), // ← aquí está la clave
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top,
-            modifier = Modifier.fillMaxSize()
+            verticalArrangement = Arrangement.Top
         ) {
-
             // CARD INICIAL
             Card(
                 modifier = Modifier
@@ -99,12 +102,12 @@ fun HomeScreen(navController: NavController) {
 
             Spacer(Modifier.height(30.dp))
 
-            // ---------- BOTONES  ----------
+            // ---------- BOTONES ----------
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                MejorButton("ESTUDIAR", R.drawable.ic_study, Color(0xFF8A78FF)) {
+                MejorButton("ESTUDIAR", R.drawable.ic_study, Color(0xFF1F0980)) {
                     navController.navigate(BottomNavItem.Pomodoro.route) {
                         popUpTo(navController.graph.startDestinationId) { saveState = true }
                         launchSingleTop = true
@@ -135,7 +138,7 @@ fun HomeScreen(navController: NavController) {
                     }
                 }
 
-                MejorButton("AVANCES", R.drawable.ic_calendar, Color(0xFF8A78FF)) {
+                MejorButton("AVANCES", R.drawable.ic_calendar, Color(0xFF1F0980)) {
                     navController.navigate(BottomNavItem.Avances.route) {
                         popUpTo(navController.graph.startDestinationId) { saveState = true }
                         launchSingleTop = true
@@ -143,9 +146,12 @@ fun HomeScreen(navController: NavController) {
                     }
                 }
             }
+
+            Spacer(Modifier.height(30.dp)) // margen final para que no quede pegado al borde
         }
     }
 }
+
 
 @Composable
 fun MejorButton(text: String, icon: Int, color: Color, onClick: () -> Unit) {
