@@ -76,7 +76,7 @@ fun MyProfileScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // 🧍 Avatar + Datos
+                //Avatar + Datos
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -112,7 +112,7 @@ fun MyProfileScreen(
                     }
                 }
 
-                // ⚙️ CONFIGURACIÓN
+                //CONFIGURACIÓN
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -154,7 +154,7 @@ fun MyProfileScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 🔒 Botón Cerrar sesión
+                //Botón Cerrar sesión
                 Button(
                     onClick = {
                         Firebase.auth.signOut()
@@ -181,7 +181,7 @@ fun MyProfileScreen(
     }
 }
 
-// 📊 COMPONENTES AUXILIARES
+// COMPONENTES AUXILIARES
 @Composable
 fun StatItem(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
