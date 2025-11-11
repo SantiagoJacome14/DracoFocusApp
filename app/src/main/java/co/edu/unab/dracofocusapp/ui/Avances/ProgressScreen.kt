@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,19 +22,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.edu.unab.dracofocusapp.R
 import androidx.navigation.NavController
-
+import androidx.compose.foundation.verticalScroll
 @Composable
-fun ProgressScreen(navController: NavController)
- {
+fun ProgressScreen(navController: NavController) {
 
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
 
+    // ✅ Agregamos scroll vertical
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(gradientBackground)
+            .verticalScroll(rememberScrollState()) // <--- IMPORTANTE
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -64,25 +66,15 @@ fun ProgressScreen(navController: NavController)
         Spacer(Modifier.height(22.dp))
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-
             NeonCard(modifier = Modifier.weight(1f)) {
-
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
                     Text("Minutos estudiados", color = Color.White, fontWeight = FontWeight.Bold)
-
                     Spacer(Modifier.height(6.dp))
-
                     Text("298 min", color = Color(0xFF22DDF2), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
                     Spacer(Modifier.height(10.dp))
-
                     BarChart(listOf(15, 45, 60, 35, 55, 80, 50))
-
                     Spacer(Modifier.height(10.dp))
-
-                    // Ver más detalles
-                    TextButton(onClick = { /* aquí luego abriremos otra screen */ }) {
+                    TextButton(onClick = { /* abrir detalles */ }) {
                         Text("Ver más detalles", color = Color(0xFF22DDF2), fontWeight = FontWeight.Bold)
                     }
                 }
@@ -90,15 +82,13 @@ fun ProgressScreen(navController: NavController)
 
             Spacer(Modifier.width(15.dp))
 
-            NeonCard(modifier = Modifier.weight(1f), ) {
-
+            NeonCard(modifier = Modifier.weight(1f)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Progreso Lecciones", color = Color.White, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(10.dp))
                     CircularProgressWithText(0.33f)
                     Spacer(Modifier.height(10.dp))
-                    // Ver más detalles
-                    TextButton(onClick = { /* Aquí luego abriremos otra pantalla */ }) {
+                    TextButton(onClick = { /* abrir detalles */ }) {
                         Text("Ver más detalles", color = Color(0xFF22DDF2), fontWeight = FontWeight.Bold)
                     }
                 }
@@ -112,8 +102,11 @@ fun ProgressScreen(navController: NavController)
             Spacer(Modifier.height(8.dp))
             Text("Estudia 15 min de Estructura de Datos para alcanzar tu meta semanal.", color = Color.White)
         }
+
+        Spacer(Modifier.height(50.dp)) // margen final para evitar corte
     }
 }
+
 
 
 // ---------- COMPONENTES ---------- //
