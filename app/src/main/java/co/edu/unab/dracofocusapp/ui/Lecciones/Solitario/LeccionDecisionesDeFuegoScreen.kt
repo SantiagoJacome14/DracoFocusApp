@@ -51,7 +51,7 @@ fun LeccionDecisionesDeFuegoScreen(
     var yaNavego by rememberSaveable { mutableStateOf(false) }
 
 
-// ✅ Obtenemos el ViewModel de feedback (persistente entre pantallas)
+// Obtenemos el ViewModel de feedback (persistente entre pantallas)
     val feedbackViewModel: FeedbackViewModel = viewModel()
 
     DisposableEffect(Unit) {
@@ -67,7 +67,7 @@ fun LeccionDecisionesDeFuegoScreen(
                         yaNavego = true
                         feedbackViewModel.retroalimentacion.value = feedback
 
-                        // 🚀 Aseguramos que la navegación se ejecute en el hilo principal de Compose
+                        // Aseguramos que la navegación se ejecute en el hilo principal de Compose
                         scope.launch {
                             delay(300)
                             navController.navigate(AppRoutes.FEEDBACK_SCREEN) {
@@ -78,7 +78,7 @@ fun LeccionDecisionesDeFuegoScreen(
                 }
             }
 
-        // 🔻 Limpieza automática al salir de la pantalla
+        // Limpieza automática al salir de la pantalla
         onDispose {
             listenerRegistration.remove()
         }
