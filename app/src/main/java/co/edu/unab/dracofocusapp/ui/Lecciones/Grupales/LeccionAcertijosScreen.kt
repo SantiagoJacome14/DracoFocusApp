@@ -1,4 +1,4 @@
-package co.edu.unab.dracofocusapp.ui
+package co.edu.unab.dracofocusapp.ui.Lecciones.Grupales
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,11 +11,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
+import co.edu.unab.dracofocusapp.auth.ModernTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LeccionTesoroScreen(
+fun LeccionAcertijosScreen(
     navController: NavController,
     onComplete: () -> Unit
 ) {
@@ -26,7 +26,7 @@ fun LeccionTesoroScreen(
     Scaffold(
         topBar = {
             ModernTopBar(
-                title = "Guardianes del Tesoro",
+                title = "El Reto de los Acertijos",
                 showBackButton = true,
                 onBackClick = { navController.popBackStack() }
             )
@@ -41,7 +41,7 @@ fun LeccionTesoroScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                Text("Aprenderás variables y condicionales.", color = Color.White, fontSize = 18.sp)
+                Text("Aprenderás funciones y lógica.", color = Color.White, fontSize = 18.sp)
 
                 Button(
                     onClick = {

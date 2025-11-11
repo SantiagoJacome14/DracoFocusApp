@@ -1,4 +1,4 @@
-package co.edu.unab.dracofocusapp.ui
+package co.edu.unab.dracofocusapp.ui.Lecciones.Grupales
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,13 +12,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.navigation.NavController
-import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
+import co.edu.unab.dracofocusapp.auth.ModernTopBar
+
 @Composable
 fun IngresarCodigoGrupoScreen(
     navController: NavController,

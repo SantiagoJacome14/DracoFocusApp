@@ -29,8 +29,41 @@ import co.edu.unab.dracofocusapp.R
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
+import androidx.compose.runtime.Composable
 
+@OptIn(ExperimentalMaterial3Api::class) // necesario por el uso de CenterAlignedTopAppBar
+@Composable
+fun ModernTopBar(
+    title: String,
+    showBackButton: Boolean = true,
+    onBackClick: () -> Unit = {}
+) {
+    CenterAlignedTopAppBar(
+        title = {
+            Text(
+                text = title,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
+        },
+        navigationIcon = {
+            if (showBackButton) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Volver",
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+        },
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            containerColor = Color.Transparent
+        )
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class) //Es necesario para usar material3
 @Composable

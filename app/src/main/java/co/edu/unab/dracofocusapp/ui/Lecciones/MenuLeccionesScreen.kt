@@ -1,4 +1,4 @@
-package co.edu.unab.dracofocusapp.ui
+package co.edu.unab.dracofocusapp.ui.Lecciones
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

@@ -1,4 +1,4 @@
-package co.edu.unab.dracofocusapp.ui
+package co.edu.unab.dracofocusapp.ui.Lecciones.Solitario
 
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -24,7 +24,7 @@ import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.api.enviarCodigoALaIA
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 @Composable
@@ -184,7 +184,7 @@ fun LeccionElLibroDeTareasScreen(
 
                             if (codigoUsuario.isNotBlank()) {
                                 // Llama a la API con Retrofit y muestra FeedbackScreen
-                                kotlinx.coroutines.GlobalScope.launch {
+                                GlobalScope.launch {
                                     try {
                                         enviarCodigoALaIA(
                                             navController = navController,

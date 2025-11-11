@@ -17,18 +17,18 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.auth.AuthViewModel
-import co.edu.unab.dracofocusapp.ui.MyProfileScreen
+import co.edu.unab.dracofocusapp.ui.Perfil.MyProfileScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
-import co.edu.unab.dracofocusapp.ui.ProgressScreen
-import co.edu.unab.dracofocusapp.ui.HomeScreen
-import co.edu.unab.dracofocusapp.ui.LeccionDecisionesDeFuegoScreen
-import co.edu.unab.dracofocusapp.ui.LeccionElLibroDeTareasScreen
-import co.edu.unab.dracofocusapp.ui.LeccionVueloInfinitoScreen
-import co.edu.unab.dracofocusapp.ui.LeccionesDracoSolitarioScreen
-import co.edu.unab.dracofocusapp.ui.MenuLeccionesScreen
-import co.edu.unab.dracofocusapp.ui.DracomodoroScreen
-import co.edu.unab.dracofocusapp.ui.CicloCompletadoScreen
-import co.edu.unab.dracofocusapp.ui.MuseoDracArteScreen
+import co.edu.unab.dracofocusapp.ui.Avances.ProgressScreen
+import co.edu.unab.dracofocusapp.ui.Draco.HomeScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionDecisionesDeFuegoScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionElLibroDeTareasScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionVueloInfinitoScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionesDracoSolitarioScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.MenuLeccionesScreen
+import co.edu.unab.dracofocusapp.ui.Pomodoro.DracomodoroScreen
+import co.edu.unab.dracofocusapp.ui.Pomodoro.CicloCompletadoScreen
+import co.edu.unab.dracofocusapp.ui.Museo.MuseoDracArteScreen
 
 
 // ---------------------- RUTAS DEL MENÚ INFERIOR ----------------------

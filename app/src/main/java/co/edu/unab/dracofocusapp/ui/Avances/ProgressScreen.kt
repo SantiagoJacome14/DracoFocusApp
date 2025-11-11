@@ -1,4 +1,4 @@
-package co.edu.unab.dracofocusapp.ui
+package co.edu.unab.dracofocusapp.ui.Avances
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image

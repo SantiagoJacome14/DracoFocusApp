@@ -1,4 +1,4 @@
-package co.edu.unab.dracofocusapp.ui
+package co.edu.unab.dracofocusapp.ui.Pomodoro
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

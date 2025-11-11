@@ -1,4 +1,4 @@
-package co.edu.unab.dracofocusapp.ui
+package co.edu.unab.dracofocusapp.ui.Lecciones
 
 //Documento que se guarda en Firebase
 data class RespuestaLeccionesClass(

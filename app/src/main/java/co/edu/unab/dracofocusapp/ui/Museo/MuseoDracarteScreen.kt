@@ -1,4 +1,4 @@
-package co.edu.unab.dracofocusapp.ui
+package co.edu.unab.dracofocusapp.ui.Museo
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,7 +19,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
-import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
+import co.edu.unab.dracofocusapp.auth.ModernTopBar
 
 @Composable
 fun MuseoDracArteScreen(navController: NavController) {
