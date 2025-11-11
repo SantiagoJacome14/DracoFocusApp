@@ -1,5 +1,6 @@
 package co.edu.unab.dracofocusapp.navigation
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,9 +36,15 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.navArgument
 import co.edu.unab.dracofocusapp.ui.Lecciones.FeedbackScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.IngresarCodigoGrupoScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.MenuLeccionesScreen
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
+import androidx.navigation.NavType
+import co.edu.unab.dracofocusapp.viewmodel.FeedbackViewModel
 
 //borrar este comentario prueba
 //Especificar Rutas
@@ -188,10 +195,14 @@ fun AppNavigation() { //crea el estado de navigation
                 RespuestaLeccionesScreen(onBack = { navController.popBackStack() })
             }
 
-            composable("feedback_screen/{retroalimentacion}") { backStackEntry ->
-                val feedback = backStackEntry.arguments?.getString("retroalimentacion") ?: ""
-                FeedbackScreen(navController = navController, retroalimentacion = feedback)
+            composable("feedback_screen") {
+                val feedbackViewModel: FeedbackViewModel = viewModel()
+                FeedbackScreen(
+                    navController = navController,
+                    retroalimentacion = feedbackViewModel.retroalimentacion.value
+                )
             }
+
 
             // Pantalla Museo
             composable("museo_dracarte") {

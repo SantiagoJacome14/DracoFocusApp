@@ -8,18 +8,21 @@ fun guardarRespuestaLeccion(codigo: String, leccionId: String) {
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
 
     val respuesta = hashMapOf(
+        "user_id" to userId,
+        "leccion_id" to leccionId,
         "codigo" to codigo,
-        "leccionId" to leccionId,
-        "usuarioId" to userId,
-        "fecha" to System.currentTimeMillis()
+        "estado" to "pendiente",
+        "timestamp" to System.currentTimeMillis()
     )
 
-    db.collection("respuestas_lecciones")
+    // Guardar en una colección dedicada a las respuestas pendientes
+    db.collection("respuestas_pendientes")
         .add(respuesta)
         .addOnSuccessListener {
-            println("✅ Respuesta guardada correctamente")
+            println("✅ Respuesta enviada a DracoFocusAI")
         }
         .addOnFailureListener { e ->
             println("❌ Error al guardar: ${e.message}")
         }
 }
+
