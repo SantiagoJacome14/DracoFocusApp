@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -22,20 +23,64 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.R
-import co.edu.unab.dracofocusapp.api.enviarCodigoALaIA
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.GlobalScope
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+import co.edu.unab.dracofocusapp.viewmodel.FeedbackViewModel
 
 @Composable
 fun LeccionElLibroDeTareasScreen(
     navController: NavController,
     onBack: () -> Unit
 ) {
-    var codigoUsuario by remember { mutableStateOf("") }
+
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
+
+    var codigoUsuario by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    val db = FirebaseFirestore.getInstance()
+    val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
+    var yaNavego by rememberSaveable { mutableStateOf(false) }
+
+    val feedbackViewModel: FeedbackViewModel = viewModel()
+
+    // ✅ Escuchar respuesta de la IA
+    DisposableEffect(Unit) {
+        val listener = db.collection("feedback_lecciones")
+            .whereEqualTo("user_id", userId)
+            .whereEqualTo("leccion_id", "el_libro_de_tareas")
+            .addSnapshotListener { snapshots, e ->
+                if (e != null || snapshots == null || yaNavego) return@addSnapshotListener
+
+                for (doc in snapshots.documents) {
+                    val feedback = doc.getString("feedback_ai") ?: ""
+                    if (feedback.isNotBlank()) {
+                        yaNavego = true
+                        feedbackViewModel.retroalimentacion.value = feedback
+
+                        // ✅ Marcar como completada
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("leccion_completada", 3)
+
+                        scope.launch {
+                            delay(300)
+                            navController.navigate("feedback_screen") {
+                                popUpTo("leccion_el_libro_de_tareas") { inclusive = true }
+                            }
+                        }
+                    }
+                }
+            }
+
+        onDispose { listener.remove() }
+    }
 
     Scaffold { innerPadding ->
         Box(
@@ -51,7 +96,8 @@ fun LeccionElLibroDeTareasScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
             ) {
-                // Encabezado
+
+                // ✅ ENCABEZADO
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
@@ -67,7 +113,7 @@ fun LeccionElLibroDeTareasScreen(
                     Spacer(modifier = Modifier.width(10.dp))
                     Image(
                         painter = painterResource(id = R.drawable.img_dr),
-                        contentDescription = "Dragón de fuego",
+                        contentDescription = "Dragón escribiendo",
                         modifier = Modifier.size(80.dp)
                     )
                 }
@@ -75,14 +121,14 @@ fun LeccionElLibroDeTareasScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Estructuras de control: Listas y recorridos",
+                    text = "Listas y recorridos",
                     color = Color(0xFFCDF4F2),
                     fontSize = 18.sp
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Objetivo
+                // ✅ OBJETIVO
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -90,18 +136,15 @@ fun LeccionElLibroDeTareasScreen(
                         .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(12.dp))
                         .padding(14.dp)
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = "OBJETIVO: ",
-                            color = Color(0xFF0F2B5D),
+                            color = Color(0xFFCDF4F2),
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
                         Text(
-                            text = "Almacenar datos y recorrerlos.",
+                            text = "Almacenar tareas y recorrerlas con ciclos.",
                             color = Color(0xFFCBC8C8),
                             fontSize = 14.sp
                         )
@@ -110,7 +153,7 @@ fun LeccionElLibroDeTareasScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Ejercicio
+                // ✅ EJERCICIO
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -129,19 +172,17 @@ fun LeccionElLibroDeTareasScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Crea una lista con las tareas de Draco: ['estudiar', 'volar', 'descansar', 'tomar café']. " +
-                                    "Haz que el programa imprima cada tarea con un número de orden.",
+                            text = "Crea una lista con las tareas de Draco:\n['estudiar', 'volar', 'descansar', 'tomar café'].\nMuestra cada tarea con su número de orden.",
                             color = Color(0xFFCBC8C8),
                             fontSize = 14.sp
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Editor de código
                         OutlinedTextField(
                             value = codigoUsuario,
                             onValueChange = { codigoUsuario = it },
-                            label = { Text("# Escribe tus líneas de código aquí") },
+                            label = { Text("#Escribe tu código aquí") },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(160.dp),
@@ -163,14 +204,21 @@ fun LeccionElLibroDeTareasScreen(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                // Botones inferiores
+                // ✅ BOTONES
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Button(
-                        onClick = { navController.navigate("lecciones_solitario") },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F2B5D)),
+                        onClick = {
+                            navController.navigate("lecciones_solitario") {
+                                popUpTo("leccion_el_libro_de_tareas") { inclusive = true }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF22DDF2),
+                            contentColor = Color.Black
+                        ),
                         modifier = Modifier
                             .weight(1f)
                             .padding(end = 10.dp)
@@ -180,20 +228,30 @@ fun LeccionElLibroDeTareasScreen(
 
                     Button(
                         onClick = {
-                            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
-
                             if (codigoUsuario.isNotBlank()) {
-                                // Llama a la API con Retrofit y muestra FeedbackScreen
-                                GlobalScope.launch {
+                                isLoading = true
+                                scope.launch {
                                     try {
-                                        enviarCodigoALaIA(
-                                            navController = navController,
-                                            userId = userId,
-                                            leccionId = "el_libro_de_tareas",
-                                            codigo = codigoUsuario
+                                        val respuesta = hashMapOf(
+                                            "user_id" to userId,
+                                            "leccion_id" to "el_libro_de_tareas",
+                                            "codigo" to codigoUsuario,
+                                            "estado" to "pendiente",
+                                            "timestamp" to System.currentTimeMillis()
                                         )
+
+                                        db.collection("respuestas_pendientes")
+                                            .add(respuesta)
+                                            .addOnSuccessListener {
+                                                Log.d("Firebase", "✅ Enviado correctamente")
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Log.e("Firebase", "❌ Error: ${e.message}")
+                                            }
                                     } catch (e: Exception) {
-                                        Log.e("API", "Error al enviar código: ${e.message}")
+                                        Log.e("Envio", "Error: ${e.message}")
+                                    } finally {
+                                        isLoading = false
                                     }
                                 }
                             } else {
@@ -208,12 +266,30 @@ fun LeccionElLibroDeTareasScreen(
                     ) {
                         Text("Enviar", color = Color(0xFFEBFFFE))
                     }
-
-                }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
             }
+
+            // ✅ LOADER
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xAA000000)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = Color(0xFF22DDF2))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            "Draco está revisando tu código...",
+                            color = Color.White,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+            }
         }
     }
-
+}
