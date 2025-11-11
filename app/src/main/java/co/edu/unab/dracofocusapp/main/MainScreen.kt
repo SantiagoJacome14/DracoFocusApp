@@ -21,6 +21,11 @@ import co.edu.unab.dracofocusapp.ui.Perfil.MyProfileScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
 import co.edu.unab.dracofocusapp.ui.Avances.ProgressScreen
 import co.edu.unab.dracofocusapp.ui.Draco.HomeScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.IngresarCodigoGrupoScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionAcertijosScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionTesoroScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionVueloScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionesGrupalesScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionDecisionesDeFuegoScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionElLibroDeTareasScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionVueloInfinitoScreen
@@ -202,6 +207,44 @@ fun BottomNavGraph(
                 onBack = { navController.navigate("lecciones_solitario") }
             )
         }
+
+        // ---------- Modo grupal ----------
+        composable("grupo_codigo") {
+            IngresarCodigoGrupoScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        // ---------- Lecciones grupales ----------
+        composable("lecciones_grupales") {
+            LeccionesGrupalesScreen(
+                navController = navController,
+                onBack = { navController.navigate("grupo_codigo") }
+            )
+        }
+
+        // Guardianes del Tesoro
+        composable("leccion_tesoro") {
+            LeccionTesoroScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        // Misión de Vuelo
+        composable("leccion_vuelo") {
+            LeccionVueloScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        // Reto de los Acertijos
+        composable("leccion_acertijos") {
+            LeccionAcertijosScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
 
         // ---------- Ciclo Completado (Pomodoro) ----------
         composable("ciclo_completado") {

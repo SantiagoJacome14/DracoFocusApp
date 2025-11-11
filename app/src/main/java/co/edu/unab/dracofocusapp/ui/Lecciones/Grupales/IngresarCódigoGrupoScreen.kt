@@ -15,6 +15,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.auth.ModernTopBar
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+
 
 @Composable
 fun IngresarCodigoGrupoScreen(
@@ -103,12 +106,46 @@ fun IngresarCodigoGrupoScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                TextButton(onClick = {
-                    // esta opción sería para generar un código
-                    navController.navigate("lecciones_grupales")
-                }) {
-                    Text("No tengo código, generar uno", color = Color(0xFF22DDF2))
+                var mostrarDialogo by remember { mutableStateOf(false) }
+                var codigoGenerado by remember { mutableStateOf("") }
+
+                TextButton(
+                    onClick = {
+                        error = false
+                        codigoGenerado = (1000..9999).random().toString()
+                        mostrarDialogo = true
+                    }
+                ) {
+                    Text(
+                        "No tengo código, generar uno",
+                        color = Color(0xFF22DDF2),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
+
+                val clipboardManager = LocalClipboardManager.current
+
+                if (mostrarDialogo) {
+                    AlertDialog(
+                        onDismissRequest = { mostrarDialogo = false },
+                        title = { Text("Código Generado") },
+                        text = { Text("Tu código es: $codigoGenerado\nCompártelo con tu compañero") },
+                        confirmButton = {
+                            Row {
+                                TextButton(onClick = {
+                                    clipboardManager.setText(AnnotatedString(codigoGenerado))
+                                }) {
+                                    Text("Copiar")
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                TextButton(onClick = { mostrarDialogo = false }) {
+                                    Text("Cerrar")
+                                }
+                            }
+                        }
+                    )
+                }
+
             }
         }
     }

@@ -18,8 +18,9 @@ import co.edu.unab.dracofocusapp.auth.ModernTopBar
 @Composable
 fun LeccionTesoroScreen(
     navController: NavController,
-    onComplete: () -> Unit
-) {
+    onComplete: () -> Unit = {},
+    onBack: () -> Unit = { navController.popBackStack() }
+)  {
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
