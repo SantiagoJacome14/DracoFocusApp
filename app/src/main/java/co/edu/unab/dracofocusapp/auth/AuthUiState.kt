@@ -1,6 +1,6 @@
 package co.edu.unab.dracofocusapp.auth
 
-// ESTADO DE LA UI
+// ESTADO
 // Esta es la DataClass, que es la unica fuente donde contiene todas las variables necesarias para
 // pintar la UI y mostrar mensajes donde especifica cuales son los tipos de datos, string, number etc
 

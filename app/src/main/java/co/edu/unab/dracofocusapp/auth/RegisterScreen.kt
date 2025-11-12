@@ -89,7 +89,6 @@ fun RegisterScreen(
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
-
     Scaffold(
         topBar = {
             ModernTopBar(
@@ -107,12 +106,11 @@ fun RegisterScreen(
                 .padding(24.dp),
             contentAlignment = Alignment.TopCenter
         ) {
-            // ✅ Activamos scroll aquí
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
-
+                // Imagen Draco
                 Image(
                     painter = painterResource(id = R.drawable.dragon_dracofocus1),
                     contentDescription = "Mascota Draco",
@@ -143,6 +141,7 @@ fun RegisterScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
+                        // Nombre completo
                         CustomRegisterField(
                             value = fullName,
                             onValueChange = { if (it.all { c -> c.isLetter() || c.isWhitespace() }) fullName = it },
@@ -155,6 +154,7 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        // Correo
                         CustomRegisterField(
                             value = email,
                             onValueChange = { email = it },
@@ -168,6 +168,7 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        // Semestre
                         CustomRegisterField(
                             value = semester,
                             onValueChange = { if (it.all { c -> c.isDigit() }) semester = it },
@@ -181,6 +182,7 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        // Contraseña
                         CustomRegisterField(
                             value = password,
                             onValueChange = { password = it },
@@ -195,6 +197,7 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        // Confirmar contraseña
                         CustomRegisterField(
                             value = confirmPassword,
                             onValueChange = { confirmPassword = it },
@@ -205,6 +208,7 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
+                        // BOTÓN REGISTRO
                         Button(
                             onClick = {
                                 if (fullName.isBlank() || email.isBlank() || semester.isBlank() ||
@@ -225,29 +229,43 @@ fun RegisterScreen(
                                 isLoading = true
                                 errorMessage = null
 
-                                val userData = hashMapOf(
-                                    "nombre" to fullName,
-                                    "correo" to email.trim(),
-                                    "semestre" to semester
-                                )
-
+                                // Crear usuario en Firebase
                                 auth.createUserWithEmailAndPassword(email.trim(), password)
                                     .addOnCompleteListener { task ->
                                         if (task.isSuccessful) {
-                                            val uid = auth.currentUser?.uid ?: return@addOnCompleteListener
-                                            db.collection("usuarios").document(uid)
-                                                .set(userData)
-                                                .addOnSuccessListener {
-                                                    isLoading = false
-                                                    onRegisterSuccess()
-                                                }
-                                                .addOnFailureListener {
-                                                    isLoading = false
-                                                    errorMessage = "Error guardando datos."
+                                            val currentUser = auth.currentUser
+                                            val uid = currentUser?.uid ?: return@addOnCompleteListener
+
+                                            // Actualiza el nombre en FirebaseAuth
+                                            val profileUpdates =
+                                                com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                                                    .setDisplayName(fullName)
+                                                    .build()
+
+                                            currentUser.updateProfile(profileUpdates)
+                                                .addOnCompleteListener {
+                                                    // Guarda los datos también en Firestore
+                                                    val userData = hashMapOf(
+                                                        "nombre" to fullName,
+                                                        "correo" to email.trim(),
+                                                        "semestre" to semester
+                                                    )
+
+                                                    db.collection("usuarios").document(uid)
+                                                        .set(userData)
+                                                        .addOnSuccessListener {
+                                                            isLoading = false
+                                                            onRegisterSuccess()
+                                                        }
+                                                        .addOnFailureListener {
+                                                            isLoading = false
+                                                            errorMessage = "Error guardando datos."
+                                                        }
                                                 }
                                         } else {
                                             isLoading = false
-                                            errorMessage = task.exception?.message ?: "Error al registrar usuario."
+                                            errorMessage = task.exception?.message
+                                                ?: "Error al registrar usuario."
                                         }
                                     }
                             },
@@ -266,6 +284,7 @@ fun RegisterScreen(
                                 Text("Crear Cuenta", fontWeight = FontWeight.Bold)
                         }
 
+                        //  Mensaje de error
                         errorMessage?.let {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(it, color = Color.Red, fontSize = 13.sp)
@@ -273,6 +292,7 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        //  Enlace a login
                         Text(
                             text = "¿Ya tienes cuenta? Inicia sesión",
                             color = Color(0xFF22DDF2),
@@ -281,6 +301,7 @@ fun RegisterScreen(
                         )
                     }
                 }
+
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }

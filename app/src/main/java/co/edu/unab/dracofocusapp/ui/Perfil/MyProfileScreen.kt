@@ -39,8 +39,16 @@ fun MyProfileScreen(
 
     // Usuario desde Firebase
     val user = Firebase.auth.currentUser
-    val userName = user?.displayName ?: "Usuario"
-    val userEmail = user?.email ?: "Sin correo"
+    var userName by remember { mutableStateOf("Usuario") }
+    var userEmail by remember { mutableStateOf("Sin correo") }
+
+    //se refresca para que cargue los datos
+    LaunchedEffect(Unit) {
+        Firebase.auth.currentUser?.reload()
+        val updatedUser = Firebase.auth.currentUser
+        userName = updatedUser?.displayName ?: "Usuario"
+        userEmail = updatedUser?.email ?: "Sin correo"
+    }
 
     var notificationsEnabled by remember { mutableStateOf(true) }
     var soundEnabled by remember { mutableStateOf(true) }
@@ -68,7 +76,7 @@ fun MyProfileScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            // ✅ Scroll vertical completo
+            // Scroll
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -85,6 +93,7 @@ fun MyProfileScreen(
                         .padding(24.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        // 🐉 Avatar del usuario
                         Image(
                             painter = painterResource(id = R.drawable.ic_avatar),
                             contentDescription = "Avatar",
@@ -93,14 +102,41 @@ fun MyProfileScreen(
                                 .padding(bottom = 8.dp)
                         )
 
-                        Text(userName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                        Text(userEmail, color = Color(0xFFB0BEC5), fontSize = 14.sp)
+                        // 🧍‍♂️ Nombre del usuario (arriba del correo)
+                        Text(
+                            text = userName,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // ✉️ Correo electrónico
+                        Text(
+                            text = userEmail,
+                            color = Color(0xFFB0BEC5),
+                            fontSize = 14.sp
+                        )
 
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Nivel 9", color = Color(0xFF22DDF2), fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        Text("1670 XP", color = Color.White, fontSize = 14.sp)
+
+                        // 🔰 Nivel y experiencia
+                        Text(
+                            text = "Nivel 9",
+                            color = Color(0xFF22DDF2),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                        Text(
+                            text = "1670 XP",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
 
                         Spacer(modifier = Modifier.height(18.dp))
+
+                        // 📊 Estadísticas
                         Row(
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             modifier = Modifier.fillMaxWidth()
