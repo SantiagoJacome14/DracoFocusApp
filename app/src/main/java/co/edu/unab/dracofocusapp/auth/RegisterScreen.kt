@@ -49,6 +49,7 @@ fun ModernTopBar(
                 fontSize = 20.sp
             )
         },
+        // Botón de retroceso si está habilitado
         navigationIcon = {
             if (showBackButton) {
                 IconButton(onClick = onBackClick) {
@@ -66,26 +67,30 @@ fun ModernTopBar(
         )
     )
 }
-
+// Pantalla de registro
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    onBackToLogin: () -> Unit,
-    onRegisterSuccess: () -> Unit
+    onBackToLogin: () -> Unit, // Acción al presionar "Volver" o "¿Ya tienes cuenta?"
+    onRegisterSuccess: () -> Unit // Acción tras completar el registro exitosamente
 ) {
+    // Inicialización de Firebase Authentication y Firestore
     val auth = Firebase.auth
     val db = Firebase.firestore
 
+    // Variables de estado para los campos del formulario
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var semester by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
+    // Control de campo enfocado y mensajes de error
     var focusedField by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Fondo degradado
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
@@ -132,6 +137,7 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // Caja que contiene los campos de registro
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -226,6 +232,7 @@ fun RegisterScreen(
                                     return@Button
                                 }
 
+                                // Carga o error
                                 isLoading = true
                                 errorMessage = null
 
@@ -307,7 +314,7 @@ fun RegisterScreen(
         }
     }
 }
-
+// Fun reutilizable para registro
 @Composable
 fun CustomRegisterField(
     value: String,
@@ -318,6 +325,7 @@ fun CustomRegisterField(
     isPassword: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
+    // Controla si la contraseña es visible o no
     var passwordVisible by remember { mutableStateOf(false) }
 
     OutlinedTextField(
@@ -331,6 +339,7 @@ fun CustomRegisterField(
                 tint = Color(0xFF22DDF2)
             )
         },
+        // Ícono de alternancia de visibilidad para campos de contraseña
         trailingIcon = {
             if (isPassword) {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -342,6 +351,7 @@ fun CustomRegisterField(
                 }
             }
         },
+        // Oculta el texto si el campo es una contraseña
         visualTransformation = if (isPassword && !passwordVisible)
             PasswordVisualTransformation()
         else

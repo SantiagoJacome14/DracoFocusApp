@@ -30,19 +30,28 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import androidx.compose.foundation.clickable
 import androidx.lifecycle.viewmodel.compose.viewModel
-
+// Pantalla autenticación Login
 @Composable
 fun AuthScreen(
     viewModel: AuthViewModel = viewModel(),
-    onNavigateToMain: () -> Unit = {},
-    onNavigateToForgotPassword: () -> Unit = {},
-    onNavigateToRegister: () -> Unit = {}
+    onNavigateToMain: () -> Unit = {},     // Navega a la pantalla principal si el login es exitoso
+    onNavigateToForgotPassword: () -> Unit = {},  // Navega a la pantalla de recuperación de contraseña
+    onNavigateToRegister: () -> Unit = {}         // Navega a la pantalla de registro
 ) {
+
+    //Estados
+
+    // Estado de la interfaz de usuario
     val uiState = viewModel.uiState
+
+    // Instancia de Firebase Authentication
     val auth = Firebase.auth
+
+    // Estados locales para el cargando y errores
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Fondo con el degradado
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
@@ -237,7 +246,7 @@ fun AuthScreen(
     }
 }
 
-
+// Funciones reutilizables para los iconos, el placeholder y la comtraseña
 @Composable
 fun CustomTextField(
     value: String,
@@ -262,6 +271,7 @@ fun CustomTextField(
                 tint = Color(0xFF22DDF2)
             )
         },
+        // Si el campo es contraseña, muestra el icono para alternar visibilidad
         trailingIcon = {
             if (isPassword) {
                 val visibilityIcon: ImageVector =
@@ -275,6 +285,7 @@ fun CustomTextField(
                 }
             }
         },
+        // Controla si se muestra o no el texto de la contraseña
         visualTransformation = if (isPassword && !passwordVisible)
             PasswordVisualTransformation()
         else

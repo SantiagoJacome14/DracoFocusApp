@@ -29,13 +29,18 @@ import com.google.firebase.ktx.Firebase
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(
-    onBackToLogin: () -> Unit
+    onBackToLogin: () -> Unit // Regresar a inicio de sesion
 ) {
+
+    // Instancia de autenticación de Firebase
     val auth = Firebase.auth
+
+    // Variables de estado para el correo, el indicador de carga y los mensajes de respuesta
     var email by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
 
+    // Fondo degradado
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
@@ -47,7 +52,7 @@ fun ForgotPasswordScreen(
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
-        // ✅ Scroll activado
+        // Scroll a
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.verticalScroll(rememberScrollState())
@@ -91,22 +96,27 @@ fun ForgotPasswordScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Botón para enviar el correo de recuperación
                     Button(
                         onClick = {
-                            if (email.isBlank()) {
+                            if (email.isBlank()) {  // Validación básica: verificar si el campo está vacío
                                 message = "Por favor ingresa tu correo electrónico."
                                 return@Button
                             }
 
+                            // Activar indicador de carga y limpiar mensajes previos
                             isLoading = true
                             message = null
 
+                            // Envío del correo de restablecimiento de contraseña
                             auth.sendPasswordResetEmail(email.trim())
                                 .addOnCompleteListener { task ->
                                     isLoading = false
                                     message = if (task.isSuccessful) {
+                                        // Si el envío fue exitoso, mostrar mensaje de confirmación
                                         "Correo de recuperación enviado. Revisa tu bandeja."
                                     } else {
+                                        // Si ocurre un error, mostrar el mensaje correspondiente
                                         task.exception?.message ?: "Error al enviar el correo."
                                     }
                                 }
@@ -120,6 +130,7 @@ fun ForgotPasswordScreen(
                             contentColor = Color.Black
                         )
                     ) {
+                        // Indicador de carga o el lo que sale en el boton
                         if (isLoading)
                             CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(20.dp))
                         else
@@ -128,6 +139,7 @@ fun ForgotPasswordScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    // Muestra mensajes de éxito o error según el resultado del envío
                     message?.let {
                         Text(
                             text = it,
