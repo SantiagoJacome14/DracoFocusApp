@@ -17,7 +17,9 @@ import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.auth.ModernTopBar
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
-
+import androidx.compose.animation.core.*
+import kotlinx.coroutines.delay
+import androidx.compose.ui.draw.alpha
 
 @Composable
 fun IngresarCodigoGrupoScreen(
@@ -26,9 +28,18 @@ fun IngresarCodigoGrupoScreen(
 ) {
     var codigo by remember { mutableStateOf("") }
     var error by remember { mutableStateOf(false) }
+    var mostrandoAnimacion by remember { mutableStateOf(false) }
+    var rolDestino by remember { mutableStateOf<String?>(null) }
+    var mensajeRol by remember { mutableStateOf("") }
 
     val background = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
+    )
+
+    // Efecto fade-in animado
+    val alphaAnim by animateFloatAsState(
+        targetValue = if (mostrandoAnimacion) 1f else 0f,
+        animationSpec = tween(durationMillis = 800, easing = LinearEasing)
     )
 
     Scaffold(
@@ -49,6 +60,7 @@ fun IngresarCodigoGrupoScreen(
             contentAlignment = Alignment.Center
         ) {
 
+            // Pantalla principal
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -87,10 +99,26 @@ fun IngresarCodigoGrupoScreen(
                     )
                 }
 
+                // 🔹 BOTÓN DE VALIDAR CÓDIGO
                 Button(
                     onClick = {
-                        if (codigo.trim().length >= 4) {
-                            navController.navigate("lecciones_grupales")
+                        val codigoLimpio = codigo.trim()
+
+                        if (codigoLimpio.length >= 4 && codigoLimpio.last().isDigit()) {
+                            val ultimoDigito = codigoLimpio.last().digitToInt()
+
+                            mostrandoAnimacion = true
+                            mensajeRol = if (ultimoDigito % 2 == 0) {
+                                "Draco te ha asignado el rol de Analista..."
+                            } else {
+                                "Draco te ha asignado el rol de Programador..."
+                            }
+
+                            rolDestino = if (ultimoDigito % 2 == 0) {
+                                "leccion_tesoro" // Analista
+                            } else {
+                                "leccion_tesoro_programador" // Programador
+                            }
                         } else {
                             error = true
                         }
@@ -106,6 +134,7 @@ fun IngresarCodigoGrupoScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                // 🔹 GENERAR CÓDIGO NUEVO
                 var mostrarDialogo by remember { mutableStateOf(false) }
                 var codigoGenerado by remember { mutableStateOf("") }
 
@@ -145,7 +174,37 @@ fun IngresarCodigoGrupoScreen(
                         }
                     )
                 }
+            }
 
+            // 🔹 ANIMACIÓN DE VALIDACIÓN
+            if (mostrandoAnimacion) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xAA000000))
+                        .alpha(alphaAnim),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = Color(0xFF22DDF2))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = mensajeRol,
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                // 🔹 Retardo antes de navegar
+                LaunchedEffect(Unit) {
+                    delay(2200) // espera 2.2 segundos
+                    mostrandoAnimacion = false
+                    rolDestino?.let { destino ->
+                        navController.navigate(destino)
+                    }
+                }
             }
         }
     }

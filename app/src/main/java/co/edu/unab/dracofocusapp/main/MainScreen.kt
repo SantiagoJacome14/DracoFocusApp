@@ -23,7 +23,8 @@ import co.edu.unab.dracofocusapp.ui.Avances.ProgressScreen
 import co.edu.unab.dracofocusapp.ui.Draco.HomeScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.IngresarCodigoGrupoScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionAcertijosScreen
-import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionTesoroScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionGuardianesDelTesoroAnalistaScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionGuardianesDelTesoroProgramadorScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionVueloScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionesGrupalesScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionDecisionesDeFuegoScreen
@@ -225,7 +226,14 @@ fun BottomNavGraph(
 
         // Guardianes del Tesoro
         composable("leccion_tesoro") {
-            LeccionTesoroScreen(
+            LeccionGuardianesDelTesoroAnalistaScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        //Rol PROGRAMADOR
+        composable("leccion_tesoro_programador") {
+            LeccionGuardianesDelTesoroProgramadorScreen(
                 navController = navController,
                 onBack = { navController.popBackStack() }
             )
