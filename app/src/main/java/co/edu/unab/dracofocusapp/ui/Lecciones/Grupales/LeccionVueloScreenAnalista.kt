@@ -62,36 +62,47 @@ fun LeccionVueloScreenAnalista(
                     .verticalScroll(rememberScrollState())
             ) {
 
-                // 🟦 Encabezado
+                // Encabezado
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Lección\nLOS VUELOS DE ENTRENAMIENTO",
-                        color = Color(0xFF57F5ED),
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Image(
-                        painter = painterResource(id = R.drawable.img_dr),
-                        contentDescription = "Draco volando",
-                        modifier = Modifier.size(80.dp)
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "LECCIÓN",
+                            color = Color(0xFF57F5ED),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "VUELOS DE ENTRENAMIENTO",
+                            color = Color(0xFF57F5ED),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Lección grupal 2 — Ciclos, listas y acumuladores",
+                            color = Color(0xFFCDF4F2),
+                            fontSize = 18.sp,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
 
-                Text(
-                    text = "Lección grupal 2 — Ciclos, listas y acumuladores",
-                    color = Color(0xFFCDF4F2),
-                    fontSize = 18.sp
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // CONTEXTO
                 Box(

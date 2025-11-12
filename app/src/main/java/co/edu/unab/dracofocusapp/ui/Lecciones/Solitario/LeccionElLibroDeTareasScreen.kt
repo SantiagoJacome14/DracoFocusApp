@@ -50,7 +50,7 @@ fun LeccionElLibroDeTareasScreen(
 
     val feedbackViewModel: FeedbackViewModel = viewModel()
 
-    // ✅ Escuchar respuesta de la IA
+    // Escuchar respuesta de la IA
     DisposableEffect(Unit) {
         val listener = db.collection("feedback_lecciones")
             .whereEqualTo("user_id", userId)
@@ -97,28 +97,33 @@ fun LeccionElLibroDeTareasScreen(
                     .verticalScroll(rememberScrollState())
             ) {
 
-                // ✅ ENCABEZADO
+                // ENCABEZADO
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Lección\nEL LIBRO DE LAS TAREAS",
-                        color = Color(0xFF57F5ED),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "LECCIÓN",
+                            color = Color(0xFF57F5ED),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "LIBRO DE TAREAS",
+                            color = Color(0xFF57F5ED),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                     Spacer(modifier = Modifier.width(10.dp))
-                    Image(
-                        painter = painterResource(id = R.drawable.img_dr),
-                        contentDescription = "Dragón escribiendo",
-                        modifier = Modifier.size(80.dp)
-                    )
                 }
-
-                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
                     text = "Listas y recorridos",

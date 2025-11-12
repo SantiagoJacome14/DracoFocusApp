@@ -102,22 +102,26 @@ fun LeccionVueloInfinitoScreen(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Lección\nVUELO INFINITO",
-                        color = Color(0xFF57F5ED),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Image(
-                        painter = painterResource(id = R.drawable.img_dr),
-                        contentDescription = "Dragón volando",
-                        modifier = Modifier.size(80.dp)
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "LECCIÓN",
+                            color = Color(0xFF57F5ED),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "VUELO INFINITO",
+                            color = Color(0xFF57F5ED),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
-
-                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
                     text = "Estructuras de control: Bucles",

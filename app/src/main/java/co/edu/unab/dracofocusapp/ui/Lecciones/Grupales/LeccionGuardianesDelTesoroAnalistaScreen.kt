@@ -68,30 +68,39 @@ fun LeccionGuardianesDelTesoroAnalistaScreen(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Lección\nGUARDIANES DEL TESORO",
-                        color = Color(0xFF57F5ED),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Image(
-                        painter = painterResource(id = R.drawable.img_dr),
-                        contentDescription = "Dragón de fuego",
-                        modifier = Modifier.size(80.dp)
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "LECCIÓN",
+                            color = Color(0xFF57F5ED),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "GUARDIANES DEL TESORO",
+                            color = Color(0xFF57F5ED),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Lección grupal 1 — Manejo de variables y condicionales",
+                            color = Color(0xFFCDF4F2),
+                            fontSize = 18.sp,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Text(
-                    text = "Lección grupal 1 — Manejo de variables y condicionales",
-                    color = Color(0xFFCDF4F2),
-                    fontSize = 18.sp
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // OBJETIVO
                 Box(

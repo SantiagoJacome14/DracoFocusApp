@@ -99,28 +99,33 @@ fun LeccionDecisionesDeFuegoScreen(
                     .verticalScroll(rememberScrollState())
             ) {
 
-                // ✅ UI DE LA LECCIÓN
+                //  Encabezado
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Lección\nDECISIONES DE FUEGO",
-                        color = Color(0xFF57F5ED),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "LECCIÓN",
+                            color = Color(0xFF57F5ED),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "DECISIONES DE FUEGO",
+                            color = Color(0xFF57F5ED),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                     Spacer(modifier = Modifier.width(10.dp))
-                    Image(
-                        painter = painterResource(id = R.drawable.img_dr),
-                        contentDescription = "Dragón de fuego",
-                        modifier = Modifier.size(80.dp)
-                    )
                 }
-
-                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
                     text = "Estructuras de control: Condicionales",
@@ -130,7 +135,7 @@ fun LeccionDecisionesDeFuegoScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ✅ OBJETIVO DE LA LECCIÓN
+                // OBJETIVO DE LA LECCIÓN
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
