@@ -262,6 +262,8 @@ fun BottomNavGraph(
 }
 
 // ---------------------- PANTALLA “DRACO” (Bienvenida) ----------------------
+// No implementada aun
+// Es un mensaje para cuando uno entre a la app
 @Composable
 fun DracoWelcomeScreen(
     onNavigateToAuth: () -> Unit,

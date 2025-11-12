@@ -46,7 +46,6 @@ import java.nio.charset.StandardCharsets
 import androidx.navigation.NavType
 import co.edu.unab.dracofocusapp.viewmodel.FeedbackViewModel
 
-//borrar este comentario prueba
 //Especificar Rutas
 object AppRoutes { // este es para los String para evitar errores al escribir los nombers de las rutas
     const val SPLASH = "splash" //ruta para la verificacion de login
@@ -56,24 +55,28 @@ object AppRoutes { // este es para los String para evitar errores al escribir lo
     const val FORGOT_PASSWORD = "forgot_password" // ruta pantalla recuperacion de password
     const val PROFILE = "profile" //ruta perfil
 
-    const val DRACOMODORO = "dracomodoro"
-    const val LECCION_DECISIONES_DE_FUEGO = "leccion_decisiones_de_fuego"
-    const val LECCION_VUELO_INFINITO = "leccion_draco_s2"
-    const val MUSEO_DRACARTE = "museo_dracarte"
-    const val LECCIONES_SOLO = "lecciones_dracosolitario"
-    const val LECCIONES_GRUPALES = "lecciones_grupales"
-    const val RESPUESTA_LECCION_S = "respuesta_leccion_s"
 
-    const val MENU_LECCIONES = "menu_lecciones"
-    const val FEEDBACK_SCREEN = "feedback_screen"
+    // Pantallas tematicas
+    const val DRACOMODORO = "dracomodoro" //Temporizador con el pomodoro
+    const val LECCION_DECISIONES_DE_FUEGO = "leccion_decisiones_de_fuego" // Leccion 1
+    const val LECCION_VUELO_INFINITO = "leccion_draco_s2" // Leccion 2
+
+    const val MUSEO_DRACARTE = "museo_dracarte" // Museo de arte Draco
+    const val LECCIONES_SOLO = "lecciones_dracosolitario" // Lecciones individuales
+    const val LECCIONES_GRUPALES = "lecciones_grupales" // Lecciones grupales
+    const val RESPUESTA_LECCION_S = "respuesta_leccion_s" // Pantalla de respuesta de lección
+
+    const val MENU_LECCIONES = "menu_lecciones" // Menú de tipos de lecciones
+    const val FEEDBACK_SCREEN = "feedback_screen" //Retro alimentacion
 
 
 }
-
+// Navegacion
 @Composable
 fun AppNavigation() { //crea el estado de navigation
     val navController = rememberNavController()
     val auth = Firebase.auth
+    // Detectar si el usuario esta registrado
     LaunchedEffect(auth) {
         auth.addAuthStateListener { firebaseAuth ->
             val user = firebaseAuth.currentUser
@@ -88,7 +91,7 @@ fun AppNavigation() { //crea el estado de navigation
     }
 
 
-
+// Temas visuales de la app
     MaterialTheme(colorScheme = AppColorScheme) {
         NavHost(// es el componente para la navegacion
             navController = navController, //el controlador a usar
@@ -96,7 +99,7 @@ fun AppNavigation() { //crea el estado de navigation
         ) {
             // Rutas
 
-            //  Pantalla verifica si hay usuario logueado
+            //  Pantalla  verifica si hay usuario logueado
             composable(AppRoutes.SPLASH) {
                 SplashScreen(navController = navController)
             }
@@ -174,29 +177,26 @@ fun AppNavigation() { //crea el estado de navigation
                     onBack = { navController.popBackStack() }
                 )
             }
-
-            composable(AppRoutes.LECCION_VUELO_INFINITO) {
-                LeccionVueloInfinitoScreen (
-                    navController = navController,
-                    onBack = { navController.popBackStack() }
-                )
-            }
+            // Pantalla Leciones SOlitario
             composable(AppRoutes.LECCIONES_SOLO) {
                 LeccionesDracoSolitarioScreen(
                     navController = navController,
                     onBack = { navController.popBackStack() }
                 )
             }
+            // Pantalla Lecciones Grupales
             composable(AppRoutes.LECCIONES_GRUPALES) {
                 LeccionesGrupalesScreen(
                         navController = navController,
                         onBack = { navController.popBackStack() }
                 )
             }
+            //Respuesta de las lecciones
             composable(AppRoutes.RESPUESTA_LECCION_S) {
                 RespuestaLeccionesScreen(onBack = { navController.popBackStack() })
             }
 
+            // Pantalla FeedBack
             composable(AppRoutes.FEEDBACK_SCREEN) {
                 val feedbackViewModel: FeedbackViewModel = viewModel()
                 FeedbackScreen(
@@ -221,6 +221,7 @@ fun AppNavigation() { //crea el estado de navigation
                 )
             }
 
+            //Codigo para las lecciones grupales
             composable("lecciones_grupales") {
                 LeccionesGrupalesScreen(
                     navController = navController,
@@ -248,12 +249,12 @@ fun AppNavigation() { //crea el estado de navigation
     }
 }
 
-
+// Pantalla temporal a cambiar luego
 @Composable
 fun MuseoDracoArteScreen(onBack: () -> Boolean) {
     TODO("Not yet implemented")
 }
-
+// Reutilizar codigo para el campo de tezto
 @Composable
 fun CustomTextField(
     value: String,
