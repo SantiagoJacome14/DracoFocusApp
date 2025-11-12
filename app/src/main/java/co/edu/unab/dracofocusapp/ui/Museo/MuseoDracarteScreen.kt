@@ -41,7 +41,8 @@ fun MuseoDracArteScreen(navController: NavController) {
         topBar = {
             ModernTopBar(
                 title = "Museo Dracarte",
-                showBackButton = true
+                showBackButton = true,
+                onBackClick = { navController.popBackStack() }
             )
         },
     ) { innerPadding ->
@@ -70,7 +71,7 @@ fun MuseoDracArteScreen(navController: NavController) {
                         .blur(5.dp)
                 )
 
-                // ✅ Scroll vertical para todo el contenido
+                // Scroll
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Top,
