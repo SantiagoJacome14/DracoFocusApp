@@ -26,6 +26,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeccionAcertijosScreenProgramador(
     navController: NavController,
@@ -41,7 +42,12 @@ fun LeccionAcertijosScreenProgramador(
     val db = FirebaseFirestore.getInstance()
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
 
-    Scaffold { innerPadding ->
+    // Snackbar para el mensaje gamificado
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -203,13 +209,30 @@ fun LeccionAcertijosScreenProgramador(
                                             "estado" to "pendiente",
                                             "timestamp" to System.currentTimeMillis()
                                         )
+
                                         db.collection("entregas_grupales")
                                             .add(entrega)
                                             .addOnSuccessListener {
                                                 Log.d("Firebase", "Código enviado correctamente")
+
+                                                // Actualizar estadísticas del usuario
+                                                val userStatsRef = db.collection("usuarios_estadisticas").document(userId)
+                                                userStatsRef.get()
+                                                    .addOnSuccessListener { document ->
+                                                        if (document.exists()) {
+                                                            val actual = document.getLong("cantidad_lecciones_grupales_completadas") ?: 0
+                                                            userStatsRef.update("cantidad_lecciones_grupales_completadas", actual + 1)
+                                                        } else {
+                                                            val newData = hashMapOf("cantidad_lecciones_grupales_completadas" to 1)
+                                                            userStatsRef.set(newData)
+                                                        }
+                                                        scope.launch {
+                                                            snackbarHostState.showSnackbar("🎉 Programa enviado, ¡Draco te felicita!")
+                                                        }
+                                                    }
                                             }
                                             .addOnFailureListener { e ->
-                                                Log.e("Firebase", "Error: ${e.message}")
+                                                Log.e("Firebase", "Error al enviar: ${e.message}")
                                             }
                                     } catch (e: Exception) {
                                         Log.e("Envio", "Error: ${e.message}")
@@ -254,3 +277,4 @@ fun LeccionAcertijosScreenProgramador(
         }
     }
 }
+

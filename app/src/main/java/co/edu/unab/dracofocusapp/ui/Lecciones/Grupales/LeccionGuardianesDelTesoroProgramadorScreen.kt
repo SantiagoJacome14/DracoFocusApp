@@ -26,6 +26,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeccionGuardianesDelTesoroProgramadorScreen(
     navController: NavController,
@@ -41,7 +42,12 @@ fun LeccionGuardianesDelTesoroProgramadorScreen(
     val db = FirebaseFirestore.getInstance()
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
 
-    Scaffold { innerPadding ->
+    // Snackbar gamificado
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -80,14 +86,14 @@ fun LeccionGuardianesDelTesoroProgramadorScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "🤝 Lección grupal 1 — Manejo de variables y condicionales",
+                    text = "Lección grupal 1 — Manejo de variables y condicionales",
                     color = Color(0xFFCDF4F2),
                     fontSize = 18.sp
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 🧭 OBJETIVO
+                // OBJETIVO
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -143,7 +149,7 @@ fun LeccionGuardianesDelTesoroProgramadorScreen(
                         OutlinedTextField(
                             value = codigoUsuario,
                             onValueChange = { codigoUsuario = it },
-                            label = { Text("#Escribe tu código aquí") },
+                            label = { Text("# Escribe tu código aquí") },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(160.dp),
@@ -196,17 +202,37 @@ fun LeccionGuardianesDelTesoroProgramadorScreen(
                                         val respuesta = hashMapOf(
                                             "user_id" to userId,
                                             "leccion_id" to "guardianes_tesoro_programador",
-                                            "codigo" to codigoUsuario,
+                                            "tipo" to "codigo_python",
+                                            "contenido" to codigoUsuario,
                                             "estado" to "pendiente",
                                             "timestamp" to System.currentTimeMillis()
                                         )
+
                                         db.collection("entregas_grupales")
                                             .add(respuesta)
                                             .addOnSuccessListener {
-                                                Log.d("Firebase", "✅ Código enviado correctamente")
+                                                Log.d("Firebase", "Código enviado correctamente")
+
+                                                // Actualizar estadísticas del usuario
+                                                val userStatsRef = db.collection("usuarios_estadisticas").document(userId)
+                                                userStatsRef.get()
+                                                    .addOnSuccessListener { document ->
+                                                        if (document.exists()) {
+                                                            val actual = document.getLong("cantidad_lecciones_grupales_completadas") ?: 0
+                                                            userStatsRef.update("cantidad_lecciones_grupales_completadas", actual + 1)
+                                                        } else {
+                                                            val newData = hashMapOf("cantidad_lecciones_grupales_completadas" to 1)
+                                                            userStatsRef.set(newData)
+                                                        }
+
+                                                        // Mostrar Snackbar gamificado
+                                                        scope.launch {
+                                                            snackbarHostState.showSnackbar("🎉 Programa enviado, ¡Draco te felicita!")
+                                                        }
+                                                    }
                                             }
                                             .addOnFailureListener { e ->
-                                                Log.e("Firebase", "❌ Error: ${e.message}")
+                                                Log.e("Firebase", "Error: ${e.message}")
                                             }
                                     } catch (e: Exception) {
                                         Log.e("Envio", "Error: ${e.message}")
@@ -215,7 +241,9 @@ fun LeccionGuardianesDelTesoroProgramadorScreen(
                                     }
                                 }
                             } else {
-                                Log.w("API", "⚠ Campo de código vacío, no se envió.")
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Escribe tu código antes de enviar.")
+                                }
                             }
                         },
                         colors = ButtonDefaults.buttonColors(

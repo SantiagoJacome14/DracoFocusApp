@@ -42,7 +42,12 @@ fun LeccionVueloScreenAnalista(
     val db = FirebaseFirestore.getInstance()
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "desconocido"
 
-    Scaffold { innerPadding ->
+    // Snackbar gamificado
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -57,7 +62,7 @@ fun LeccionVueloScreenAnalista(
                     .verticalScroll(rememberScrollState())
             ) {
 
-                // Encabezado
+                // 🟦 Encabezado
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
@@ -169,7 +174,7 @@ fun LeccionVueloScreenAnalista(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                // Botones inferiores
+                // 🟩 Botones inferiores
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
@@ -205,10 +210,29 @@ fun LeccionVueloScreenAnalista(
                                             "estado" to "pendiente",
                                             "timestamp" to System.currentTimeMillis()
                                         )
+
                                         db.collection("entregas_grupales")
                                             .add(entrega)
                                             .addOnSuccessListener {
                                                 Log.d("Firebase", "Entrega enviada correctamente")
+
+                                                // Actualizar estadísticas
+                                                val userStatsRef = db.collection("usuarios_estadisticas").document(userId)
+                                                userStatsRef.get()
+                                                    .addOnSuccessListener { document ->
+                                                        if (document.exists()) {
+                                                            val actual = document.getLong("cantidad_lecciones_grupales_completadas") ?: 0
+                                                            userStatsRef.update("cantidad_lecciones_grupales_completadas", actual + 1)
+                                                        } else {
+                                                            val newData = hashMapOf("cantidad_lecciones_grupales_completadas" to 1)
+                                                            userStatsRef.set(newData)
+                                                        }
+
+                                                        // 🎉 Mostrar mensaje gamificado
+                                                        scope.launch {
+                                                            snackbarHostState.showSnackbar("🎉 Programa enviado, ¡Draco te felicita!")
+                                                        }
+                                                    }
                                             }
                                             .addOnFailureListener { e ->
                                                 Log.e("Firebase", "Error: ${e.message}")
@@ -218,6 +242,10 @@ fun LeccionVueloScreenAnalista(
                                     } finally {
                                         isLoading = false
                                     }
+                                }
+                            } else {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Escribe tu pseudocódigo antes de enviar.")
                                 }
                             }
                         },
@@ -234,7 +262,7 @@ fun LeccionVueloScreenAnalista(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // Indicador de carga
+            // Cargando
             if (isLoading) {
                 Box(
                     modifier = Modifier
