@@ -22,30 +22,41 @@ import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.auth.ModernTopBar
 import androidx.compose.foundation.verticalScroll
+
+// Esta función representa la pantalla "Museo DracArte" dentro de la aplicación
 @Composable
 fun MuseoDracArteScreen(navController: NavController) {
+
+    // Fondo con un degradado de colores oscuros
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
 
+    // Variables que almacenan el número de piezas y pinturas completadas
     var piezasCompletas by remember { mutableStateOf(0) }
     var pinturasCompletas by remember { mutableStateOf(0) }
 
+    // Lista que representa las piezas del museo, inicialmente todas sin completar (false)
     val piezas = remember { mutableStateListOf<Boolean>().apply { repeat(24) { add(false) } } }
 
+    // Cálculo del progreso general del jugador en porcentaje
     val progreso = piezasCompletas * 4.2f
-    val progresoClamped = progreso.coerceAtMost(100f)
+    val progresoClamped = progreso.coerceAtMost(100f) // Limita el valor máximo a 100%
 
+    // Estructura base de la pantalla con barra superior y contenido principal
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
         topBar = {
+            // Barra superior con título y botón de retroceso
             ModernTopBar(
                 title = "Museo Dracarte",
                 showBackButton = true,
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() } // Vuelve a la pantalla anterior
             )
         },
     ) { innerPadding ->
+
+        // Contenedor principal de la pantalla
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -53,36 +64,39 @@ fun MuseoDracArteScreen(navController: NavController) {
                 .padding(innerPadding),
             contentAlignment = Alignment.TopCenter
         ) {
+
+            // Caja principal que contiene el marco del museo
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .clip(RoundedCornerShape(20.dp))
-                    .border(2.dp, Color.Black, RoundedCornerShape(20.dp))
-                    .background(Color(0xFF101C33))
+                    .clip(RoundedCornerShape(20.dp)) // Bordes redondeados
+                    .border(2.dp, Color.Black, RoundedCornerShape(20.dp)) // Borde negro
+                    .background(Color(0xFF101C33)) // Fondo azul oscuro
                     .padding(16.dp)
             ) {
-                // Fondo difuminado
+
+                // Imagen de fondo difuminada para dar ambiente al museo
                 Image(
                     painter = painterResource(id = R.drawable.img_fondo),
                     contentDescription = "Fondo del museo",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .matchParentSize()
-                        .blur(5.dp)
+                        .blur(5.dp) // Efecto de desenfoque
                 )
 
-                // Scroll
+                // Columna que organiza todos los elementos visuales de forma vertical
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Top,
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState()) // ← ¡Clave!
+                        .verticalScroll(rememberScrollState()) // Permite desplazarse si hay mucho contenido
                         .padding(16.dp)
                 ) {
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Barra de progreso
+                    // Sección que muestra el progreso general
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -93,10 +107,11 @@ fun MuseoDracArteScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(10.dp))
 
+                    // Barra visual que representa el progreso total del usuario
                     LinearProgressIndicator(
                         progress = progresoClamped / 100f,
-                        color = Color(0xFFF44336),
-                        trackColor = Color.White,
+                        color = Color(0xFFF44336), // Rojo brillante para el progreso
+                        trackColor = Color.White,  // Fondo de la barra
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(10.dp)
@@ -105,18 +120,20 @@ fun MuseoDracArteScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${progresoClamped.toInt()}%",
+                        text = "${progresoClamped.toInt()}%", // Porcentaje mostrado en texto
                         color = Color.White,
                         fontSize = 16.sp
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Cuatro obras del museo
+                    // Sección donde se muestran las obras del museo
                     Column(
                         verticalArrangement = Arrangement.spacedBy(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+
+                        // Primera fila con dos imágenes de pinturas incompletas
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
@@ -141,6 +158,7 @@ fun MuseoDracArteScreen(navController: NavController) {
                             )
                         }
 
+                        // Segunda fila con otras dos pinturas incompletas
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
@@ -166,10 +184,10 @@ fun MuseoDracArteScreen(navController: NavController) {
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(40.dp)) // margen final para evitar corte
+                    // Espacio final para evitar que el contenido quede cortado en pantallas pequeñas
+                    Spacer(modifier = Modifier.height(40.dp))
                 }
             }
         }
     }
 }
-
