@@ -1,7 +1,6 @@
 package co.edu.unab.dracofocusapp.ui.Lecciones.Grupales
 
 import android.util.Log
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,6 +35,7 @@ fun LeccionGuardianesDelTesoroAnalistaScreen(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
 
+    var pseudocodigo by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val db = FirebaseFirestore.getInstance()
@@ -55,7 +56,7 @@ fun LeccionGuardianesDelTesoroAnalistaScreen(
                     .verticalScroll(rememberScrollState())
             ) {
 
-                // 🟦 Encabezado
+                // Encabezado
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
@@ -141,21 +142,27 @@ fun LeccionGuardianesDelTesoroAnalistaScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // Botón de subir archivo
-                        OutlinedButton(
-                            onClick = { /* Implementar subida de archivo */ },
+                        // ✍️ Editor de pseudocódigo
+                        OutlinedTextField(
+                            value = pseudocodigo,
+                            onValueChange = { pseudocodigo = it },
+                            label = { Text("Escribe tu pseudocódigo aquí") },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(55.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(2.dp, Color(0xFF57F5ED)),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color.Transparent,
-                                contentColor = Color(0xFF57F5ED)
+                                .height(160.dp),
+                            textStyle = LocalTextStyle.current.copy(
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 14.sp,
+                                color = Color.Black
+                            ),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color(0xFFEBFFFE),
+                                unfocusedContainerColor = Color(0xFFEBFFFE),
+                                focusedIndicatorColor = Color(0xFF57F5ED),
+                                unfocusedIndicatorColor = Color(0xFF57F5ED),
+                                cursorColor = Color(0xFF0F2B5D)
                             )
-                        ) {
-                            Text("AGREGAR ENTREGA", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        }
+                        )
                     }
                 }
 
@@ -185,28 +192,31 @@ fun LeccionGuardianesDelTesoroAnalistaScreen(
 
                     Button(
                         onClick = {
-                            isLoading = true
-                            scope.launch {
-                                try {
-                                    val entrega = hashMapOf(
-                                        "user_id" to userId,
-                                        "leccion_id" to "guardianes_tesoro_analista",
-                                        "tipo" to "archivo",
-                                        "estado" to "pendiente",
-                                        "timestamp" to System.currentTimeMillis()
-                                    )
-                                    db.collection("entregas_grupales")
-                                        .add(entrega)
-                                        .addOnSuccessListener {
-                                            Log.d("Firebase", "Entrega enviada correctamente")
-                                        }
-                                        .addOnFailureListener { e ->
-                                            Log.e("Firebase", "Error: ${e.message}")
-                                        }
-                                } catch (e: Exception) {
-                                    Log.e("Envio", "Error: ${e.message}")
-                                } finally {
-                                    isLoading = false
+                            if (pseudocodigo.isNotBlank()) {
+                                isLoading = true
+                                scope.launch {
+                                    try {
+                                        val entrega = hashMapOf(
+                                            "user_id" to userId,
+                                            "leccion_id" to "guardianes_tesoro_analista",
+                                            "tipo" to "pseudocodigo",
+                                            "contenido" to pseudocodigo,
+                                            "estado" to "pendiente",
+                                            "timestamp" to System.currentTimeMillis()
+                                        )
+                                        db.collection("entregas_grupales")
+                                            .add(entrega)
+                                            .addOnSuccessListener {
+                                                Log.d("Firebase", "✅ Entrega enviada correctamente")
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Log.e("Firebase", "❌ Error: ${e.message}")
+                                            }
+                                    } catch (e: Exception) {
+                                        Log.e("Envio", "Error: ${e.message}")
+                                    } finally {
+                                        isLoading = false
+                                    }
                                 }
                             }
                         },
@@ -235,7 +245,7 @@ fun LeccionGuardianesDelTesoroAnalistaScreen(
                         CircularProgressIndicator(color = Color(0xFF22DDF2))
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Draco está revisando tu entrega...",
+                            text = "Draco está revisando tu pseudocódigo...",
                             color = Color.White,
                             fontSize = 16.sp
                         )
@@ -245,4 +255,3 @@ fun LeccionGuardianesDelTesoroAnalistaScreen(
         }
     }
 }
-
