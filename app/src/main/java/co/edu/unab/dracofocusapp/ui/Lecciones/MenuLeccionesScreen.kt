@@ -62,7 +62,7 @@ fun MenuLeccionesScreen(navController: NavController) {
 
             // --- BOTÓN MODO GRUPAL ---
             Button(
-                onClick = { navController.navigate("grupo_codigo") },
+                onClick = { navController.navigate("lecciones_grupales") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

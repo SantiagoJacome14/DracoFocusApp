@@ -22,10 +22,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import co.edu.unab.dracofocusapp.ui.Avances.ProgressScreen
 import co.edu.unab.dracofocusapp.ui.Draco.HomeScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.IngresarCodigoGrupoScreen
-import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionAcertijosScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionAcertijosScreenAnalista
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionAcertijosScreenProgramador
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionGuardianesDelTesoroAnalistaScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionGuardianesDelTesoroProgramadorScreen
-import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionVueloScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionVueloScreenAnalista
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionVueloScreenProgramador
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionesGrupalesScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionDecisionesDeFuegoScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionElLibroDeTareasScreen
@@ -44,9 +46,6 @@ sealed class BottomNavItem(val route: String, val icon: Int, val label: String) 
     object Draco : BottomNavItem("draco", R.drawable.ic_home, "Draco")
     object Avances : BottomNavItem("avances", R.drawable.ic_calendar, "Avances")
     object Perfil : BottomNavItem("perfil", R.drawable.ic_user, "Perfil")
-
-
-
 }
 
 // ---------------------- PANTALLA PRINCIPAL CON NAVBAR ----------------------
@@ -77,7 +76,6 @@ data class NavItem(val route: String, val icon: Int, val label: String)
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -89,14 +87,12 @@ fun BottomNavigationBar(navController: NavHostController) {
         NavItem(BottomNavItem.Perfil.route, R.drawable.ic_user, "Perfil")
     )
 
-    // Rutas Lecciones
     val leccionesRoutes = listOf(
-        "menu_lecciones",
-        "lecciones_solitario",
-        "grupo_codigo",
-        "leccion_decisiones_fuego",
-        "leccion_vuelo_infinito",
-        "leccion_libro_tareas"
+        "menu_lecciones", "lecciones_solitario", "lecciones_grupales",
+        "ingresar_codigo_grupo/{leccionId}",
+        "leccion_guardianes_analista", "leccion_guardianes_programador",
+        "leccion_vuelo_analista", "leccion_vuelo_programador",
+        "leccion_acertijos_analista", "leccion_acertijos_programador"
     )
 
     NavigationBar(
@@ -104,7 +100,6 @@ fun BottomNavigationBar(navController: NavHostController) {
         tonalElevation = 0.dp
     ) {
         items.forEach { item ->
-
             val isSelected =
                 currentRoute == item.route ||
                         (item.route == BottomNavItem.Lecciones.route && currentRoute in leccionesRoutes)
@@ -114,9 +109,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 onClick = {
                     val targetRoute = if (item.route == BottomNavItem.Lecciones.route) {
                         "menu_lecciones"
-                    } else {
-                        item.route
-                    }
+                    } else item.route
 
                     if (currentRoute != targetRoute) {
                         navController.navigate(targetRoute) {
@@ -156,27 +149,19 @@ fun BottomNavGraph(
 ) {
     NavHost(navController, startDestination = BottomNavItem.Draco.route) {
 
-
-        // ---------- Pestaña Draco (Home) ----------
+        // ---------- Home ----------
         composable(BottomNavItem.Draco.route) {
             HomeScreen(navController)
         }
 
-
-
-        // ---------- Abiertos desde navegación inferior ----------
+        // ---------- Menú inferior ----------
         composable(BottomNavItem.Avances.route) { ProgressScreen(navController = navController) }
         composable(BottomNavItem.Perfil.route) { MyProfileScreen() }
-
         composable(BottomNavItem.Pomodoro.route) { DracomodoroScreen() }
 
         // ---------- Menú de Lecciones ----------
         composable("menu_lecciones") {
             MenuLeccionesScreen(navController = navController)
-        }
-        //  MUSEO
-        composable("museo_dracarte") {
-            MuseoDracArteScreen(navController)
         }
 
         // ---------- Modo Solitario ----------
@@ -186,22 +171,18 @@ fun BottomNavGraph(
                 onBack = { navController.navigate("menu_lecciones") }
             )
         }
-
-        // Screens de lecciones
         composable("leccion_decisiones_fuego") {
             LeccionDecisionesDeFuegoScreen(
                 navController = navController,
                 onBack = { navController.navigate("lecciones_solitario") }
             )
         }
-
         composable("leccion_vuelo_infinito") {
             LeccionVueloInfinitoScreen(
                 navController = navController,
                 onBack = { navController.navigate("lecciones_solitario") }
             )
         }
-
         composable("leccion_libro_tareas") {
             LeccionElLibroDeTareasScreen(
                 navController = navController,
@@ -209,54 +190,73 @@ fun BottomNavGraph(
             )
         }
 
-        // ---------- Modo grupal ----------
-        composable("grupo_codigo") {
-            IngresarCodigoGrupoScreen(
-                navController = navController,
-                onBack = { navController.popBackStack() }
-            )
-        }
-        // ---------- Lecciones grupales ----------
+        // ---------- Modo Grupal ----------
         composable("lecciones_grupales") {
             LeccionesGrupalesScreen(
                 navController = navController,
-                onBack = { navController.navigate("grupo_codigo") }
+                onBack = { navController.navigate("menu_lecciones") }
             )
         }
 
-        // Guardianes del Tesoro
-        composable("leccion_tesoro") {
+        // Pantalla de código (recibe el nombre de la lección)
+        composable("ingresar_codigo_grupo/{leccionId}") { backStackEntry ->
+            IngresarCodigoGrupoScreen(
+                navController = navController,
+                backStackEntry = backStackEntry,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // ---------- Guardianes del Tesoro ----------
+        composable("leccion_guardianes_analista") {
             LeccionGuardianesDelTesoroAnalistaScreen(
                 navController = navController,
                 onBack = { navController.popBackStack() }
             )
         }
-        //Rol PROGRAMADOR
-        composable("leccion_tesoro_programador") {
+        composable("leccion_guardianes_programador") {
             LeccionGuardianesDelTesoroProgramadorScreen(
                 navController = navController,
                 onBack = { navController.popBackStack() }
             )
         }
-        // Misión de Vuelo
-        composable("leccion_vuelo") {
-            LeccionVueloScreen(
+
+        // ---------- Misión de Vuelo ----------
+        composable("leccion_vuelo_analista") {
+            LeccionVueloScreenAnalista(
                 navController = navController,
                 onBack = { navController.popBackStack() }
             )
         }
-        // Reto de los Acertijos
-        composable("leccion_acertijos") {
-            LeccionAcertijosScreen(
+        composable("leccion_vuelo_programador") {
+            LeccionVueloScreenProgramador(
                 navController = navController,
                 onBack = { navController.popBackStack() }
             )
         }
 
+        // ---------- Reto de los Acertijos ----------
+        composable("leccion_acertijos_analista") {
+            LeccionAcertijosScreenAnalista(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("leccion_acertijos_programador") {
+            LeccionAcertijosScreenProgramador(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
 
-        // ---------- Ciclo Completado (Pomodoro) ----------
+        // ---------- Ciclo Pomodoro ----------
         composable("ciclo_completado") {
             CicloCompletadoScreen(navController)
+        }
+
+        // ---------- Museo ----------
+        composable("museo_dracarte") {
+            MuseoDracArteScreen(navController)
         }
     }
 }
@@ -316,10 +316,6 @@ fun DracoWelcomeScreen(
             ) {
                 Text("Ver mi perfil 👤", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
         }
     }
 }
-

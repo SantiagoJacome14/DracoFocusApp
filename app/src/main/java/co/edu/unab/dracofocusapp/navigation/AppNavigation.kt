@@ -213,10 +213,11 @@ fun AppNavigation() { //crea el estado de navigation
 
         }
             // Pantalla para el codigo de lecciones en grupo
-            composable("grupo_codigo") {
+            composable("ingresar_codigo_grupo/{leccionId}") { backStackEntry ->
                 IngresarCodigoGrupoScreen(
                     navController = navController,
-                    onBack = { navController.navigate("menu_lecciones") }
+                    backStackEntry = backStackEntry,
+                    onBack = { navController.popBackStack() }
                 )
             }
 

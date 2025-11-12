@@ -9,37 +9,39 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.navigation.NavController
-import co.edu.unab.dracofocusapp.auth.ModernTopBar
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.animation.core.*
+import androidx.navigation.NavBackStackEntry
 import kotlinx.coroutines.delay
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.shape.RoundedCornerShape
+import co.edu.unab.dracofocusapp.auth.ModernTopBar
 
 @Composable
 fun IngresarCodigoGrupoScreen(
     navController: NavController,
-    onBack: () -> Unit
+    backStackEntry: NavBackStackEntry,
+    onBack: () -> Unit = {}
 ) {
+    // Recupera el nombre de la lección desde la ruta
+    val leccionId = backStackEntry.arguments?.getString("leccionId") ?: "guardianes_tesoro"
+
     var codigo by remember { mutableStateOf("") }
     var error by remember { mutableStateOf(false) }
     var mostrandoAnimacion by remember { mutableStateOf(false) }
-    var rolDestino by remember { mutableStateOf<String?>(null) }
     var mensajeRol by remember { mutableStateOf("") }
+    var destinoRol by remember { mutableStateOf("") }
 
-    val background = Brush.verticalGradient(
+    val gradient = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
 
-    // Efecto fade-in animado
     val alphaAnim by animateFloatAsState(
         targetValue = if (mostrandoAnimacion) 1f else 0f,
-        animationSpec = tween(durationMillis = 800, easing = LinearEasing)
+        animationSpec = tween(durationMillis = 800)
     )
 
     Scaffold(
@@ -51,27 +53,25 @@ fun IngresarCodigoGrupoScreen(
             )
         }
     ) { innerPadding ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(background)
+                .background(gradient)
                 .padding(innerPadding)
                 .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
 
-            // Pantalla principal
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
                 Text(
-                    text = "Ingresa el código de tu compañero para estudiar juntos",
+                    "Ingresa el código de tu compañero para comenzar la lección",
                     color = Color(0xFFB3B3B3),
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center
+                    fontSize = 16.sp
                 )
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 OutlinedTextField(
                     value = codigo,
@@ -79,45 +79,51 @@ fun IngresarCodigoGrupoScreen(
                         codigo = it
                         error = false
                     },
-                    label = { Text("Código de invitación") },
-                    singleLine = true,
+                    label = { Text("Código del grupo") },
                     isError = error,
-                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
                     colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = Color(0xFF22DDF2),
                         unfocusedIndicatorColor = Color.Gray,
-                        cursorColor = Color(0xFF22DDF2),
-                        focusedLabelColor = Color(0xFF22DDF2)
+                        cursorColor = Color(0xFF22DDF2)
                     )
                 )
 
                 if (error) {
                     Text(
-                        "Código incorrecto. Intenta de nuevo.",
+                        "Código inválido, inténtalo de nuevo.",
                         color = Color(0xFFFF6B6B),
                         fontSize = 13.sp
                     )
                 }
 
-                // 🔹 BOTÓN DE VALIDAR CÓDIGO
+                Spacer(modifier = Modifier.height(24.dp))
+
                 Button(
                     onClick = {
-                        val codigoLimpio = codigo.trim()
-
-                        if (codigoLimpio.length >= 4 && codigoLimpio.last().isDigit()) {
-                            val ultimoDigito = codigoLimpio.last().digitToInt()
+                        val limpio = codigo.trim()
+                        if (limpio.length >= 4 && limpio.last().isDigit()) {
+                            val ultimo = limpio.last().digitToInt()
 
                             mostrandoAnimacion = true
-                            mensajeRol = if (ultimoDigito % 2 == 0) {
-                                "Draco te ha asignado el rol de Analista..."
-                            } else {
-                                "Draco te ha asignado el rol de Programador..."
-                            }
 
-                            rolDestino = if (ultimoDigito % 2 == 0) {
-                                "leccion_tesoro" // Analista
+                            // Determinar el mensaje y destino
+                            if (ultimo % 2 == 0) {
+                                mensajeRol = "Draco te ha asignado el rol de Analista..."
+                                destinoRol = when (leccionId) {
+                                    "guardianes_tesoro" -> "leccion_guardianes_analista"
+                                    "mision_vuelo" -> "leccion_vuelo_analista"
+                                    "reto_acertijos" -> "leccion_acertijos_analista"
+                                    else -> "lecciones_grupales"
+                                }
                             } else {
-                                "leccion_tesoro_programador" // Programador
+                                mensajeRol = "Draco te ha asignado el rol de Programador..."
+                                destinoRol = when (leccionId) {
+                                    "guardianes_tesoro" -> "leccion_guardianes_programador"
+                                    "mision_vuelo" -> "leccion_vuelo_programador"
+                                    "reto_acertijos" -> "leccion_acertijos_programador"
+                                    else -> "lecciones_grupales"
+                                }
                             }
                         } else {
                             error = true
@@ -132,51 +138,10 @@ fun IngresarCodigoGrupoScreen(
                     Text("Validar Código", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 🔹 GENERAR CÓDIGO NUEVO
-                var mostrarDialogo by remember { mutableStateOf(false) }
-                var codigoGenerado by remember { mutableStateOf("") }
-
-                TextButton(
-                    onClick = {
-                        error = false
-                        codigoGenerado = (1000..9999).random().toString()
-                        mostrarDialogo = true
-                    }
-                ) {
-                    Text(
-                        "No tengo código, generar uno",
-                        color = Color(0xFF22DDF2),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                val clipboardManager = LocalClipboardManager.current
-
-                if (mostrarDialogo) {
-                    AlertDialog(
-                        onDismissRequest = { mostrarDialogo = false },
-                        title = { Text("Código Generado") },
-                        text = { Text("Tu código es: $codigoGenerado\nCompártelo con tu compañero") },
-                        confirmButton = {
-                            Row {
-                                TextButton(onClick = {
-                                    clipboardManager.setText(AnnotatedString(codigoGenerado))
-                                }) {
-                                    Text("Copiar")
-                                }
-                                Spacer(Modifier.width(8.dp))
-                                TextButton(onClick = { mostrarDialogo = false }) {
-                                    Text("Cerrar")
-                                }
-                            }
-                        }
-                    )
-                }
+                Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // 🔹 ANIMACIÓN DE VALIDACIÓN
+            // 🔹 Animación tipo overlay
             if (mostrandoAnimacion) {
                 Box(
                     modifier = Modifier
@@ -197,13 +162,10 @@ fun IngresarCodigoGrupoScreen(
                     }
                 }
 
-                // 🔹 Retardo antes de navegar
                 LaunchedEffect(Unit) {
-                    delay(2200) // espera 2.2 segundos
+                    delay(2200)
                     mostrandoAnimacion = false
-                    rolDestino?.let { destino ->
-                        navController.navigate(destino)
-                    }
+                    navController.navigate(destinoRol)
                 }
             }
         }

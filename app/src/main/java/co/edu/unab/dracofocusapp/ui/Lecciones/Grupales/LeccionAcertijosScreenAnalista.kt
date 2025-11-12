@@ -15,7 +15,7 @@ import co.edu.unab.dracofocusapp.auth.ModernTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LeccionVueloScreen(
+fun LeccionAcertijosScreenAnalista(
     navController: NavController,
     onComplete: () -> Unit = {},
     onBack: () -> Unit = { navController.popBackStack() }
@@ -27,7 +27,7 @@ fun LeccionVueloScreen(
     Scaffold(
         topBar = {
             ModernTopBar(
-                title = "Misión de Vuelo",
+                title = "El Reto de los Acertijos",
                 showBackButton = true,
                 onBackClick = { navController.popBackStack() }
             )
@@ -42,7 +42,7 @@ fun LeccionVueloScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                Text("Aprenderás ciclos, listas y contadores.", color = Color.White, fontSize = 18.sp)
+                Text("Aprenderás funciones y lógica.", color = Color.White, fontSize = 18.sp)
 
                 Button(
                     onClick = {

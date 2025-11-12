@@ -182,7 +182,7 @@ fun LeccionesGrupalesScreen(
                         subtitulo = "Variables y condicionales",
                         isCompleted = lecciones[0],
                         onStart = {
-                            navController.navigate("leccion_tesoro")
+                            navController.navigate("ingresar_codigo_grupo/guardianes_tesoro")
                         }
                     )
 
@@ -192,7 +192,7 @@ fun LeccionesGrupalesScreen(
                         subtitulo = "Ciclos, acumuladores",
                         isCompleted = lecciones[1],
                         onStart = {
-                            navController.navigate("leccion_vuelo")
+                            navController.navigate("ingresar_codigo_grupo/mision_vuelo")
                         }
                     )
 
@@ -202,7 +202,7 @@ fun LeccionesGrupalesScreen(
                         subtitulo = "Funciones y lógica",
                         isCompleted = lecciones[2],
                         onStart = {
-                            navController.navigate("leccion_acertijos")
+                            navController.navigate("ingresar_codigo_grupo/reto_acertijos")
                         }
                     )
                 }
