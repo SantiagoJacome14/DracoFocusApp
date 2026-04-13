@@ -1,5 +1,6 @@
 package co.edu.unab.dracofocusapp.ui.Draco
 
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,6 +23,13 @@ import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.main.BottomNavItem
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -36,7 +44,7 @@ fun HomeScreen(navController: NavController) {
             .background(gradientBackground)
             .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
-        // ✅ Scroll habilitado
+        // Scroll
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -57,11 +65,17 @@ fun HomeScreen(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(20.dp)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.dragon_dracofocus1),
-                        contentDescription = "Draco",
-                        modifier = Modifier.size(180.dp)
-                    )
+                    val progreso = 0.3f
+
+                    val selectedVideo = remember(progreso) {
+                        if (progreso > 0.5f) {
+                            listOf(R.raw.dracoidle, R.raw.dracochilltomandocafe).random()
+                        } else {
+                            listOf(R.raw.dracotriste, R.raw.dracotristongo).random()
+                        }
+                    }
+
+                    DracoVideo(videoRes = selectedVideo)
 
                     Spacer(Modifier.height(12.dp))
 
@@ -182,4 +196,34 @@ fun MejorButton(text: String, icon: Int, color: Color, onClick: () -> Unit) {
             )
         }
     }
+}
+@Composable
+fun DracoVideo(videoRes: Int) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    val exoPlayer = remember(videoRes) {
+        ExoPlayer.Builder(context).build().apply {
+            val uri = Uri.parse("android.resource://${context.packageName}/$videoRes")
+            setMediaItem(MediaItem.fromUri(uri))
+            repeatMode = Player.REPEAT_MODE_ONE
+            prepare()
+            playWhenReady = true
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            exoPlayer.release()
+        }
+    }
+
+    AndroidView(
+        factory = {
+            PlayerView(it).apply {
+                player = exoPlayer
+                useController = false
+            }
+        },
+        modifier = Modifier.size(180.dp)
+    )
 }

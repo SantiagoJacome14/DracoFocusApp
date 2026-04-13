@@ -77,7 +77,7 @@ fun AppNavigation() { //crea el estado de navigation
     val navController = rememberNavController()
     val auth = Firebase.auth
     // Detectar si el usuario esta registrado
-    LaunchedEffect(auth) {
+/*    LaunchedEffect(auth) {
         auth.addAuthStateListener { firebaseAuth ->
             val user = firebaseAuth.currentUser
             if (user == null) {
@@ -90,12 +90,12 @@ fun AppNavigation() { //crea el estado de navigation
         }
     }
 
-
+*/
 // Temas visuales de la app
     MaterialTheme(colorScheme = AppColorScheme) {
         NavHost(// es el componente para la navegacion
             navController = navController, //el controlador a usar
-            startDestination = AppRoutes.SPLASH // la pantalla que se muestra al iniciar
+            startDestination = AppRoutes.MAIN // la pantalla que se muestra al iniciar
         ) {
             // Rutas
 
