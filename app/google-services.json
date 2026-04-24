@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "659167749865",
+    "project_id": "dracofocusapp",
+    "storage_bucket": "dracofocusapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:659167749865:android:0b7bcbfee0e61703a9f278",
+        "android_client_info": {
+          "package_name": "co.edu.unab.dracofocusapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCw4pSyNEf06Da_SjUMb5Js85C33diUX1Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
