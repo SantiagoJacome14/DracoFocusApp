@@ -67,7 +67,6 @@ dependencies {
     implementation("com.google.accompanist:accompanist-navigation-animation:0.34.0")
     implementation("androidx.compose.animation:animation:1.7.2")
 
-
     implementation("androidx.activity:activity-compose:1.9.0")
 
     // NAVIGATION
@@ -82,6 +81,9 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // COIL (Caché de imágenes)
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

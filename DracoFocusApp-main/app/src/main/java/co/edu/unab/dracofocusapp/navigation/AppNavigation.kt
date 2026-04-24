@@ -1,5 +1,9 @@
 package co.edu.unab.dracofocusapp.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,14 +34,37 @@ fun AppNavigation() {
     MaterialTheme(colorScheme = AppColorScheme) {
         NavHost(
             navController = navController,
-            startDestination = Screen.Splash.route
+            startDestination = Screen.Splash.route,
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                ) + fadeIn(animationSpec = tween(500))
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(500)
+                ) + fadeOut(animationSpec = tween(500))
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                ) + fadeIn(animationSpec = tween(500))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(500)
+                ) + fadeOut(animationSpec = tween(500))
+            }
         ) {
-            // Pantalla de carga y verificación de Auth
+            // Splash & Auth
             composable(Screen.Splash.route) {
                 SplashScreen(navController = navController)
             }
 
-            // Autenticación
             composable(Screen.Auth.route) {
                 AuthScreen(
                     onNavigateToMain = {
@@ -66,9 +93,7 @@ fun AppNavigation() {
             }
 
             composable(Screen.ForgotPassword.route) {
-                ForgotPasswordScreen(
-                    onBackToLogin = { navController.popBackStack() }
-                )
+                ForgotPasswordScreen(onBackToLogin = { navController.popBackStack() })
             }
 
             // Flujo Principal
@@ -148,7 +173,6 @@ fun AppNavigation() {
 
             composable(Screen.Museo.route) {
                 // TODO: Implementar pantalla de Museo
-                // MuseoDracoArteScreen(onBack = { navController.popBackStack() })
             }
         }
     }
