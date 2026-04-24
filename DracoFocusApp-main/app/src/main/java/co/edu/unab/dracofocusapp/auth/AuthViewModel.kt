@@ -6,7 +6,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.edu.unab.dracofocusapp.data.repository.AuthRepository
+import co.edu.unab.dracofocusapp.ui.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -16,12 +19,17 @@ class AuthViewModel @Inject constructor(
 ) : ViewModel() {
 
     var uiState by mutableStateOf(AuthUiState())
+        private set
+
+    private val _uiEvent = MutableSharedFlow<UiEvent>()
+    val uiEvent = _uiEvent.asSharedFlow()
 
     fun onError(message: String?) {
-        uiState = uiState.copy(
-            isLoading = false,
-            errorMessage = message ?: "Ocurrió un error inesperado."
-        )
+        val errorMsg = message ?: "Ocurrió un error inesperado."
+        uiState = uiState.copy(isLoading = false, errorMessage = errorMsg)
+        viewModelScope.launch {
+            _uiEvent.emit(UiEvent.ShowSnackbar(errorMsg))
+        }
     }
 
     fun clearError() {
@@ -48,16 +56,6 @@ class AuthViewModel @Inject constructor(
         )
     }
 
-    fun signOut() {
-        authRepository.logout()
-        uiState = uiState.copy(
-            isSuccessLogin = false,
-            isLoading = false,
-            errorMessage = null
-        )
-        clearForm()
-    }
-
     fun onLoginEmailChanged(value: String) {
         uiState = uiState.copy(loginEmail = value.trim())
     }
@@ -66,7 +64,7 @@ class AuthViewModel @Inject constructor(
         uiState = uiState.copy(loginPassword = value)
     }
 
-    fun onLoginClicked(onSuccess: () -> Unit) {
+    fun onLoginClicked() {
         if (uiState.loginEmail.isBlank() || uiState.loginPassword.isBlank()) {
             onError("Por favor, completa todos los campos.")
             return
@@ -79,7 +77,7 @@ class AuthViewModel @Inject constructor(
                 result.fold(
                     onSuccess = {
                         uiState = uiState.copy(isLoading = false, isSuccessLogin = true)
-                        onSuccess()
+                        _uiEvent.emit(UiEvent.ShowSnackbar("¡Bienvenido de nuevo!"))
                     },
                     onFailure = { error ->
                         onError(error.message)
@@ -89,61 +87,35 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // Registro
-    fun onSignUpNameChanged(value: String) {
-        val filtered = value.filter { it.isLetter() || it.isWhitespace() }
-        uiState = uiState.copy(signUpName = filtered)
-    }
-
-    fun onSignUpEmailChanged(value: String) {
-        uiState = uiState.copy(signUpEmail = value.trim())
-    }
-
-    fun onSignUpSemesterChanged(value: String) {
-        val filtered = value.filter { it.isDigit() }.take(2)
-        uiState = uiState.copy(signUpSemester = filtered)
-    }
-
-    fun onSignUpPasswordChanged(value: String) {
-        uiState = uiState.copy(signUpPassword = value)
-    }
-
-    fun onSignUpConfirmPasswordChanged(value: String) {
-        uiState = uiState.copy(signUpConfirmPassword = value)
-    }
-
-    fun onSignUpClicked(onSuccess: () -> Unit) {
+    // Registro similar...
+    fun onSignUpClicked() {
         val name = uiState.signUpName
         val email = uiState.signUpEmail
-        val semester = uiState.signUpSemester
         val pass = uiState.signUpPassword
         val confirm = uiState.signUpConfirmPassword
 
-        when {
-            name.isBlank() || email.isBlank() || semester.isBlank() || pass.isBlank() || confirm.isBlank() -> {
-                onError("Completa todos los campos para continuar.")
-            }
-            pass.length < 6 -> {
-                onError("La contraseña debe tener al menos 6 caracteres.")
-            }
-            pass != confirm -> {
-                onError("Las contraseñas no coinciden.")
-            }
-            else -> {
-                uiState = uiState.copy(isLoading = true, errorMessage = null)
-                viewModelScope.launch {
-                    authRepository.register(email, pass, name).collect { result ->
-                        result.fold(
-                            onSuccess = {
-                                uiState = uiState.copy(isLoading = false, isSuccessLogin = true)
-                                onSuccess()
-                            },
-                            onFailure = { error ->
-                                onError(error.message)
-                            }
-                        )
+        if (name.isBlank() || email.isBlank() || pass.isBlank() || confirm.isBlank()) {
+            onError("Completa todos los campos.")
+            return
+        }
+
+        if (pass != confirm) {
+            onError("Las contraseñas no coinciden.")
+            return
+        }
+
+        uiState = uiState.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            authRepository.register(email, pass, name).collect { result ->
+                result.fold(
+                    onSuccess = {
+                        uiState = uiState.copy(isLoading = false, isSuccessLogin = true)
+                        _uiEvent.emit(UiEvent.ShowSnackbar("¡Cuenta creada con éxito!"))
+                    },
+                    onFailure = { error ->
+                        onError(error.message)
                     }
-                }
+                )
             }
         }
     }
