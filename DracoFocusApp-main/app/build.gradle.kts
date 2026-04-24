@@ -85,6 +85,9 @@ dependencies {
     // COIL (Caché de imágenes)
     implementation("io.coil-kt:coil-compose:2.6.0")
 
+    // LOTTIE (Animaciones fluidas)
+    implementation("com.airbnb.android:lottie-compose:6.4.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
