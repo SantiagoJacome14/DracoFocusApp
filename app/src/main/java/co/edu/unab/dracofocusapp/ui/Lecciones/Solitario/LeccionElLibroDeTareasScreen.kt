@@ -29,6 +29,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.edu.unab.dracofocusapp.viewmodel.FeedbackViewModel
+import co.edu.unab.dracofocusapp.navigation.AppRoutes
 
 @Composable
 fun LeccionElLibroDeTareasScreen(
@@ -71,8 +72,8 @@ fun LeccionElLibroDeTareasScreen(
 
                         scope.launch {
                             delay(300)
-                            navController.navigate("feedback_screen") {
-                                popUpTo("leccion_el_libro_de_tareas") { inclusive = true }
+                            navController.navigate(AppRoutes.FEEDBACK_SCREEN) {
+                                popUpTo(AppRoutes.LECCION_LIBRO_TAREAS) { inclusive = true }
                             }
                         }
                     }
@@ -217,7 +218,7 @@ fun LeccionElLibroDeTareasScreen(
                     Button(
                         onClick = {
                             navController.navigate("lecciones_solitario") {
-                                popUpTo("leccion_el_libro_de_tareas") { inclusive = true }
+                                popUpTo(AppRoutes.LECCION_LIBRO_TAREAS) { inclusive = true }
                             }
                         },
                         colors = ButtonDefaults.buttonColors(

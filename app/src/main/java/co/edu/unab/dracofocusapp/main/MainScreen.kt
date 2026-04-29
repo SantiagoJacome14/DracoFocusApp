@@ -28,10 +28,14 @@ import co.edu.unab.dracofocusapp.ui.Pomodoro.DracomodoroScreen
 import co.edu.unab.dracofocusapp.ui.Pomodoro.CicloCompletadoScreen
 import co.edu.unab.dracofocusapp.ui.MuseoDracoArteScreen
 import co.edu.unab.dracofocusapp.navigation.AppRoutes
+import co.edu.unab.dracofocusapp.ui.Lecciones.FeedbackScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionElLibroDeTareasScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionVueloInfinitoScreen
+import co.edu.unab.dracofocusapp.viewmodel.FeedbackViewModel
 
 sealed class BottomNavItem(val route: String, val icon: Int, val label: String) {
     object Lecciones : BottomNavItem("lecciones", R.drawable.ic_book, "Lecciones")
-    object Pomodoro : BottomNavItem("pomodoro", R.drawable.ic_timer, "DRACOMODORO") // Cambio solicitado
+    object Pomodoro : BottomNavItem("pomodoro", R.drawable.ic_timer, "Estudiar")
     object Draco : BottomNavItem("draco", R.drawable.ic_home, "Draco")
     object Avances : BottomNavItem("avances", R.drawable.ic_calendar, "Avances")
     object Perfil : BottomNavItem("perfil", R.drawable.ic_user, "Perfil")
@@ -125,9 +129,46 @@ fun BottomNavGraph(
         composable(BottomNavItem.Lecciones.route) { MenuLeccionesScreen(navController = navController) }
         
         // Rutas adicionales
-        composable("lecciones_solitario") { LeccionesDracoSolitarioScreen(navController = navController, onBack = { navController.popBackStack() }) }
-        composable("lecciones_grupales") { LeccionesGrupalesScreen(navController = navController, onBack = { navController.popBackStack() }) }
-        composable("ciclo_completado") { CicloCompletadoScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoutes.LECCIONES_SOLO) {
+            LeccionesDracoSolitarioScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(AppRoutes.LECCIONES_GRUPALES) {
+            LeccionesGrupalesScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(AppRoutes.CICLO_COMPLETADO) { CicloCompletadoScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoutes.MUSEO_DRACARTE) { MuseoDracoArteScreen(onBack = { navController.popBackStack() }) }
+
+        // Lecciones (solitario) + feedback
+        composable(AppRoutes.LECCION_DECISIONES_DE_FUEGO) {
+            LeccionDecisionesDeFuegoScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(AppRoutes.LECCION_VUELO_INFINITO) {
+            LeccionVueloInfinitoScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(AppRoutes.LECCION_LIBRO_TAREAS) {
+            LeccionElLibroDeTareasScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(AppRoutes.FEEDBACK_SCREEN) {
+            val feedbackViewModel: FeedbackViewModel = viewModel()
+            FeedbackScreen(
+                navController = navController,
+                retroalimentacion = feedbackViewModel.retroalimentacion.value
+            )
+        }
     }
 }

@@ -29,6 +29,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.edu.unab.dracofocusapp.viewmodel.FeedbackViewModel
+import co.edu.unab.dracofocusapp.navigation.AppRoutes
 
 @Composable
 fun LeccionVueloInfinitoScreen(
@@ -70,8 +71,8 @@ fun LeccionVueloInfinitoScreen(
 
                         scope.launch {
                             delay(300)
-                            navController.navigate("feedback_screen") {
-                                popUpTo("leccion_vuelo_infinito") { inclusive = true }
+                            navController.navigate(AppRoutes.FEEDBACK_SCREEN) {
+                                popUpTo(AppRoutes.LECCION_VUELO_INFINITO) { inclusive = true }
                             }
                         }
                     }
@@ -218,7 +219,7 @@ fun LeccionVueloInfinitoScreen(
                     Button(
                         onClick = {
                             navController.navigate("lecciones_solitario") {
-                                popUpTo("leccion_vuelo_infinito") { inclusive = true }
+                                popUpTo(AppRoutes.LECCION_VUELO_INFINITO) { inclusive = true }
                             }
                         },
                         colors = ButtonDefaults.buttonColors(

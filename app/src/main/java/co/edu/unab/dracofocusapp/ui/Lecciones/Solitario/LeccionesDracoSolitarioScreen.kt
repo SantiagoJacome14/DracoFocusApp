@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.ui.Lecciones.ModernLessonCard
 import co.edu.unab.dracofocusapp.auth.ModernTopBar
+import co.edu.unab.dracofocusapp.navigation.AppRoutes
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,7 +126,7 @@ fun LeccionesDracoSolitarioScreen(
                         subtitulo = "Condicionales",
                         isCompleted = lecciones[0],
                         onStart = {
-                            navController.navigate("leccion_decisiones_de_fuego") {
+                            navController.navigate(AppRoutes.LECCION_DECISIONES_DE_FUEGO) {
                                 launchSingleTop = true
                             }
                         }
@@ -137,7 +138,7 @@ fun LeccionesDracoSolitarioScreen(
                         subtitulo = "Bucles",
                         isCompleted = lecciones[1],
                         onStart = {
-                            navController.navigate("leccion_vuelo_infinito") {
+                            navController.navigate(AppRoutes.LECCION_VUELO_INFINITO) {
                                 launchSingleTop = true
                             }
                         }
@@ -149,7 +150,7 @@ fun LeccionesDracoSolitarioScreen(
                         subtitulo = "Arreglos",
                         isCompleted = lecciones[2],
                         onStart = {
-                            navController.navigate("leccion_libro_tareas") {
+                            navController.navigate(AppRoutes.LECCION_LIBRO_TAREAS) {
                                 launchSingleTop = true
                             }
                         }

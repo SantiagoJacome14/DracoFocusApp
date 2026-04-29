@@ -17,6 +17,8 @@ import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionesGrupalesScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.MenuLeccionesScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.RespuestaLeccionesScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionDecisionesDeFuegoScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionElLibroDeTareasScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionVueloInfinitoScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionesDracoSolitarioScreen
 import co.edu.unab.dracofocusapp.ui.MuseoDracoArteScreen
 import co.edu.unab.dracofocusapp.ui.Perfil.MyProfileScreen
@@ -35,9 +37,10 @@ object AppRoutes {
     const val DRACOMODORO = "dracomodoro"
     const val CICLO_COMPLETADO = "ciclo_completado"
     const val LECCION_DECISIONES_DE_FUEGO = "leccion_decisiones_de_fuego"
-    const val LECCION_VUELO_INFINITO = "leccion_draco_s2"
+    const val LECCION_VUELO_INFINITO = "leccion_vuelo_infinito"
+    const val LECCION_LIBRO_TAREAS = "leccion_libro_tareas"
     const val MUSEO_DRACARTE = "museo_dracarte"
-    const val LECCIONES_SOLO = "lecciones_dracosolitario"
+    const val LECCIONES_SOLO = "lecciones_solitario"
     const val LECCIONES_GRUPALES = "lecciones_grupales"
     const val RESPUESTA_LECCION_S = "respuesta_leccion_s"
     const val MENU_LECCIONES = "menu_lecciones"
@@ -114,6 +117,20 @@ fun AppNavigation() {
 
         composable(AppRoutes.LECCION_DECISIONES_DE_FUEGO) {
             LeccionDecisionesDeFuegoScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(AppRoutes.LECCION_VUELO_INFINITO) {
+            LeccionVueloInfinitoScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(AppRoutes.LECCION_LIBRO_TAREAS) {
+            LeccionElLibroDeTareasScreen(
                 navController = navController,
                 onBack = { navController.popBackStack() }
             )

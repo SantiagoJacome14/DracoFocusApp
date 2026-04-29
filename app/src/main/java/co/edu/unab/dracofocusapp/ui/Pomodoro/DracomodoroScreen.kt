@@ -120,7 +120,8 @@ fun DracomodoroScreen(
                         onClick = { isRunning = true },
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        shape = RoundedCornerShape(0.dp)
+                        shape = RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) { Text("INICIAR", color = Color.White, fontWeight = FontWeight.Bold) }
                     
                     VerticalDivider(color = dracoCyan.copy(alpha = 0.5f), thickness = 1.dp)
@@ -129,7 +130,8 @@ fun DracomodoroScreen(
                         onClick = { isRunning = false },
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        shape = RoundedCornerShape(0.dp)
+                        shape = RoundedCornerShape(0.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) { Text("PAUSAR", color = Color.White, fontWeight = FontWeight.Bold) }
                     
                     VerticalDivider(color = dracoCyan.copy(alpha = 0.5f), thickness = 1.dp)
@@ -141,7 +143,8 @@ fun DracomodoroScreen(
                         },
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        shape = RoundedCornerShape(0.dp)
+                        shape = RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) { Text("REINICIAR", color = Color.White, fontWeight = FontWeight.Bold) }
                 }
             }

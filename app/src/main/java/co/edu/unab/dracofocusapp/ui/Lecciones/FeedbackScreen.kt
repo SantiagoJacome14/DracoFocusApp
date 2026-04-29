@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.navigation.AppRoutes
 
 @Composable
 fun FeedbackScreen(navController: NavController, retroalimentacion: String) {
@@ -46,7 +47,7 @@ fun FeedbackScreen(navController: NavController, retroalimentacion: String) {
 
         Spacer(Modifier.height(24.dp))
 
-        Button(onClick = { navController.navigate("lecciones_dracosolitario") }) {
+        Button(onClick = { navController.navigate(AppRoutes.LECCIONES_SOLO) }) {
             Text("Regresar")
         }
     }
