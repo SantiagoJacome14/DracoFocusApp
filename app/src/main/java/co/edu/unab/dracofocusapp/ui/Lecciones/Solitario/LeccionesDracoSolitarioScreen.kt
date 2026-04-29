@@ -19,7 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
-import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.ModernLessonCard
+import co.edu.unab.dracofocusapp.ui.Lecciones.ModernLessonCard
 import co.edu.unab.dracofocusapp.auth.ModernTopBar
 
 
@@ -37,6 +37,8 @@ fun LeccionesDracoSolitarioScreen(
     var lecciones = remember { mutableStateListOf(false, false, false) }
     val leccionesCompletadas = lecciones.count { it }
     val leccionesFaltantes = (3 - leccionesCompletadas).coerceAtLeast(0)
+
+    val dracoCyan = Color(0xFF22DDF2)
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
@@ -70,7 +72,7 @@ fun LeccionesDracoSolitarioScreen(
 
                 Text(
                     text = "Fundamentos de Programación",
-                    color = Color(0xFF22DDF2),
+                    color = dracoCyan,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -85,7 +87,7 @@ fun LeccionesDracoSolitarioScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color(0xFF22DDF2), RoundedCornerShape(16.dp))
+                        .border(1.dp, dracoCyan, RoundedCornerShape(16.dp))
                         .background(Color(0xFF0F1A2A), RoundedCornerShape(16.dp))
                         .padding(16.dp)
                 ) {
@@ -93,7 +95,7 @@ fun LeccionesDracoSolitarioScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         LinearProgressIndicator(
                             progress = leccionesCompletadas / 3f,
-                            color = Color(0xFF22DDF2),
+                            color = dracoCyan,
                             trackColor = Color(0xFF1C2541),
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -123,7 +125,7 @@ fun LeccionesDracoSolitarioScreen(
                         subtitulo = "Condicionales",
                         isCompleted = lecciones[0],
                         onStart = {
-                            navController.navigate("leccion_decisiones_fuego") {
+                            navController.navigate("leccion_decisiones_de_fuego") {
                                 launchSingleTop = true
                             }
                         }
@@ -153,9 +155,6 @@ fun LeccionesDracoSolitarioScreen(
                         }
                     )
 
-
-
-
                     // Caja de recompensa
                     Box(
                         modifier = Modifier
@@ -176,7 +175,7 @@ fun LeccionesDracoSolitarioScreen(
 
                             Text(
                                 "¡Te faltan solo $leccionesFaltantes para un sobre misterioso!",
-                                color = Color(0xFF22DDF2),
+                                color = dracoCyan,
                                 textAlign = TextAlign.Center,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
