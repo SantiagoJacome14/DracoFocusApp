@@ -1,288 +1,179 @@
 package co.edu.unab.dracofocusapp.ui.Pomodoro
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.compose.material3.*
-import kotlinx.coroutines.delay
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
-
-
-
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 
 @Composable
 fun DracomodoroScreen(
     onBack: () -> Unit = {},
-    navController: NavController? = null  // navegar a pantalla ciclo completado dracomodoro
+    navController: NavController? = null
 ) {
-    // Estados
-
     var workMinutes by remember { mutableStateOf(25) }
     var restMinutes by remember { mutableStateOf(5) }
     var secondsLeft by remember { mutableStateOf(workMinutes * 60) }
     var isRunning by remember { mutableStateOf(false) }
     var isWorkMode by remember { mutableStateOf(true) }
-    var completedCycles by remember { mutableStateOf(0) }
 
-    val context = LocalContext.current
-
-    // Animación del tamaño del círculo
     val circleSize by animateDpAsState(
         targetValue = if (isWorkMode) 220.dp else 250.dp,
         animationSpec = tween(durationMillis = 800)
     )
 
-    // Guardar en Firebase
-    fun registrarEstudioEnFirebase(minutosSesion: Int) {
+    fun registrarEstudioEnFirebase() {
         val db = FirebaseFirestore.getInstance()
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val minutosSesion = 25.0  // ejemplo fijo
         val usuarioRef = db.collection("usuarios_estadisticas").document(userId)
         usuarioRef.update(
             mapOf(
                 "cantidad_estudio" to FieldValue.increment(1),
-                "minutos_estudiados_semanal" to FieldValue.increment(minutosSesion),
-                "horas_estudio" to FieldValue.increment(minutosSesion / 60.0),
+                "minutos_estudiados_semanal" to FieldValue.increment(workMinutes.toDouble()),
+                "horas_estudio" to FieldValue.increment(workMinutes / 60.0),
                 "dia" to FieldValue.serverTimestamp()
             )
-        ).addOnSuccessListener {
-            println("✅ Sesión de estudio registrada correctamente")
-        }.addOnFailureListener { e ->
-            println("❌ Error al registrar estudio: ${e.message}")
-        }
+        )
     }
 
-    // Temporizador
-    LaunchedEffect(isRunning, secondsLeft, isWorkMode) {
+    LaunchedEffect(isRunning, secondsLeft) {
         if (isRunning && secondsLeft > 0) {
             delay(1000L)
             secondsLeft--
-        }
-        else if (isRunning && secondsLeft == 0) {
-
-            // Cuando termina de modo descanso hace el ciclo completo terminado
+        } else if (isRunning && secondsLeft == 0) {
             if (!isWorkMode) {
-                completedCycles++
-                registrarEstudioEnFirebase(workMinutes)
+                registrarEstudioEnFirebase()
                 navController?.navigate("ciclo_completado")
             }
-
-            // Cambia modo
             isWorkMode = !isWorkMode
-
-            // Nuevo tiempo
             secondsLeft = if (isWorkMode) workMinutes * 60 else restMinutes * 60
         }
     }
-    val minutes = secondsLeft / 60
-    val seconds = secondsLeft % 60
-    val timeDisplay = String.format("%02d:%02d", minutes, seconds)
 
-    //cambia el fondo segun el modo que este, trabajo o descanso
-    val gradientBackground = Brush.verticalGradient(
-        if (isWorkMode)
-            listOf(Color(0xFF0B132B), Color(0xFF1C2541)) // TRABAJO
-        else
-            listOf(Color(0xFF003022), Color(0xFF005C41)) // DESCANSO
-    )
-    // Color dinámico del borde
-    val borderColor = if (isWorkMode) Color(0xFF22DDF2) else Color(0xFF58FF99)
+    val timeDisplay = String.format("%02d:%02d", secondsLeft / 60, secondsLeft % 60)
+    val dracoCyan = Color(0xFF22DDF2)
 
-    // Contenido
-    Scaffold { innerPadding ->
-        Box(
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(Color(0xFF0B132B), Color(0xFF1C2541)))),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(gradientBackground)
-                .padding(innerPadding),
-            contentAlignment = Alignment.TopCenter
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // ✅ Scroll activado
-            Column(
+            Image(
+                painter = painterResource(id = R.drawable.dragon_dracofocus1),
+                contentDescription = "Draco",
+                modifier = Modifier.size(120.dp)
+            )
+            Text("Dracomodoro", color = dracoCyan, fontSize = 40.sp, fontWeight = FontWeight.Bold)
+            Text(if (isWorkMode) "Modo Trabajo" else "Modo Descanso", color = Color(0xFFa2faf6), fontSize = 18.sp)
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(bottom = 30.dp), // margen final
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
+                    .size(circleSize)
+                    .border(8.dp, if (isWorkMode) dracoCyan else Color(0xFF58FF99), CircleShape),
+                contentAlignment = Alignment.Center
             ) {
+                Text(timeDisplay, color = Color.White, fontSize = 48.sp, fontWeight = FontWeight.Bold)
+            }
 
-                // 🐉 Imagen + título
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(top = 10.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.dragon_dracofocus1),
-                        contentDescription = "Draco",
-                        modifier = Modifier.size(130.dp)
-                    )
-                    Text(
-                        "Dracomodoro",
-                        color = Color(0xFF22DDF2),
-                        fontSize = 45.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = if (isWorkMode) "Modo Trabajo" else "Modo Descanso",
-                        color = Color(0xFFa2faf6),
-                        fontSize = 22.sp
-                    )
-                }
+            Spacer(modifier = Modifier.height(40.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // ⏱ Temporizador animado
-                Box(
-                    modifier = Modifier
-                        .size(circleSize)
-                        .border(10.dp, borderColor, shape = CircleShape)
-                        .padding(25.dp)
-                        .border(5.dp, borderColor, shape = CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        timeDisplay,
-                        color = Color.White,
-                        fontSize = 48.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 🎮 Botones de control
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                ) {
+            // UI PULIDA: Botones unificados sin espacios (Sólidos)
+            Surface(
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                color = Color(0xFF1C2541),
+                border = BorderStroke(1.dp, dracoCyan)
+            ) {
+                Row(modifier = Modifier.fillMaxSize()) {
                     Button(
                         onClick = { isRunning = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A78FF)),
-                        modifier = Modifier.border(2.dp, borderColor, shape = RoundedCornerShape(30.dp))
-                    ) {
-                        Text("+ Iniciar", color = Color.White)
-                    }
-
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        shape = RoundedCornerShape(0.dp)
+                    ) { Text("INICIAR", color = Color.White, fontWeight = FontWeight.Bold) }
+                    
+                    VerticalDivider(color = dracoCyan.copy(alpha = 0.5f), thickness = 1.dp)
+                    
                     Button(
                         onClick = { isRunning = false },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A78FF)),
-                        modifier = Modifier.border(2.dp, borderColor, shape = RoundedCornerShape(30.dp))
-                    ) {
-                        Text("❚❚ Pausar", color = Color.White)
-                    }
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        shape = RoundedCornerShape(0.dp)
+                    ) { Text("PAUSAR", color = Color.White, fontWeight = FontWeight.Bold) }
+                    
+                    VerticalDivider(color = dracoCyan.copy(alpha = 0.5f), thickness = 1.dp)
 
                     Button(
                         onClick = {
                             isRunning = false
                             secondsLeft = if (isWorkMode) workMinutes * 60 else restMinutes * 60
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A78FF)),
-                        modifier = Modifier.border(2.dp, borderColor, shape = RoundedCornerShape(30.dp))
-                    ) {
-                        Text("↻ Reiniciar", color = Color.White)
-                    }
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        shape = RoundedCornerShape(0.dp)
+                    ) { Text("REINICIAR", color = Color.White, fontWeight = FontWeight.Bold) }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-                // ⚙️ Configuración trabajo/descanso
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp)
-                ) {
-                    // Trabajo
-                    Box(
-                        modifier = Modifier
-                            .weight(2f)
-                            .height(65.dp)
-                            .background(Color(0xFF6a5cc4)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Trabajo", color = Color(0xFFb6b6b6), fontWeight = FontWeight.Bold)
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(onClick = {
-                                    if (workMinutes > 1) {
-                                        workMinutes--
-                                        if (isWorkMode) secondsLeft = workMinutes * 60
-                                    }
-                                }) {
-                                    Icon(Icons.Filled.Remove, contentDescription = "Disminuir", tint = Color.White)
-                                }
-                                Text("$workMinutes min", color = Color.White)
-                                IconButton(onClick = {
-                                    workMinutes++
-                                    if (isWorkMode) secondsLeft = workMinutes * 60
-                                }) {
-                                    Icon(Icons.Filled.Add, contentDescription = "Aumentar", tint = Color.White)
-                                }
-                            }
-                        }
-                    }
+            // Configuración modular
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                TimeAdjuster("TRABAJO", workMinutes, dracoCyan) { workMinutes = it; if(isWorkMode) secondsLeft = it * 60 }
+                TimeAdjuster("DESCANSO", restMinutes, Color(0xFF58FF99)) { restMinutes = it; if(!isWorkMode) secondsLeft = it * 60 }
+            }
+        }
+    }
+}
 
-                    Spacer(modifier = Modifier.width(20.dp))
-
-                    // Descanso
-                    Box(
-                        modifier = Modifier
-                            .weight(2f)
-                            .height(65.dp)
-                            .background(Color(0xFF6a5cc4)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Descanso", color = Color(0xFFb6b6b6), fontWeight = FontWeight.Bold)
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(onClick = {
-                                    if (restMinutes > 1) {
-                                        restMinutes--
-                                        if (!isWorkMode) secondsLeft = restMinutes * 60
-                                    }
-                                }) {
-                                    Icon(Icons.Filled.Remove, contentDescription = "Disminuir", tint = Color.White)
-                                }
-                                Text("$restMinutes min", color = Color.White)
-                                IconButton(onClick = {
-                                    restMinutes++
-                                    if (!isWorkMode) secondsLeft = restMinutes * 60
-                                }) {
-                                    Icon(Icons.Filled.Add, contentDescription = "Aumentar", tint = Color.White)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(50.dp))
+@Composable
+fun TimeAdjuster(label: String, value: Int, color: Color, onValueChange: (Int) -> Unit) {
+    Column(
+        modifier = Modifier
+            .background(Color(0xFF1C2541), RoundedCornerShape(16.dp))
+            .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(label, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { if (value > 1) onValueChange(value - 1) }) {
+                Icon(Icons.Default.Remove, "Menos", tint = Color.White)
+            }
+            Text("$value", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            IconButton(onClick = { if (value < 60) onValueChange(value + 1) }) {
+                Icon(Icons.Default.Add, "Más", tint = Color.White)
             }
         }
     }
