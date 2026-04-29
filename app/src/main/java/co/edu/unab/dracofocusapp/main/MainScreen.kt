@@ -14,7 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.auth.AuthViewModel
 import co.edu.unab.dracofocusapp.ui.Perfil.MyProfileScreen
@@ -29,8 +31,7 @@ import co.edu.unab.dracofocusapp.ui.Pomodoro.CicloCompletadoScreen
 import co.edu.unab.dracofocusapp.ui.MuseoDracoArteScreen
 import co.edu.unab.dracofocusapp.navigation.AppRoutes
 import co.edu.unab.dracofocusapp.ui.Lecciones.FeedbackScreen
-import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionElLibroDeTareasScreen
-import co.edu.unab.dracofocusapp.ui.Lecciones.Solitario.LeccionVueloInfinitoScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.LeccionRetoScreen
 import co.edu.unab.dracofocusapp.viewmodel.FeedbackViewModel
 
 sealed class BottomNavItem(val route: String, val icon: Int, val label: String) {
@@ -144,23 +145,57 @@ fun BottomNavGraph(
         composable(AppRoutes.CICLO_COMPLETADO) { CicloCompletadoScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoutes.MUSEO_DRACARTE) { MuseoDracoArteScreen(onBack = { navController.popBackStack() }) }
 
-        // Lecciones (solitario) + feedback
+        // Lecciones (solitario) + feedback — retos unificados (puzzle / quiz / relleno)
         composable(AppRoutes.LECCION_DECISIONES_DE_FUEGO) {
-            LeccionDecisionesDeFuegoScreen(
+            LeccionRetoScreen(
                 navController = navController,
-                onBack = { navController.popBackStack() }
+                lessonId = "1",
+                coopRoomId = null,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(AppRoutes.LECCION_VUELO_INFINITO) {
-            LeccionVueloInfinitoScreen(
+            LeccionRetoScreen(
                 navController = navController,
-                onBack = { navController.popBackStack() }
+                lessonId = "2",
+                coopRoomId = null,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(AppRoutes.LECCION_LIBRO_TAREAS) {
-            LeccionElLibroDeTareasScreen(
+            LeccionRetoScreen(
                 navController = navController,
-                onBack = { navController.popBackStack() }
+                lessonId = "3",
+                coopRoomId = null,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = AppRoutes.LECCION_RETO,
+            arguments = listOf(navArgument("lessonId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("lessonId") ?: return@composable
+            LeccionRetoScreen(
+                navController = navController,
+                lessonId = id,
+                coopRoomId = null,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = AppRoutes.LECCION_RETO_COOP,
+            arguments = listOf(
+                navArgument("lessonId") { type = NavType.StringType },
+                navArgument("roomId") { type = NavType.StringType },
+            ),
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("lessonId") ?: return@composable
+            val room = backStackEntry.arguments?.getString("roomId") ?: return@composable
+            LeccionRetoScreen(
+                navController = navController,
+                lessonId = id,
+                coopRoomId = room,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(AppRoutes.FEEDBACK_SCREEN) {

@@ -1,88 +1,125 @@
 package co.edu.unab.dracofocusapp.ui.Lecciones.Solitario
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.compose.material3.*
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.R
-import co.edu.unab.dracofocusapp.ui.Lecciones.ModernLessonCard
 import co.edu.unab.dracofocusapp.auth.ModernTopBar
-import co.edu.unab.dracofocusapp.navigation.AppRoutes
-
+import co.edu.unab.dracofocusapp.domain.rewards.RewardManager
+import co.edu.unab.dracofocusapp.ui.Lecciones.ModernLessonCard
+import co.edu.unab.dracofocusapp.viewmodel.LessonProgressViewModel
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeccionesDracoSolitarioScreen(
     navController: NavController,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
-    val gradientBackground = Brush.verticalGradient(
-        listOf(Color(0xFF0B132B), Color(0xFF1C2541))
+    val app = LocalContext.current.applicationContext as DracoFocusApplication
+    val lessonVm = viewModel<LessonProgressViewModel>(
+        factory = LessonProgressViewModel.factory(
+            repository = app.lessonProgressRepository,
+            rewardManager = app.rewardManager,
+        ),
     )
 
-    // Estados de las lecciones
-    var lecciones = remember { mutableStateListOf(false, false, false) }
-    val leccionesCompletadas = lecciones.count { it }
-    val leccionesFaltantes = (3 - leccionesCompletadas).coerceAtLeast(0)
+    val snackbarHostState = remember { SnackbarHostState() }
+    val completadas by lessonVm.soloFundamentosCompleted.collectAsState()
+    val envelopeVisible by lessonVm.showEnvelopeHint.collectAsState()
 
+    val progressFraction by lessonVm.soloFundamentosProgress.collectAsState()
+
+    val doneCount = completadas.size.coerceAtMost(3)
+    val faltantes = (3 - doneCount).coerceAtLeast(0)
+
+    LaunchedEffect(Unit) {
+        lessonVm.envelopeUiEvents.collectLatest { outcome ->
+            val msg = when (outcome) {
+                is RewardManager.EnvelopeOutcome.PieceGranted ->
+                    "¡Sobre abierto! Nueva ficha del museo: \"${outcome.piece.title}\""
+                RewardManager.EnvelopeOutcome.NotEligible ->
+                    "Draco aún espera que completes las misiones para el sobre."
+                RewardManager.EnvelopeOutcome.NoPiecesLeftInCatalog ->
+                    "¡Colección completa! No quedan fichas nuevas por ahora."
+            }
+            snackbarHostState.showSnackbar(msg)
+        }
+    }
+
+    val gradientBackground =
+        Brush.verticalGradient(listOf(Color(0xFF0B132B), Color(0xFF1C2541)))
     val dracoCyan = Color(0xFF22DDF2)
+
+    val sobrePulse by animateFloatAsState(
+        targetValue = if (envelopeVisible) 1f else 0.93f,
+        animationSpec = tween(durationMillis = 950),
+        label = "sobrePulse",
+    )
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             ModernTopBar(
                 title = "Lecciones Draco Solitario",
                 showBackButton = true,
-                onBackClick = { onBack() }
+                onBackClick = { onBack() },
             )
-        }
+        },
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(gradientBackground)
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp, vertical = 10.dp)
+                .padding(horizontal = 20.dp, vertical = 10.dp),
         ) {
-
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-
                 Text(
                     "Avanza completando misiones y gana XP.",
                     color = Color(0xFFB3B3B3),
                     fontSize = 15.sp,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
 
                 Text(
                     text = "Fundamentos de Programación",
                     color = dracoCyan,
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
 
-                // Barra de progreso
                 Text(
-                    "${leccionesCompletadas}/3 completadas",
+                    "$doneCount/3 completadas",
                     color = Color.White,
-                    fontSize = 14.sp
+                    fontSize = 14.sp,
                 )
 
                 Box(
@@ -90,96 +127,96 @@ fun LeccionesDracoSolitarioScreen(
                         .fillMaxWidth()
                         .border(1.dp, dracoCyan, RoundedCornerShape(16.dp))
                         .background(Color(0xFF0F1A2A), RoundedCornerShape(16.dp))
-                        .padding(16.dp)
+                        .padding(16.dp),
                 ) {
-
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         LinearProgressIndicator(
-                            progress = leccionesCompletadas / 3f,
+                            progress = { progressFraction },
                             color = dracoCyan,
                             trackColor = Color(0xFF1C2541),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(8.dp)
-                                .clip(RoundedCornerShape(50))
+                                .clip(RoundedCornerShape(50)),
                         )
-
                         Spacer(modifier = Modifier.height(6.dp))
-
                         Text(
-                            if (leccionesFaltantes == 0)
-                                "¡Curso completado! 🎉"
-                            else
-                                "$leccionesFaltantes lecciones restantes",
+                            if (faltantes == 0) "¡Set completado! Revisa el sobre 🎁" else "$faltantes lecciones restantes",
                             color = Color(0xFFB3B3B3),
-                            fontSize = 13.sp
+                            fontSize = 13.sp,
                         )
                     }
                 }
 
-                // TARJETAS DE LECCIONES
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-
                     ModernLessonCard(
-                        icon = R.drawable.ic_decisiones_fuego,
+                        icon = R.drawable.ic_lesson_fire,
                         titulo = "Decisiones de Fuego",
-                        subtitulo = "Condicionales",
-                        isCompleted = lecciones[0],
+                        subtitulo = "Condicionales • retos mixtos",
+                        isCompleted = "1" in completadas,
                         onStart = {
-                            navController.navigate(AppRoutes.LECCION_DECISIONES_DE_FUEGO) {
+                            navController.navigate("leccion_reto/1") {
                                 launchSingleTop = true
                             }
-                        }
+                        },
                     )
 
                     ModernLessonCard(
-                        icon = R.drawable.ic_vuelo_infinito,
+                        icon = R.drawable.ic_lesson_loop,
                         titulo = "Vuelo Infinito",
-                        subtitulo = "Bucles",
-                        isCompleted = lecciones[1],
+                        subtitulo = "Bucles • retos mixtos",
+                        isCompleted = "2" in completadas,
                         onStart = {
-                            navController.navigate(AppRoutes.LECCION_VUELO_INFINITO) {
+                            navController.navigate("leccion_reto/2") {
                                 launchSingleTop = true
                             }
-                        }
+                        },
                     )
 
                     ModernLessonCard(
-                        icon = R.drawable.ic_libro_tareas,
+                        icon = R.drawable.ic_lesson_arrays,
                         titulo = "El Libro de las Tareas",
-                        subtitulo = "Arreglos",
-                        isCompleted = lecciones[2],
+                        subtitulo = "Lists & lógica",
+                        isCompleted = "3" in completadas,
                         onStart = {
-                            navController.navigate(AppRoutes.LECCION_LIBRO_TAREAS) {
+                            navController.navigate("leccion_reto/3") {
                                 launchSingleTop = true
                             }
-                        }
+                        },
                     )
 
-                    // Caja de recompensa
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Color(0xFF0F2B5D), RoundedCornerShape(15.dp))
                             .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(15.dp))
                             .padding(16.dp),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Image(
                                 painter = painterResource(R.drawable.img_sobre),
                                 contentDescription = "Sobre misterioso",
-                                modifier = Modifier.size(70.dp)
+                                modifier = Modifier
+                                    .size(88.dp)
+                                    .scale(sobrePulse)
+                                    .clickable(enabled = envelopeVisible) {
+                                        lessonVm.openSoloFundamentosEnvelope()
+                                    },
                             )
 
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
                             Text(
-                                "¡Te faltan solo $leccionesFaltantes para un sobre misterioso!",
+                                text = when {
+                                    envelopeVisible -> "Toca el sobre para revelar tu ficha del museo"
+                                    faltantes > 0 -> "Te faltan $faltantes lecciones para el sobre especial"
+                                    else -> "Ya reclamaste el sobre de esta temporada: sigue coleccionando en el museo."
+                                },
                                 color = dracoCyan,
                                 textAlign = TextAlign.Center,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
                             )
                         }
                     }

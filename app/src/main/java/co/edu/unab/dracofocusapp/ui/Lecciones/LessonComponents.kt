@@ -1,5 +1,6 @@
 package co.edu.unab.dracofocusapp.ui.Lecciones
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -67,5 +68,23 @@ fun ModernLessonCard(
                 tint = if(isCompleted) Color(0xFF58FF99) else dracoCyan
             )
         }
+    }
+}
+
+@Composable
+fun CodigoPill(text: String, color: Color = Color(0xFF22DDF2), onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        color = color,
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, Color(0xFF22DDF2).copy(alpha = 0.5f))
+    ) {
+        Text(
+            text = text,
+            color = if (color == Color(0xFF22DDF2)) Color.Black else Color.White,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }

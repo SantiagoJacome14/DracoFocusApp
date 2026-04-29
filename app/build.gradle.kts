@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.google.gms.google.services)
 }
 
@@ -72,6 +73,12 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.media3:media3-ui:1.4.1")
+
+    // Room (progreso local + museo)
+    val roomVer = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVer")
+    implementation("androidx.room:room-ktx:$roomVer")
+    kapt("androidx.room:room-compiler:$roomVer")
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
