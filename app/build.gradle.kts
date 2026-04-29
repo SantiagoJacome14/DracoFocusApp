@@ -61,21 +61,20 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
 
-    //animaciones
-    implementation("com.google.accompanist:accompanist-navigation-animation:0.34.0")
+    // Animaciones y Navegación (Nativo)
     implementation("androidx.compose.animation:animation:1.7.2")
-
+    implementation(libs.androidx.navigation.compose)
 
     implementation("androidx.activity:activity-compose:1.9.0")
 
-    // NAVIGATION
-    implementation(libs.androidx.navigation.compose)
-
-    // VIEWMODEL
+    // VIEWMODEL y Multimedia
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.media3:media3-ui:1.4.1")
 
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -84,16 +83,4 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-    //Respuestas
-    implementation("com.google.firebase:firebase-firestore-ktx")
-
-    //Retrofit
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-
-
-
 }
-
-

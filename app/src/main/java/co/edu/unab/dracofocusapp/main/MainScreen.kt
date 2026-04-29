@@ -37,6 +37,7 @@ import co.edu.unab.dracofocusapp.ui.Lecciones.MenuLeccionesScreen
 import co.edu.unab.dracofocusapp.ui.Pomodoro.DracomodoroScreen
 import co.edu.unab.dracofocusapp.ui.Pomodoro.CicloCompletadoScreen
 import co.edu.unab.dracofocusapp.ui.Museo.MuseoDracArteScreen
+import co.edu.unab.dracofocusapp.navigation.AppRoutes
 
 
 // ---------------------- RUTAS DEL MENÚ INFERIOR ----------------------
@@ -156,8 +157,20 @@ fun BottomNavGraph(
 
         // ---------- Menú inferior ----------
         composable(BottomNavItem.Avances.route) { ProgressScreen(navController = navController) }
-        composable(BottomNavItem.Perfil.route) { MyProfileScreen() }
-        composable(BottomNavItem.Pomodoro.route) { DracomodoroScreen() }
+        
+        composable(BottomNavItem.Perfil.route) { 
+            MyProfileScreen(
+                onBack = { navController.popBackStack() },
+                onLogout = onNavigateToAuth
+            ) 
+        }
+        
+        composable(BottomNavItem.Pomodoro.route) { 
+            DracomodoroScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            ) 
+        }
 
         // ---------- Menú de Lecciones ----------
         composable("menu_lecciones") {
@@ -251,7 +264,7 @@ fun BottomNavGraph(
 
         // ---------- Ciclo Pomodoro ----------
         composable("ciclo_completado") {
-            CicloCompletadoScreen(navController)
+            CicloCompletadoScreen(onBack = { navController.popBackStack() })
         }
 
         // ---------- Museo ----------
@@ -262,8 +275,6 @@ fun BottomNavGraph(
 }
 
 // ---------------------- PANTALLA “DRACO” (Bienvenida) ----------------------
-// No implementada aun
-// Es un mensaje para cuando uno entre a la app
 @Composable
 fun DracoWelcomeScreen(
     onNavigateToAuth: () -> Unit,

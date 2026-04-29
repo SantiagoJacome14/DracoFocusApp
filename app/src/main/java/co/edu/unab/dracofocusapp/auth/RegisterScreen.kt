@@ -1,18 +1,17 @@
 package co.edu.unab.dracofocusapp.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,7 +30,6 @@ import co.edu.unab.dracofocusapp.R
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import androidx.compose.runtime.Composable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +47,6 @@ fun ModernTopBar(
                 fontSize = 20.sp
             )
         },
-        // Botón de retroceso si está habilitado
         navigationIcon = {
             if (showBackButton) {
                 IconButton(onClick = onBackClick) {
@@ -67,42 +64,37 @@ fun ModernTopBar(
         )
     )
 }
-// Pantalla de registro
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun RegisterScreen(
-    onBackToLogin: () -> Unit, // Acción al presionar "Volver" o "¿Ya tienes cuenta?"
-    onRegisterSuccess: () -> Unit // Acción tras completar el registro exitosamente
+    onBack: () -> Unit,
+    onRegisterSuccess: () -> Unit
 ) {
-    // Inicialización de Firebase Authentication y Firestore
     val auth = Firebase.auth
     val db = Firebase.firestore
 
-    // Variables de estado para los campos del formulario
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var semester by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-    // Control de campo enfocado y mensajes de error
     var focusedField by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Fondo degradado
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
+
     Scaffold(
         topBar = {
             ModernTopBar(
                 title = "Registro",
-                onBackClick = onBackToLogin
+                onBackClick = onBack
             )
         }
     ) { innerPadding ->
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -115,7 +107,6 @@ fun RegisterScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
-                // Imagen Draco
                 Image(
                     painter = painterResource(id = R.drawable.dragon_dracofocus1),
                     contentDescription = "Mascota Draco",
@@ -137,7 +128,6 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Caja que contiene los campos de registro
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -146,8 +136,6 @@ fun RegisterScreen(
                         .padding(20.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-                        // Nombre completo
                         CustomRegisterField(
                             value = fullName,
                             onValueChange = { if (it.all { c -> c.isLetter() || c.isWhitespace() }) fullName = it },
@@ -160,7 +148,6 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Correo
                         CustomRegisterField(
                             value = email,
                             onValueChange = { email = it },
@@ -174,7 +161,6 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Semestre
                         CustomRegisterField(
                             value = semester,
                             onValueChange = { if (it.all { c -> c.isDigit() }) semester = it },
@@ -188,7 +174,6 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Contraseña
                         CustomRegisterField(
                             value = password,
                             onValueChange = { password = it },
@@ -203,7 +188,6 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Confirmar contraseña
                         CustomRegisterField(
                             value = confirmPassword,
                             onValueChange = { confirmPassword = it },
@@ -214,7 +198,6 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // BOTÓN REGISTRO
                         Button(
                             onClick = {
                                 if (fullName.isBlank() || email.isBlank() || semester.isBlank() ||
@@ -232,18 +215,15 @@ fun RegisterScreen(
                                     return@Button
                                 }
 
-                                // Carga o error
                                 isLoading = true
                                 errorMessage = null
 
-                                // Crear usuario en Firebase
                                 auth.createUserWithEmailAndPassword(email.trim(), password)
                                     .addOnCompleteListener { task ->
                                         if (task.isSuccessful) {
                                             val currentUser = auth.currentUser
                                             val uid = currentUser?.uid ?: return@addOnCompleteListener
 
-                                            // Actualiza el nombre en FirebaseAuth
                                             val profileUpdates =
                                                 com.google.firebase.auth.UserProfileChangeRequest.Builder()
                                                     .setDisplayName(fullName)
@@ -251,7 +231,6 @@ fun RegisterScreen(
 
                                             currentUser.updateProfile(profileUpdates)
                                                 .addOnCompleteListener {
-                                                    // Guarda los datos también en Firestore
                                                     val userData = hashMapOf(
                                                         "nombre" to fullName,
                                                         "correo" to email.trim(),
@@ -291,7 +270,6 @@ fun RegisterScreen(
                                 Text("Crear Cuenta", fontWeight = FontWeight.Bold)
                         }
 
-                        //  Mensaje de error
                         errorMessage?.let {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(it, color = Color.Red, fontSize = 13.sp)
@@ -299,22 +277,20 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        //  Enlace a login
                         Text(
                             text = "¿Ya tienes cuenta? Inicia sesión",
                             color = Color(0xFF22DDF2),
                             textDecoration = TextDecoration.Underline,
-                            modifier = Modifier.clickable { onBackToLogin() }
+                            modifier = Modifier.clickable { onBack() }
                         )
                     }
                 }
-
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
     }
 }
-// Fun reutilizable para registro
+
 @Composable
 fun CustomRegisterField(
     value: String,
@@ -325,7 +301,6 @@ fun CustomRegisterField(
     isPassword: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
-    // Controla si la contraseña es visible o no
     var passwordVisible by remember { mutableStateOf(false) }
 
     OutlinedTextField(
@@ -339,7 +314,6 @@ fun CustomRegisterField(
                 tint = Color(0xFF22DDF2)
             )
         },
-        // Ícono de alternancia de visibilidad para campos de contraseña
         trailingIcon = {
             if (isPassword) {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -351,12 +325,11 @@ fun CustomRegisterField(
                 }
             }
         },
-        // Oculta el texto si el campo es una contraseña
         visualTransformation = if (isPassword && !passwordVisible)
             PasswordVisualTransformation()
         else
             VisualTransformation.None,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = keyboardType),
         singleLine = true,
         textStyle = TextStyle(color = Color.White, fontSize = 14.sp),
         modifier = Modifier

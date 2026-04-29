@@ -31,18 +31,16 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyProfileScreen(
-    onBackToMain: () -> Unit = {},
-    onNavigateToAuth: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // Usuario desde Firebase
     val user = Firebase.auth.currentUser
     var userName by remember { mutableStateOf("Usuario") }
     var userEmail by remember { mutableStateOf("Sin correo") }
 
-    //se refresca para que cargue los datos
     LaunchedEffect(Unit) {
         Firebase.auth.currentUser?.reload()
         val updatedUser = Firebase.auth.currentUser
@@ -53,7 +51,6 @@ fun MyProfileScreen(
     var notificationsEnabled by remember { mutableStateOf(true) }
     var soundEnabled by remember { mutableStateOf(true) }
 
-    // Fondo degradado
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
@@ -63,7 +60,8 @@ fun MyProfileScreen(
         topBar = {
             ModernTopBar(
                 title = "Mi Perfil",
-                showBackButton = false
+                showBackButton = true,
+                onBackClick = onBack
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -76,7 +74,6 @@ fun MyProfileScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            // Scroll
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -84,7 +81,6 @@ fun MyProfileScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                //Avatar + Datos
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -93,7 +89,6 @@ fun MyProfileScreen(
                         .padding(24.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        // 🐉 Avatar del usuario
                         Image(
                             painter = painterResource(id = R.drawable.ic_avatar),
                             contentDescription = "Avatar",
@@ -102,7 +97,6 @@ fun MyProfileScreen(
                                 .padding(bottom = 8.dp)
                         )
 
-                        // 🧍‍♂️ Nombre del usuario (arriba del correo)
                         Text(
                             text = userName,
                             color = Color.White,
@@ -112,7 +106,6 @@ fun MyProfileScreen(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        // ✉️ Correo electrónico
                         Text(
                             text = userEmail,
                             color = Color(0xFFB0BEC5),
@@ -121,7 +114,6 @@ fun MyProfileScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // 🔰 Nivel y experiencia
                         Text(
                             text = "Nivel 9",
                             color = Color(0xFF22DDF2),
@@ -136,7 +128,6 @@ fun MyProfileScreen(
 
                         Spacer(modifier = Modifier.height(18.dp))
 
-                        // 📊 Estadísticas
                         Row(
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             modifier = Modifier.fillMaxWidth()
@@ -148,7 +139,6 @@ fun MyProfileScreen(
                     }
                 }
 
-                //CONFIGURACIÓN
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -190,14 +180,13 @@ fun MyProfileScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                //Botón Cerrar sesión
                 Button(
                     onClick = {
                         Firebase.auth.signOut()
                         scope.launch {
                             snackbarHostState.showSnackbar("Sesión cerrada correctamente")
                         }
-                        onNavigateToAuth()
+                        onLogout()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -217,7 +206,6 @@ fun MyProfileScreen(
     }
 }
 
-// COMPONENTES AUXILIARES
 @Composable
 fun StatItem(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
