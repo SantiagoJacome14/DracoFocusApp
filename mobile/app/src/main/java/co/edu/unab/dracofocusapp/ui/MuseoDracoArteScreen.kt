@@ -39,9 +39,17 @@ import co.edu.unab.dracofocusapp.museum.MuseumCatalog
 @Composable
 fun MuseoDracoArteScreen(onBack: () -> Unit) {
     val app = LocalContext.current.applicationContext as DracoFocusApplication
+    val currentUserId by app.tokenManager.userId.collectAsState(initial = null)
 
-    val unlockedIds by app.lessonProgressRepository.observeUnlockedPieceIds().collectAsState(emptySet())
-    val collectionPct by app.lessonProgressRepository.observeMuseumCollectionProgressFraction()
+    if (currentUserId == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Color(0xFF22DDF2))
+        }
+        return
+    }
+
+    val unlockedIds by app.lessonProgressRepository.observeUnlockedPieceIds(currentUserId!!).collectAsState(emptySet())
+    val collectionPct by app.lessonProgressRepository.observeMuseumCollectionProgressFraction(currentUserId!!)
         .collectAsState(initial = 0f)
 
     val piezas = MuseumCatalog.ALL_PIECES.map { piece ->

@@ -15,11 +15,14 @@ interface CompletedLessonDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entity: CompletedLessonEntity)
 
-    @Query("SELECT lessonId FROM completed_lessons")
-    fun observeCompletedIds(): Flow<List<String>>
+    @Query("SELECT lessonId FROM completed_lessons WHERE userId = :userId")
+    fun observeCompletedIds(userId: String): Flow<List<String>>
 
-    @Query("SELECT lessonId FROM completed_lessons")
-    suspend fun snapshotLessonIds(): List<String>
+    @Query("SELECT lessonId FROM completed_lessons WHERE userId = :userId")
+    suspend fun snapshotLessonIds(userId: String): List<String>
+    
+    @Query("DELETE FROM completed_lessons WHERE userId = :userId")
+    suspend fun clearForUser(userId: String)
 }
 
 @Dao
@@ -28,11 +31,11 @@ interface RewardFlagsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entity: RewardFlagsEntity)
 
-    @Query("SELECT * FROM reward_flags WHERE id = :id LIMIT 1")
-    fun observe(id: Int = 0): Flow<RewardFlagsEntity?>
+    @Query("SELECT * FROM reward_flags WHERE userId = :userId LIMIT 1")
+    fun observe(userId: String): Flow<RewardFlagsEntity?>
 
-    @Query("SELECT * FROM reward_flags WHERE id = :id LIMIT 1")
-    suspend fun snapshot(id: Int = 0): RewardFlagsEntity?
+    @Query("SELECT * FROM reward_flags WHERE userId = :userId LIMIT 1")
+    suspend fun snapshot(userId: String): RewardFlagsEntity?
 }
 
 @Dao
@@ -41,12 +44,12 @@ interface MuseumUnlockDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entity: MuseumUnlockEntity)
 
-    @Query("SELECT pieceCatalogId FROM museum_unlocks")
-    fun observeUnlockedPieceIds(): Flow<List<String>>
+    @Query("SELECT pieceCatalogId FROM museum_unlocks WHERE userId = :userId")
+    fun observeUnlockedPieceIds(userId: String): Flow<List<String>>
 
-    @Query("SELECT COUNT(*) FROM museum_unlocks")
-    fun observeCollectedCount(): Flow<Int>
+    @Query("SELECT COUNT(*) FROM museum_unlocks WHERE userId = :userId")
+    fun observeCollectedCount(userId: String): Flow<Int>
 
-    @Query("SELECT pieceCatalogId FROM museum_unlocks")
-    suspend fun snapshotUnlockedPieceIds(): List<String>
+    @Query("SELECT pieceCatalogId FROM museum_unlocks WHERE userId = :userId")
+    suspend fun snapshotUnlockedPieceIds(userId: String): List<String>
 }

@@ -3,12 +3,15 @@ package co.edu.unab.dracofocusapp.data.repo
 import co.edu.unab.dracofocusapp.data.local.CompletedLessonEntity
 import co.edu.unab.dracofocusapp.data.local.DracoDatabase
 import co.edu.unab.dracofocusapp.data.remote.ApiService
+import co.edu.unab.dracofocusapp.data.remote.LessonSlugMapper
 import co.edu.unab.dracofocusapp.data.remote.ProgressRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
 
+/**
+ * Repositorio de progreso (Versión compatible con multi-usuario).
+ */
 class ProgressRepository(
     private val db: DracoDatabase,
     private val apiService: ApiService
@@ -16,26 +19,28 @@ class ProgressRepository(
     private val lessonDao = db.completedLessonDao()
 
     /**
-     * Observa las lecciones completadas desde Room (Local First)
+     * Observa las lecciones completadas desde Room filtrando por usuario.
      */
-    fun observeCompletedLessons(): Flow<Set<String>> = 
-        lessonDao.observeCompletedIds().map { it.toSet() }
+    fun observeCompletedLessons(userId: String): Flow<Set<String>> = 
+        lessonDao.observeCompletedIds(userId).map { it.toSet() }
 
     /**
      * Marca una lección como completada localmente y luego intenta sincronizar con el servidor.
      */
-    suspend fun markLessonCompleted(lessonId: String, score: Int = 100): Result<Unit> {
-        // 1. Guardar localmente siempre
+    suspend fun markLessonCompleted(userId: String, lessonId: String, score: Int = 100): Result<Unit> {
+        // 1. Guardar localmente siempre usando el userId
         lessonDao.upsert(
             CompletedLessonEntity(
+                userId = userId,
                 lessonId = lessonId,
                 completedAtMillis = System.currentTimeMillis()
             )
         )
 
-        // 2. Intentar enviar al servidor
+        // 2. Intentar enviar al servidor mapeando a slug
         return try {
-            val response = apiService.sendLessonProgress(ProgressRequest(lessonSlug = lessonId, score = score))
+            val slug = LessonSlugMapper.getSlugFromId(lessonId)
+            val response = apiService.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = score))
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
@@ -50,16 +55,18 @@ class ProgressRepository(
     /**
      * Trae todo el progreso del servidor y actualiza la base de datos local (Sync).
      */
-    suspend fun syncProgressFromServer(): Result<Unit> {
+    suspend fun syncProgressFromServer(userId: String): Result<Unit> {
         return try {
             val response = apiService.getProgress()
             if (response.isSuccessful && response.body() != null) {
                 val remoteProgress = response.body()!!.data
                 
                 remoteProgress.forEach { dto ->
+                    val localId = LessonSlugMapper.getIdFromSlug(dto.lessonId)
                     lessonDao.upsert(
                         CompletedLessonEntity(
-                            lessonId = dto.lessonId,
+                            userId = userId,
+                            lessonId = localId,
                             completedAtMillis = parseIsoDate(dto.completedAt)
                         )
                     )
@@ -75,7 +82,6 @@ class ProgressRepository(
 
     private fun parseIsoDate(isoDate: String): Long {
         return try {
-            // Laravel suele devolver ISO-8601
             OffsetDateTime.parse(isoDate).toInstant().toEpochMilli()
         } catch (e: Exception) {
             System.currentTimeMillis()

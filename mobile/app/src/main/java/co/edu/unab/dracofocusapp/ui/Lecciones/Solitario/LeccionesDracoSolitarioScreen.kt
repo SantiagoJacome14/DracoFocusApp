@@ -40,8 +40,19 @@ fun LeccionesDracoSolitarioScreen(
     onBack: () -> Unit,
 ) {
     val app = LocalContext.current.applicationContext as DracoFocusApplication
+    val currentUserId by app.tokenManager.userId.collectAsState(initial = null)
+
+    if (currentUserId == null) {
+        // Mostrar un estado de carga mientras recuperamos el ID del usuario
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Color(0xFF22DDF2))
+        }
+        return
+    }
+
     val lessonVm = viewModel<LessonProgressViewModel>(
         factory = LessonProgressViewModel.factory(
+            userId = currentUserId!!,
             repository = app.lessonProgressRepository,
             rewardManager = app.rewardManager,
         ),
@@ -117,7 +128,7 @@ fun LeccionesDracoSolitarioScreen(
                 )
 
                 Text(
-                    "$doneCount/3 completadas",
+                    text = "$doneCount/3 completadas",
                     color = Color.White,
                     fontSize = 14.sp,
                 )

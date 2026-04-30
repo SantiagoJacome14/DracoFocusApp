@@ -21,19 +21,14 @@ import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.navigation.AppRoutes
 import co.edu.unab.dracofocusapp.theme.DarkBlueBg
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import co.edu.unab.dracofocusapp.auth.TokenManager
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(navController: NavController) {
+fun SplashScreen(navController: NavController, tokenManager: TokenManager) {
     // Estado para la animación de opacidad (alpha)
     val alpha = remember { Animatable(0f) }
-
-    // Verificación de autenticación
-    val isAuthenticated by produceState<Boolean?>(initialValue = null) {
-        value = Firebase.auth.currentUser != null
-    }
 
     LaunchedEffect(Unit) {
         // Animación de entrada del logo (1 segundo)
@@ -45,16 +40,17 @@ fun SplashScreen(navController: NavController) {
         // Espera un momento pequeño para que no sea tan abrupto
         delay(500)
 
-        // Navegación basada en el estado de autenticación
-        if (isAuthenticated != null) {
-            when (isAuthenticated) {
-                true -> navController.navigate(AppRoutes.MAIN) {
-                    popUpTo(AppRoutes.SPLASH) { inclusive = true }
-                }
-                false -> navController.navigate(AppRoutes.AUTH) {
-                    popUpTo(AppRoutes.SPLASH) { inclusive = true }
-                }
-                else -> Unit
+        // Verificación de token en DataStore
+        val token = tokenManager.token.first()
+        val isAuthenticated = !token.isNullOrBlank()
+
+        if (isAuthenticated) {
+            navController.navigate(AppRoutes.MAIN) {
+                popUpTo(AppRoutes.SPLASH) { inclusive = true }
+            }
+        } else {
+            navController.navigate(AppRoutes.AUTH) {
+                popUpTo(AppRoutes.SPLASH) { inclusive = true }
             }
         }
     }

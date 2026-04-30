@@ -1,16 +1,20 @@
 package co.edu.unab.dracofocusapp.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import co.edu.unab.dracofocusapp.auth.AuthScreen
+import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.auth.ForgotPasswordScreen
 import co.edu.unab.dracofocusapp.auth.RegisterScreen
 import co.edu.unab.dracofocusapp.main.MainScreen
+import co.edu.unab.dracofocusapp.ui.Auth.LoginScreen
+import co.edu.unab.dracofocusapp.ui.Auth.LoginViewModel
 import co.edu.unab.dracofocusapp.ui.Lecciones.FeedbackScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.IngresarCodigoGrupoScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionesGrupalesScreen
@@ -51,17 +55,26 @@ object AppRoutes {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val app = LocalContext.current.applicationContext as DracoFocusApplication
+    
+    val tokenManager = app.tokenManager
+    val repository = app.lessonProgressRepository
+    val apiService = app.apiService
 
     NavHost(
         navController = navController,
         startDestination = AppRoutes.SPLASH
     ) {
         composable(AppRoutes.SPLASH) {
-            SplashScreen(navController = navController)
+            SplashScreen(navController = navController, tokenManager = tokenManager)
         }
 
         composable(AppRoutes.AUTH) {
-            AuthScreen(
+            val loginViewModel: LoginViewModel = viewModel(
+                factory = LoginViewModel.Factory(apiService, tokenManager, repository)
+            )
+            LoginScreen(
+                viewModel = loginViewModel,
                 onNavigateToMain = {
                     navController.navigate(AppRoutes.MAIN) {
                         popUpTo(AppRoutes.AUTH) { inclusive = true }
@@ -155,6 +168,7 @@ fun AppNavigation() {
             )
         }
 
+        @Suppress("DEPRECATION")
         composable(
             route = AppRoutes.LECCION_RETO_COOP,
             arguments = listOf(

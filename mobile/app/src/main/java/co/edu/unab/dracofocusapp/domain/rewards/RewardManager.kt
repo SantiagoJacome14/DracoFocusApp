@@ -20,16 +20,16 @@ class RewardManager(
     /**
      * Al tocar el sobre: valida prerequisitos, desbloquea una ficha y marca el sobre como abierto localmente.
      */
-    suspend fun openSoloFundamentosEnvelope(): EnvelopeOutcome {
-        if (!repository.shouldShowSobreMisterioso()) return EnvelopeOutcome.NotEligible
+    suspend fun openSoloFundamentosEnvelope(userId: String): EnvelopeOutcome {
+        if (!repository.shouldShowSobreMisterioso(userId)) return EnvelopeOutcome.NotEligible
 
-        val unlocked = repository.snapshotUnlockedPieceIdsBlocking()
+        val unlocked = repository.snapshotUnlockedPieceIdsBlocking(userId)
         val pending = MuseumCatalog.ALL_PIECES.filter { it.catalogId !in unlocked }
         if (pending.isEmpty()) return EnvelopeOutcome.NoPiecesLeftInCatalog
 
         val piece = pending[random.nextInt(pending.size)]
-        repository.insertMuseumPiece(piece.catalogId)
-        repository.markSoloEnvelopeClaimed()
+        repository.insertMuseumPiece(userId, piece.catalogId)
+        repository.markSoloEnvelopeClaimed(userId)
         return EnvelopeOutcome.PieceGranted(piece)
     }
 }

@@ -44,9 +44,10 @@ class LessonSeeder extends Seeder
         ];
 
         foreach ($lessons as $lesson) {
-            Lesson::create(array_merge($lesson, [
-                'slug' => Str::slug($lesson['title']),
-            ]));
+            Lesson::updateOrCreate(
+                ['slug' => Str::slug($lesson['title'])],
+                $lesson
+            );
         }
     }
 }

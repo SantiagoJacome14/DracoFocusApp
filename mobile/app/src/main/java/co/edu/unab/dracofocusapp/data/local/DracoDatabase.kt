@@ -13,7 +13,7 @@ import co.edu.unab.dracofocusapp.data.local.dao.RewardFlagsDao
         RewardFlagsEntity::class,
         MuseumUnlockEntity::class,
     ],
-    version = 1,
+    version = 2, // Incrementado de 1 a 2 debido al cambio de esquema (userId)
 )
 abstract class DracoDatabase : RoomDatabase() {
 
