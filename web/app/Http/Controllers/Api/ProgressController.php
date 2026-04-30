@@ -15,8 +15,17 @@ class ProgressController extends Controller
     public function index()
     {
         $progress = UserProgress::where('user_id', Auth::id())
-            ->with('lesson:id,title,slug') // Include basic lesson info if needed
-            ->get();
+            ->with('lesson:id,slug')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'user_id' => $item->user_id,
+                    'lesson_id' => $item->lesson->slug, // Android expects the slug as the ID
+                    'score' => $item->score,
+                    'completed_at' => $item->completed_at->toIso8601String(),
+                ];
+            });
 
         return response()->json([
             'status' => 'success',
@@ -30,14 +39,21 @@ class ProgressController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'lesson_id' => ['required', 'exists:lessons,id'],
+            'lesson_id' => ['required_without:lesson_slug', 'exists:lessons,id'],
+            'lesson_slug' => ['required_without:lesson_id', 'exists:lessons,slug'],
             'score' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
+
+        $lessonId = $request->lesson_id;
+
+        if ($request->has('lesson_slug')) {
+            $lessonId = \App\Models\Lesson::where('slug', $request->lesson_slug)->first()->id;
+        }
 
         $progress = UserProgress::updateOrCreate(
             [
                 'user_id' => Auth::id(),
-                'lesson_id' => $request->lesson_id,
+                'lesson_id' => $lessonId,
             ],
             [
                 'score' => $request->score ?? 100,
