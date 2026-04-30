@@ -1,6 +1,6 @@
 [versions]
 
-agp = "8.2.0"               # Android Gradle Plugin
+agp = "8.6.1"               # Android Gradle Plugin (mejor soporte JDK/jlink en Windows)
 kotlin = "1.9.24"           # Kotlin
 googleGms = "4.4.4"         # Google Services Plugin
 coreKtx = "1.13.1"          # androidx.core
