@@ -65,7 +65,7 @@ fun HomeScreen(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(20.dp)
                 ) {
-                    val progreso = 0.3f
+                    val progreso = 0.6f
 
                     val selectedVideo = remember(progreso) {
                         if (progreso > 0.5f) {
