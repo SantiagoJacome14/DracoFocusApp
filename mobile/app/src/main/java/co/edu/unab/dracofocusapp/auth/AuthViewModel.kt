@@ -5,14 +5,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.edu.unab.dracofocusapp.api.GoogleAuthRequest
-import co.edu.unab.dracofocusapp.api.RetrofitClient
+import co.edu.unab.dracofocusapp.data.remote.GoogleAuthRequest
+import co.edu.unab.dracofocusapp.data.remote.RetrofitInstance
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.auth.auth
+import android.util.Log
 
 // Esta clase es para la lógica de la autenticación del login y el registro
 // Es la que hereda de ViewModel para que los datos sirvan despues de los cambiosde la pantalla como por ejemplo girar el telefono
@@ -109,22 +110,42 @@ class AuthViewModel : ViewModel() {
     }
 
     // GOOGLE SIGN IN
-    fun onGoogleSignIn(idToken: String, onSuccess: () -> Unit) {
+    fun onGoogleSignIn(idToken: String, tokenManager: TokenManager, onSuccess: () -> Unit) {
+        Log.d("GOOGLE_LOGIN", "Entró a ViewModel")
         uiState = uiState.copy(isLoading = true, errorMessage = null)
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.instance.loginWithGoogle(GoogleAuthRequest(idToken))
-                if (response.success) {
-                    // Si el backend de Laravel responde exitosamente
-                    uiState = uiState.copy(
-                        isSuccessLogin = true,
-                        isLoading = false
-                    )
-                    onSuccess()
+                Log.d("GOOGLE_LOGIN", "Llamando a Laravel /api/auth/google")
+                val response = RetrofitInstance.getApiService(tokenManager)
+                    .loginWithGoogle(GoogleAuthRequest(idToken))
+
+                Log.d("GOOGLE_LOGIN", "Respuesta Laravel code: ${response.code()}")
+
+                if (response.isSuccessful) {
+                    Log.d("GOOGLE_LOGIN", "Login exitoso, guardando token")
+                    val body = response.body()
+
+                    if (body != null) {
+                        // guardar token y usuario
+                        tokenManager.saveAuthData(
+                            body.accessToken,
+                            body.user.id.toString()
+                        )
+
+                        uiState = uiState.copy(
+                            isSuccessLogin = true,
+                            isLoading = false
+                        )
+
+                        onSuccess()
+                    } else {
+                        onError("Respuesta vacía del servidor")
+                    }
                 } else {
-                    onError(response.message ?: "Error en la autenticación con el servidor")
+                    onError("Error HTTP: ${response.code()}")
                 }
             } catch (e: Exception) {
+                Log.e("GOOGLE_LOGIN", "Error en login Google", e)
                 onError("Error de conexión con el servidor: ${e.message}")
             }
         }

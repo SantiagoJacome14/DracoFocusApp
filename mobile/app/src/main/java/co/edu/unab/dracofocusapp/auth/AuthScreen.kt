@@ -40,6 +40,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import android.util.Log
 
 // Pantalla autenticación Login
 @Composable
@@ -61,6 +62,7 @@ fun AuthScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val credentialManager = CredentialManager.create(context)
+    val tokenManager = TokenManager(context)
 
     // Estados locales para el cargando y errores
     var isLoading by remember { mutableStateOf(false) }
@@ -219,8 +221,8 @@ fun AuthScreen(
                     OutlinedButton(
                         onClick = {
                             val googleIdOption = GetGoogleIdOption.Builder()
+                                .setServerClientId("461716187115-vtbahb3hngqj7kfeun641oqmjvq4mhgo.apps.googleusercontent.com")
                                 .setFilterByAuthorizedAccounts(false)
-                                .setServerClientId("659167749865-v6tt0qbr3ctn878qqmc4svt99nfo216u.apps.googleusercontent.com")
                                 .build()
 
                             val request = GetCredentialRequest.Builder()
@@ -230,22 +232,28 @@ fun AuthScreen(
                             scope.launch {
                                 try {
                                     isLoading = true
+                                    Log.d("GOOGLE_LOGIN", "Antes de getCredential")
                                     val result = credentialManager.getCredential(
                                         request = request,
                                         context = context
                                     )
+                                    Log.d("GOOGLE_LOGIN", "Después de getCredential")
                                     val credential = result.credential
+                                    Log.d("GOOGLE_LOGIN", "Credential recibida: ${credential::class.java.simpleName}")
                                     if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                                        val idToken = googleIdTokenCredential.idToken
-                                        viewModel.onGoogleSignIn(idToken) {
+                                        val idToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
+                                        Log.d("GOOGLE_LOGIN", "ID TOKEN obtenido")
+                                        Log.d("GOOGLE_LOGIN", "Llamando a onGoogleSignIn")
+                                        viewModel.onGoogleSignIn(idToken, tokenManager) {
                                             isLoading = false
                                             onNavigateToMain()
                                         }
                                     } else {
+                                        Log.d("GOOGLE_LOGIN", "Credencial no es de tipo Google")
                                         isLoading = false
                                     }
                                 } catch (e: Exception) {
+                                    Log.e("GOOGLE_LOGIN", "Error en login Google", e)
                                     isLoading = false
                                     viewModel.onError("Error con Google: ${e.message}")
                                 }

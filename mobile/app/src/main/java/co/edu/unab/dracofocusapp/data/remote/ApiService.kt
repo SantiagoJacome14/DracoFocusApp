@@ -1,5 +1,7 @@
 package co.edu.unab.dracofocusapp.data.remote
 
+import co.edu.unab.dracofocusapp.api.EvaluacionRequest
+import co.edu.unab.dracofocusapp.api.EvaluacionResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -24,4 +26,7 @@ interface ApiService {
 
     @GET("api/lessons")
     suspend fun getLessons(): Response<List<LessonDto>>
+
+    @POST("api/evaluar")
+    suspend fun evaluar(@Body request: EvaluacionRequest): EvaluacionResponse
 }

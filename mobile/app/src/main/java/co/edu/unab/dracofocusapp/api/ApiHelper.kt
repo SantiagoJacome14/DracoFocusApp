@@ -2,13 +2,16 @@ package co.edu.unab.dracofocusapp.api
 
 import android.net.Uri
 import androidx.navigation.NavController
+import co.edu.unab.dracofocusapp.auth.TokenManager
+import co.edu.unab.dracofocusapp.data.remote.RetrofitInstance
 suspend fun enviarCodigoALaIA(
     navController: NavController,
     userId: String,
     leccionId: String,
-    codigo: String
+    codigo: String,
+    tokenManager: TokenManager
 ) {
-    val api = RetrofitClient.instance
+    val api = RetrofitInstance.getApiService(tokenManager)
     val request = EvaluacionRequest(
         user_id = userId,
         leccion_id = leccionId,
