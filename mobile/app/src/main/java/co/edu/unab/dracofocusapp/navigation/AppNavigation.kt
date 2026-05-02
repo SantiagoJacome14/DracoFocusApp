@@ -71,7 +71,7 @@ fun AppNavigation() {
 
         composable(AppRoutes.AUTH) {
             val loginViewModel: LoginViewModel = viewModel(
-                factory = LoginViewModel.Factory(apiService, tokenManager, repository)
+                factory = LoginViewModel.Factory(apiService, tokenManager, repository, app.lessonRepository)
             )
             LoginScreen(
                 viewModel = loginViewModel,

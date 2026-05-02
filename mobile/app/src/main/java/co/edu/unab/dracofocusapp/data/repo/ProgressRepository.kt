@@ -14,7 +14,7 @@ import java.time.OffsetDateTime
 class ProgressRepository(
     private val db: DracoDatabase,
     private val apiService: ApiService,
-    private val lessonRepository: LessonRepository? = null
+    private val lessonRepository: LessonRepository
 ) {
     private val lessonDao = db.completedLessonDao()
 
@@ -39,17 +39,23 @@ class ProgressRepository(
 
         // 2. Intentar enviar al servidor mapeando a slug dinámicamente
         return try {
-            val lessonIdInt = lessonId.toIntOrNull()
-            val slug = lessonIdInt?.let { lessonRepository?.getSlugById(it) }
-            if (slug != null) {
-                val response = apiService.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = score))
-                if (response.isSuccessful) {
-                    Result.success(Unit)
+            if (lessonRepository.ensureLessonsAvailable()) {
+                val lessonIdInt = lessonId.toIntOrNull()
+                val slug = lessonIdInt?.let { lessonRepository.getSlugById(it) }
+                if (slug != null) {
+                    val response = apiService.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = score))
+                    if (response.isSuccessful) {
+                        Result.success(Unit)
+                    } else {
+                        Result.failure(Exception("Error al sincronizar con el servidor: ${response.code()}"))
+                    }
                 } else {
-                    Result.failure(Exception("Error al sincronizar con el servidor: ${response.code()}"))
+                    android.util.Log.e("ProgressRepo", "No slug found for lessonId: $lessonId, skipping sync")
+                    Result.success(Unit) // No romper progreso, solo loggear
                 }
             } else {
-                Result.failure(Exception("No se pudo mapear lessonId $lessonId a slug"))
+                android.util.Log.e("ProgressRepo", "Lessons not available, skipping sync")
+                Result.success(Unit) // No romper progreso
             }
         } catch (e: Exception) {
             // Manejar error de red, pero los datos ya están en Room
@@ -62,23 +68,28 @@ class ProgressRepository(
      */
     suspend fun syncProgressFromServer(userId: String): Result<Unit> {
         return try {
-            val response = apiService.getProgress()
-            if (response.isSuccessful && response.body() != null) {
-                val remoteProgress = response.body()!!.data
-                
-                remoteProgress.forEach { dto ->
-                    val localId = lessonRepository?.getIdBySlug(dto.lessonId)?.toString() ?: dto.lessonId
-                    lessonDao.upsert(
-                        CompletedLessonEntity(
-                            userId = userId,
-                            lessonId = localId,
-                            completedAtMillis = parseIsoDate(dto.completedAt)
+            if (lessonRepository.ensureLessonsAvailable()) {
+                val response = apiService.getProgress()
+                if (response.isSuccessful && response.body() != null) {
+                    val remoteProgress = response.body()!!.data
+                    
+                    remoteProgress.forEach { dto ->
+                        val localId = lessonRepository.getIdBySlug(dto.lessonId)?.toString() ?: dto.lessonId
+                        lessonDao.upsert(
+                            CompletedLessonEntity(
+                                userId = userId,
+                                lessonId = localId,
+                                completedAtMillis = parseIsoDate(dto.completedAt)
+                            )
                         )
-                    )
+                    }
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception("Error al obtener progreso: ${response.code()}"))
                 }
-                Result.success(Unit)
             } else {
-                Result.failure(Exception("Error al obtener progreso: ${response.code()}"))
+                android.util.Log.e("ProgressRepo", "Lessons not available, skipping sync")
+                Result.success(Unit) // No romper progreso
             }
         } catch (e: Exception) {
             Result.failure(e)

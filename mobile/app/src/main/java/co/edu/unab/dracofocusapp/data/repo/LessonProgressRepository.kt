@@ -18,7 +18,7 @@ import java.time.OffsetDateTime
 class LessonProgressRepository(
     private val db: DracoDatabase,
     private val apiService: ApiService? = null,
-    private val lessonRepository: LessonRepository? = null
+    private val lessonRepository: LessonRepository
 ) {
 
     companion object {
@@ -54,12 +54,18 @@ class LessonProgressRepository(
             )
         )
 
-        // 2. Sync to Laravel
+        // 2. Sync to Laravel (only if lessons are available)
         try {
-            val lessonIdInt = lessonId.toIntOrNull()
-            val slug = lessonIdInt?.let { lessonRepository?.getSlugById(it) }
-            if (slug != null) {
-                apiService?.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = 100))
+            if (lessonRepository.ensureLessonsAvailable()) {
+                val lessonIdInt = lessonId.toIntOrNull()
+                val slug = lessonIdInt?.let { lessonRepository.getSlugById(it) }
+                if (slug != null) {
+                    apiService?.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = 100))
+                } else {
+                    android.util.Log.e("LessonProgressRepo", "No slug found for lessonId: $lessonId, skipping sync")
+                }
+            } else {
+                android.util.Log.e("LessonProgressRepo", "Lessons not available, skipping sync")
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -107,21 +113,25 @@ class LessonProgressRepository(
      */
     suspend fun syncProgressFromServer(userId: String) {
         try {
-            val response = apiService?.getProgress()
-            if (response != null && response.isSuccessful) {
-                // Opcional: limpiar progreso local del usuario antes de re-sincronizar
-                // lessonDao.clearForUser(userId) 
-                
-                response.body()?.data?.forEach { dto ->
-                    val localId = lessonRepository?.getIdBySlug(dto.lessonId)?.toString() ?: dto.lessonId
-                    lessonDao.upsert(
-                        CompletedLessonEntity(
-                            userId = userId,
-                            lessonId = localId,
-                            completedAtMillis = parseIsoDate(dto.completedAt)
+            if (lessonRepository.ensureLessonsAvailable()) {
+                val response = apiService?.getProgress()
+                if (response != null && response.isSuccessful) {
+                    // Opcional: limpiar progreso local del usuario antes de re-sincronizar
+                    // lessonDao.clearForUser(userId) 
+                    
+                    response.body()?.data?.forEach { dto ->
+                        val localId = lessonRepository.getIdBySlug(dto.lessonId)?.toString() ?: dto.lessonId
+                        lessonDao.upsert(
+                            CompletedLessonEntity(
+                                userId = userId,
+                                lessonId = localId,
+                                completedAtMillis = parseIsoDate(dto.completedAt)
+                            )
                         )
-                    )
+                    }
                 }
+            } else {
+                android.util.Log.e("LessonProgressRepo", "Lessons not available, skipping sync")
             }
         } catch (e: Exception) {
             e.printStackTrace()

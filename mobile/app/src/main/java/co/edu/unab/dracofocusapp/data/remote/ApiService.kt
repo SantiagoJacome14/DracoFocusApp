@@ -23,5 +23,5 @@ interface ApiService {
     suspend fun sendLessonProgress(@Body request: ProgressRequest): Response<SimpleResponse>
 
     @GET("api/lessons")
-    suspend fun getLessons(): List<LessonDto>
+    suspend fun getLessons(): Response<List<LessonDto>>
 }

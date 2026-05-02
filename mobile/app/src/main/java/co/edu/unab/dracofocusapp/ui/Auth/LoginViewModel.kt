@@ -25,7 +25,7 @@ class LoginViewModel(
     private val apiService: ApiService,
     private val tokenManager: TokenManager,
     private val repository: LessonProgressRepository,
-    private val lessonRepository: LessonRepository? = null
+    private val lessonRepository: LessonRepository
 ) : ViewModel() {
 
     var email by mutableStateOf("")
@@ -53,7 +53,8 @@ class LoginViewModel(
                     tokenManager.saveAuthData(loginResponse.accessToken, userId)
 
                     // Fetch lecciones dinámicas desde el backend
-                    lessonRepository?.fetchLessonsFromApi()?.let { lessons ->
+                    val lessons = lessonRepository.fetchLessonsFromApi()
+                    if (lessons.isNotEmpty()) {
                         lessonRepository.saveLessonsInRoom(lessons)
                     }
 
@@ -94,7 +95,8 @@ class LoginViewModel(
 
                     tokenManager.saveAuthData(loginResponse.accessToken, userId)
                     Log.d("GOOGLE_LOGIN", "[VM-5] Token guardado en DataStore, obteniendo lecciones dinámicas")
-                    lessonRepository?.fetchLessonsFromApi()?.let { lessons ->
+                    val lessons = lessonRepository.fetchLessonsFromApi()
+                    if (lessons.isNotEmpty()) {
                         lessonRepository.saveLessonsInRoom(lessons)
                     }
                     Log.d("GOOGLE_LOGIN", "[VM-5] Token guardado en DataStore, sincronizando progreso")
@@ -124,7 +126,7 @@ class LoginViewModel(
         private val apiService: ApiService,
         private val tokenManager: TokenManager,
         private val repository: LessonProgressRepository,
-        private val lessonRepository: LessonRepository? = null
+        private val lessonRepository: LessonRepository
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return LoginViewModel(apiService, tokenManager, repository, lessonRepository) as T

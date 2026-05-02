@@ -4,6 +4,7 @@ import co.edu.unab.dracofocusapp.data.local.DracoDatabase
 import co.edu.unab.dracofocusapp.data.local.LessonEntity
 import co.edu.unab.dracofocusapp.data.remote.ApiService
 import co.edu.unab.dracofocusapp.data.remote.LessonDto
+import retrofit2.Response
 
 class LessonRepository(
     private val db: DracoDatabase,
@@ -13,9 +14,15 @@ class LessonRepository(
 
     suspend fun fetchLessonsFromApi(): List<LessonDto> {
         return try {
-            apiService?.getLessons() ?: emptyList()
+            val response: Response<List<LessonDto>>? = apiService?.getLessons()
+            if (response != null && response.isSuccessful) {
+                response.body() ?: emptyList()
+            } else {
+                android.util.Log.e("LessonRepository", "Error fetching lessons: ${response?.code()} - ${response?.message()}")
+                emptyList()
+            }
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("LessonRepository", "Exception fetching lessons: ${e.message}", e)
             emptyList()
         }
     }
@@ -42,5 +49,18 @@ class LessonRepository(
 
     suspend fun clearLessons() {
         lessonDao.clearAll()
+    }
+
+    suspend fun ensureLessonsAvailable(): Boolean {
+        val existing = lessonDao.getAllLessons()
+        if (existing.isEmpty()) {
+            val fetched = fetchLessonsFromApi()
+            if (fetched.isNotEmpty()) {
+                saveLessonsInRoom(fetched)
+                return true
+            }
+            return false
+        }
+        return true
     }
 }
