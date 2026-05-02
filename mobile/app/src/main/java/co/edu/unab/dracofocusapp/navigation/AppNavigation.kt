@@ -13,8 +13,8 @@ import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.auth.ForgotPasswordScreen
 import co.edu.unab.dracofocusapp.auth.RegisterScreen
 import co.edu.unab.dracofocusapp.main.MainScreen
-import co.edu.unab.dracofocusapp.ui.Auth.LoginScreen
-import co.edu.unab.dracofocusapp.ui.Auth.LoginViewModel
+import co.edu.unab.dracofocusapp.auth.AuthScreen
+import co.edu.unab.dracofocusapp.auth.AuthViewModel
 import co.edu.unab.dracofocusapp.ui.Lecciones.FeedbackScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.IngresarCodigoGrupoScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionesGrupalesScreen
@@ -70,19 +70,17 @@ fun AppNavigation() {
         }
 
         composable(AppRoutes.AUTH) {
-            val loginViewModel: LoginViewModel = viewModel(
-                factory = LoginViewModel.Factory(apiService, tokenManager, repository)
-            )
-            LoginScreen(
-                viewModel = loginViewModel,
+            val authViewModel: AuthViewModel = viewModel()
+            AuthScreen(
+                viewModel = authViewModel,
                 onNavigateToMain = {
                     navController.navigate(AppRoutes.MAIN) {
                         popUpTo(AppRoutes.AUTH) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
-                onNavigateToForgotPassword = { navController.navigate(AppRoutes.FORGOT_PASSWORD) },
-                onNavigateToRegister = { navController.navigate(AppRoutes.REGISTER) }
+                onNavigateToRegister = { navController.navigate(AppRoutes.REGISTER) },
+                onNavigateToForgotPassword = { navController.navigate(AppRoutes.FORGOT_PASSWORD) }
             )
         }
 

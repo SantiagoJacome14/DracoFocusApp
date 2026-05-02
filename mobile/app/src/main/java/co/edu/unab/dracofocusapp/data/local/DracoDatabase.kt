@@ -1,8 +1,11 @@
 package co.edu.unab.dracofocusapp.data.local
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import co.edu.unab.dracofocusapp.data.local.dao.CompletedLessonDao
+import co.edu.unab.dracofocusapp.data.local.dao.LessonDao
 import co.edu.unab.dracofocusapp.data.local.dao.MuseumUnlockDao
 import co.edu.unab.dracofocusapp.data.local.dao.RewardFlagsDao
 
@@ -12,12 +15,32 @@ import co.edu.unab.dracofocusapp.data.local.dao.RewardFlagsDao
         CompletedLessonEntity::class,
         RewardFlagsEntity::class,
         MuseumUnlockEntity::class,
+        LessonEntity::class,
     ],
-    version = 2, // Incrementado de 1 a 2 debido al cambio de esquema (userId)
+    version = 3
 )
 abstract class DracoDatabase : RoomDatabase() {
 
     abstract fun completedLessonDao(): CompletedLessonDao
     abstract fun rewardFlagsDao(): RewardFlagsDao
     abstract fun museumUnlockDao(): MuseumUnlockDao
+    abstract fun lessonDao(): LessonDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: DracoDatabase? = null
+
+        fun getInstance(context: Context): DracoDatabase {
+            return INSTANCE ?: synchronized(this) {
+                Room.databaseBuilder(
+                    context.applicationContext,
+                    DracoDatabase::class.java,
+                    "draco.db"
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                    .also { INSTANCE = it }
+            }
+        }
+    }
 }

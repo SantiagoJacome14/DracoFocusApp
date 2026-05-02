@@ -5,7 +5,6 @@ import co.edu.unab.dracofocusapp.data.local.DracoDatabase
 import co.edu.unab.dracofocusapp.data.local.MuseumUnlockEntity
 import co.edu.unab.dracofocusapp.data.local.RewardFlagsEntity
 import co.edu.unab.dracofocusapp.data.remote.ApiService
-import co.edu.unab.dracofocusapp.data.remote.LessonSlugMapper
 import co.edu.unab.dracofocusapp.data.remote.ProgressRequest
 import co.edu.unab.dracofocusapp.museum.MuseumCatalog
 import kotlinx.coroutines.flow.Flow
@@ -18,12 +17,13 @@ import java.time.OffsetDateTime
  */
 class LessonProgressRepository(
     private val db: DracoDatabase,
-    private val apiService: ApiService? = null
+    private val apiService: ApiService? = null,
+    private val lessonRepository: LessonRepository
 ) {
 
     companion object {
-        /** Set “Fundamentos”: las 3 misiones del menú Draco Solitario. */
-        val SOLO_FUNDAMENTOS_IDS = setOf("1", "2", "3")
+        /** Set “Fundamentos”: las 3 misiones del menú Draco Solitario (usar slugs, no IDs de Laravel). */
+        val SOLO_FUNDAMENTOS_SLUGS = setOf("decisiones_de_fuego", "vuelo_infinito", "el_libro_de_tareas")
     }
 
     private val lessonDao get() = db.completedLessonDao()
@@ -32,13 +32,13 @@ class LessonProgressRepository(
 
     fun observeSoloFundamentosCompletedIds(userId: String): Flow<Set<String>> =
         lessonDao.observeCompletedIds(userId).map { ids ->
-            ids.filter { it in SOLO_FUNDAMENTOS_IDS }.toSet()
+            ids.filter { it in SOLO_FUNDAMENTOS_SLUGS }.toSet()
         }
 
     fun observeSoloFundamentosProgressFraction(userId: String): Flow<Float> =
         observeSoloFundamentosCompletedIds(userId).map { done ->
-            (done.size.coerceAtMost(SOLO_FUNDAMENTOS_IDS.size)).toFloat() /
-                SOLO_FUNDAMENTOS_IDS.size.toFloat()
+            (done.size.coerceAtMost(SOLO_FUNDAMENTOS_SLUGS.size)).toFloat() /
+                SOLO_FUNDAMENTOS_SLUGS.size.toFloat()
         }
 
     fun observeEnvelopeClaimedFlag(userId: String): Flow<Boolean> =
@@ -54,10 +54,19 @@ class LessonProgressRepository(
             )
         )
 
-        // 2. Sync to Laravel
+        // 2. Sync to Laravel (only if lessons are available)
         try {
-            val slug = LessonSlugMapper.getSlugFromId(lessonId)
-            apiService?.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = 100))
+            if (lessonRepository.ensureLessonsAvailable()) {
+                val lessonIdInt = lessonId.toIntOrNull()
+                val slug = lessonIdInt?.let { lessonRepository.getSlugById(it) }
+                if (slug != null) {
+                    apiService?.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = 100))
+                } else {
+                    android.util.Log.e("LessonProgressRepo", "No slug found for lessonId: $lessonId, skipping sync")
+                }
+            } else {
+                android.util.Log.e("LessonProgressRepo", "Lessons not available, skipping sync")
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -65,11 +74,11 @@ class LessonProgressRepository(
 
     suspend fun shouldShowSobreMisterioso(userId: String): Boolean {
         val ids = lessonDao.snapshotLessonIds(userId)
-            .filter { it in SOLO_FUNDAMENTOS_IDS }
+            .filter { it in SOLO_FUNDAMENTOS_SLUGS }
             .toSet()
         val envelopeClaimed =
             flagsDao.snapshot(userId)?.soloFundamentosEnvelopeClaimed ?: false
-        return ids.containsAll(SOLO_FUNDAMENTOS_IDS) && !envelopeClaimed
+        return ids.containsAll(SOLO_FUNDAMENTOS_SLUGS) && !envelopeClaimed
     }
 
     suspend fun markSoloEnvelopeClaimed(userId: String) {
@@ -104,21 +113,25 @@ class LessonProgressRepository(
      */
     suspend fun syncProgressFromServer(userId: String) {
         try {
-            val response = apiService?.getProgress()
-            if (response != null && response.isSuccessful) {
-                // Opcional: limpiar progreso local del usuario antes de re-sincronizar
-                // lessonDao.clearForUser(userId) 
-                
-                response.body()?.data?.forEach { dto ->
-                    val localId = LessonSlugMapper.getIdFromSlug(dto.lessonId)
-                    lessonDao.upsert(
-                        CompletedLessonEntity(
-                            userId = userId,
-                            lessonId = localId,
-                            completedAtMillis = parseIsoDate(dto.completedAt)
+            if (lessonRepository.ensureLessonsAvailable()) {
+                val response = apiService?.getProgress()
+                if (response != null && response.isSuccessful) {
+                    // Opcional: limpiar progreso local del usuario antes de re-sincronizar
+                    // lessonDao.clearForUser(userId) 
+                    
+                    response.body()?.data?.forEach { dto ->
+                        val localId = lessonRepository.getIdBySlug(dto.lessonId)?.toString() ?: dto.lessonId
+                        lessonDao.upsert(
+                            CompletedLessonEntity(
+                                userId = userId,
+                                lessonId = localId,
+                                completedAtMillis = parseIsoDate(dto.completedAt)
+                            )
                         )
-                    )
+                    }
                 }
+            } else {
+                android.util.Log.e("LessonProgressRepo", "Lessons not available, skipping sync")
             }
         } catch (e: Exception) {
             e.printStackTrace()

@@ -11,6 +11,16 @@ use Carbon\Carbon;
 class LessonController extends Controller
 {
     /**
+     * Get all lessons for Android dynamic slug mapping.
+     */
+    public function index()
+    {
+        $lessons = Lesson::select('id', 'slug', 'title', 'xp_reward')->get();
+
+        return response()->json($lessons);
+    }
+
+    /**
      * Bank of exercises per lesson topic.
      */
     private function getLessonExercises(): array

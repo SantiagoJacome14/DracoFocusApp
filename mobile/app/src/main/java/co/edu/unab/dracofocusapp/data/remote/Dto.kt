@@ -8,6 +8,13 @@ data class LoginRequest(
     val password: String
 )
 
+data class RegisterRequest(
+    val name: String,
+    val email: String,
+    val password: String,
+    val semester: String
+)
+
 data class GoogleAuthRequest(
     @SerializedName("id_token") val idToken: String
 )
@@ -46,4 +53,12 @@ data class ProgressRequest(
 data class SimpleResponse(
     val status: String,
     val message: String
+)
+
+// Lesson DTO for dynamic slug mapping
+data class LessonDto(
+    val id: Int,
+    val slug: String,
+    val title: String,
+    @SerializedName("xp_reward") val xpReward: Int
 )

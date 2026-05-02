@@ -7,6 +7,7 @@ import co.edu.unab.dracofocusapp.data.local.DracoDatabase
 import co.edu.unab.dracofocusapp.data.remote.ApiService
 import co.edu.unab.dracofocusapp.data.remote.RetrofitInstance
 import co.edu.unab.dracofocusapp.data.repo.LessonProgressRepository
+import co.edu.unab.dracofocusapp.data.repo.LessonRepository
 import co.edu.unab.dracofocusapp.domain.rewards.RewardManager
 
 /**
@@ -18,6 +19,9 @@ class DracoFocusApplication : Application() {
         private set
 
     lateinit var lessonProgressRepository: LessonProgressRepository
+        private set
+
+    lateinit var lessonRepository: LessonRepository
         private set
 
     lateinit var rewardManager: RewardManager
@@ -46,7 +50,8 @@ class DracoFocusApplication : Application() {
         apiService = RetrofitInstance.getApiService(tokenManager)
         
         // Inicializar Repositorios
-        lessonProgressRepository = LessonProgressRepository(database, apiService)
+        lessonRepository = LessonRepository(database, apiService)
+        lessonProgressRepository = LessonProgressRepository(database, apiService, lessonRepository)
         
         // Inicializar Managers
         rewardManager = RewardManager(lessonProgressRepository)

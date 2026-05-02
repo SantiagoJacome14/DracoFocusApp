@@ -20,7 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
-import co.edu.unab.dracofocusapp.auth.ModernTopBar
+import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
 import androidx.compose.foundation.verticalScroll
 
 // Esta función representa la pantalla "Museo DracArte" dentro de la aplicación
@@ -139,7 +139,7 @@ fun MuseoDracArteScreen(navController: NavController) {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Image(
-                                painter = painterResource(id = R.drawable.pintura1_0),
+                                painter = painterResource(id = R.drawable.img_fondo),
                                 contentDescription = "Obra incompleta 1",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -148,7 +148,7 @@ fun MuseoDracArteScreen(navController: NavController) {
                                     .clip(RoundedCornerShape(10.dp))
                             )
                             Image(
-                                painter = painterResource(id = R.drawable.pintura2_0),
+                                painter = painterResource(id = R.drawable.img_fondo),
                                 contentDescription = "Obra incompleta 2",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -164,7 +164,7 @@ fun MuseoDracArteScreen(navController: NavController) {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Image(
-                                painter = painterResource(id = R.drawable.pintura3_0),
+                                painter = painterResource(id = R.drawable.img_fondo),
                                 contentDescription = "Obra incompleta 3",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -173,7 +173,7 @@ fun MuseoDracArteScreen(navController: NavController) {
                                     .clip(RoundedCornerShape(10.dp))
                             )
                             Image(
-                                painter = painterResource(id = R.drawable.pintura4_0),
+                                painter = painterResource(id = R.drawable.img_fondo),
                                 contentDescription = "Obra incompleta 4",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier

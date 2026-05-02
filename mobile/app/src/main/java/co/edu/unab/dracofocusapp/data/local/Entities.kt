@@ -1,7 +1,16 @@
 package co.edu.unab.dracofocusapp.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+
+@Entity(tableName = "lessons")
+data class LessonEntity(
+    @PrimaryKey val id: Int,
+    val slug: String,
+    val title: String,
+    @ColumnInfo(name = "xp_reward") val xpReward: Int = 0
+)
 
 @Entity(
     tableName = "completed_lessons",
