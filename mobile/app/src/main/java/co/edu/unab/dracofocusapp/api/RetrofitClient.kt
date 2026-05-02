@@ -11,7 +11,13 @@ import java.util.concurrent.TimeUnit
 interface DracoApiService {
     @POST("evaluar")
     suspend fun evaluar(@Body request: EvaluacionRequest): EvaluacionResponse
+
+    @POST("api/auth/google")
+    suspend fun loginWithGoogle(@Body request: GoogleAuthRequest): GoogleAuthResponse
 }
+
+data class GoogleAuthRequest(val id_token: String)
+data class GoogleAuthResponse(val success: Boolean, val message: String?, val token: String?) // Ajusta según tu API de Laravel
 
 // --- Cliente Retrofit dinámico ---
 object RetrofitClient {

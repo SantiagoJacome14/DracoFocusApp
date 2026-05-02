@@ -85,6 +85,11 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
+    // Credential Manager
+    //implementation(libs.androidx.credentials)
+    //implementation(libs.androidx.credentials.play.services.auth)
+    //implementation(libs.googleid)
+
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
@@ -95,4 +100,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
 }

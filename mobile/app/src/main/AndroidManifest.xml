@@ -13,6 +13,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DracoFocusApp"
         android:networkSecurityConfig="@xml/network_security_config">
+        <meta-data
+            android:name="com.google.android.gms.credentials.API_ENABLED"
+            android:value="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

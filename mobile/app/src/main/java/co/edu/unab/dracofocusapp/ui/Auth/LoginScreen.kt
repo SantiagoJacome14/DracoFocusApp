@@ -1,5 +1,6 @@
 package co.edu.unab.dracofocusapp.ui.Auth
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,6 +19,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.auth.CustomTextField
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.platform.LocalContext
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.CustomCredential
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -28,6 +37,9 @@ fun LoginScreen(
 ) {
     val state = viewModel.state
     val dracoCyan = Color(0xFF22DDF2)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val credentialManager = CredentialManager.create(context)
 
     // Efecto para navegar cuando el login es exitoso
     LaunchedEffect(state.isSuccess) {
@@ -141,6 +153,59 @@ fun LoginScreen(
                             CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(24.dp))
                         } else {
                             Text("INGRESAR", fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Botón de Google Sign-In
+                    OutlinedButton(
+                        onClick = {
+                            val googleIdOption = GetGoogleIdOption.Builder()
+                                .setFilterByAuthorizedAccounts(false)
+                                .setServerClientId("659167749865-v6tt0qbr3ctn878qqmc4svt99nfo216u.apps.googleusercontent.com")
+                                .build()
+
+                            val request = GetCredentialRequest.Builder()
+                                .addCredentialOption(googleIdOption)
+                                .build()
+
+                            scope.launch {
+                                try {
+                                    val result = credentialManager.getCredential(
+                                        request = request,
+                                        context = context
+                                    )
+                                    val credential = result.credential
+                                    if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                        val idToken = googleIdTokenCredential.idToken
+                                        viewModel.onGoogleSignIn(idToken)
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("GOOGLE_LOGIN", "Error: ${e.message}", e)
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        enabled = !state.isLoading,
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, dracoCyan.copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_iniciarsesion), 
+                                contentDescription = "Google Icon",
+                                modifier = Modifier.size(20.dp),
+                                tint = Color.Unspecified
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Continuar con Google", fontWeight = FontWeight.Medium)
                         }
                     }
 

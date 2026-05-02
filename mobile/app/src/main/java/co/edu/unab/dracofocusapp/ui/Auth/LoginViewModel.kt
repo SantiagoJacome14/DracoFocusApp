@@ -68,6 +68,34 @@ class LoginViewModel(
         }
     }
 
+    fun onGoogleSignIn(idToken: String) {
+        viewModelScope.launch {
+            state = state.copy(isLoading = true, error = null)
+            try {
+                val response = apiService.loginWithGoogle(co.edu.unab.dracofocusapp.data.remote.GoogleAuthRequest(idToken))
+                if (response.isSuccessful && response.body() != null) {
+                    val loginResponse = response.body()!!
+                    val userId = loginResponse.user.id.toString()
+
+                    tokenManager.saveAuthData(loginResponse.accessToken, userId)
+                    repository.syncProgressFromServer(userId)
+
+                    state = state.copy(isLoading = false, isSuccess = true)
+                } else {
+                    state = state.copy(
+                        isLoading = false,
+                        error = "Error en la autenticación con Google."
+                    )
+                }
+            } catch (e: Exception) {
+                state = state.copy(
+                    isLoading = false,
+                    error = "Error de conexión con el servidor: ${e.message}"
+                )
+            }
+        }
+    }
+
     class Factory(
         private val apiService: ApiService,
         private val tokenManager: TokenManager,

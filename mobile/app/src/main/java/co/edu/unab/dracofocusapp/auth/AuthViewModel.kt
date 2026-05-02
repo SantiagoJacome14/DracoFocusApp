@@ -4,7 +4,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import co.edu.unab.dracofocusapp.api.GoogleAuthRequest
+import co.edu.unab.dracofocusapp.api.RetrofitClient
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -102,6 +106,28 @@ class AuthViewModel : ViewModel() {
             errorMessage = null
         )
         clearForm() // Limpiamos el formulario después del éxito
+    }
+
+    // GOOGLE SIGN IN
+    fun onGoogleSignIn(idToken: String, onSuccess: () -> Unit) {
+        uiState = uiState.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.instance.loginWithGoogle(GoogleAuthRequest(idToken))
+                if (response.success) {
+                    // Si el backend de Laravel responde exitosamente
+                    uiState = uiState.copy(
+                        isSuccessLogin = true,
+                        isLoading = false
+                    )
+                    onSuccess()
+                } else {
+                    onError(response.message ?: "Error en la autenticación con el servidor")
+                }
+            } catch (e: Exception) {
+                onError("Error de conexión con el servidor: ${e.message}")
+            }
+        }
     }
 
 

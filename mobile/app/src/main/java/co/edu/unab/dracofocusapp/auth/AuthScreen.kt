@@ -26,10 +26,21 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.edu.unab.dracofocusapp.R
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.CustomCredential
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 // Pantalla autenticación Login
 @Composable
 fun AuthScreen(
@@ -46,6 +57,10 @@ fun AuthScreen(
 
     // Instancia de Firebase Authentication
     val auth = Firebase.auth
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val credentialManager = CredentialManager.create(context)
 
     // Estados locales para el cargando y errores
     var isLoading by remember { mutableStateOf(false) }
@@ -64,7 +79,10 @@ fun AuthScreen(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(24.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp)
         ) {
             // Mascota
             Image(
@@ -195,6 +213,66 @@ fun AuthScreen(
                             Text("Iniciar Sesión", fontWeight = FontWeight.Bold)
                     }
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Botón de Google Sign-In
+                    OutlinedButton(
+                        onClick = {
+                            val googleIdOption = GetGoogleIdOption.Builder()
+                                .setFilterByAuthorizedAccounts(false)
+                                .setServerClientId("659167749865-v6tt0qbr3ctn878qqmc4svt99nfo216u.apps.googleusercontent.com")
+                                .build()
+
+                            val request = GetCredentialRequest.Builder()
+                                .addCredentialOption(googleIdOption)
+                                .build()
+
+                            scope.launch {
+                                try {
+                                    isLoading = true
+                                    val result = credentialManager.getCredential(
+                                        request = request,
+                                        context = context
+                                    )
+                                    val credential = result.credential
+                                    if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                        val idToken = googleIdTokenCredential.idToken
+                                        viewModel.onGoogleSignIn(idToken) {
+                                            isLoading = false
+                                            onNavigateToMain()
+                                        }
+                                    } else {
+                                        isLoading = false
+                                    }
+                                } catch (e: Exception) {
+                                    isLoading = false
+                                    viewModel.onError("Error con Google: ${e.message}")
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        enabled = !isLoading,
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Color(0xFF22DDF2).copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_iniciarsesion), 
+                                contentDescription = "Google Icon",
+                                modifier = Modifier.size(20.dp),
+                                tint = Color.Unspecified
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Continuar con Google", fontWeight = FontWeight.Medium)
+                        }
+                    }
+
                     //  Mensaje de error preventivo
                     errorMessage?.let {
                         Spacer(modifier = Modifier.height(12.dp))
@@ -208,7 +286,7 @@ fun AuthScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Divider(
+                    HorizontalDivider(
                         color = Color(0xFF22DDF2).copy(alpha = 0.3f),
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
