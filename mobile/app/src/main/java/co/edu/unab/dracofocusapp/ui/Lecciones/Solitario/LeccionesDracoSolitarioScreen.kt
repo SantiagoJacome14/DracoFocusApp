@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.util.Log
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.DracoFocusApplication
@@ -39,6 +40,7 @@ fun LeccionesDracoSolitarioScreen(
     navController: NavController,
     onBack: () -> Unit,
 ) {
+    Log.d("PROGRESS_SYNC", "Entró a LeccionesDracoSolitarioScreen")
     val app = LocalContext.current.applicationContext as DracoFocusApplication
     val currentUserId by app.tokenManager.userId.collectAsState(initial = null)
 
@@ -66,6 +68,18 @@ fun LeccionesDracoSolitarioScreen(
 
     val doneCount = completadas.size.coerceAtMost(3)
     val faltantes = (3 - doneCount).coerceAtLeast(0)
+
+    LaunchedEffect(completadas) {
+        Log.d("PROGRESS_SYNC", "Estado actual en UI: $doneCount/3 completadas")
+        Log.d("PROGRESS_SYNC", "Lección 'decisiones_de_fuego' completada: ${"decisiones_de_fuego" in completadas}")
+        Log.d("PROGRESS_SYNC", "Lección 'vuelo_infinito' completada: ${"vuelo_infinito" in completadas}")
+        Log.d("PROGRESS_SYNC", "Lección 'el_libro_de_tareas' completada: ${"el_libro_de_tareas" in completadas}")
+    }
+
+    LaunchedEffect(Unit) {
+        Log.d("PROGRESS_SYNC", "Cargando progreso al entrar a Lecciones")
+        lessonVm.refreshProgress()
+    }
 
     LaunchedEffect(Unit) {
         lessonVm.envelopeUiEvents.collectLatest { outcome ->
@@ -164,7 +178,7 @@ fun LeccionesDracoSolitarioScreen(
                         icon = R.drawable.ic_lesson_fire,
                         titulo = "Decisiones de Fuego",
                         subtitulo = "Condicionales • retos mixtos",
-                        isCompleted = "1" in completadas,
+                        isCompleted = "decisiones_de_fuego" in completadas,
                         onStart = {
                             navController.navigate("leccion_reto/1") {
                                 launchSingleTop = true
@@ -176,7 +190,7 @@ fun LeccionesDracoSolitarioScreen(
                         icon = R.drawable.ic_lesson_loop,
                         titulo = "Vuelo Infinito",
                         subtitulo = "Bucles • retos mixtos",
-                        isCompleted = "2" in completadas,
+                        isCompleted = "vuelo_infinito" in completadas,
                         onStart = {
                             navController.navigate("leccion_reto/2") {
                                 launchSingleTop = true
@@ -188,7 +202,7 @@ fun LeccionesDracoSolitarioScreen(
                         icon = R.drawable.ic_lesson_arrays,
                         titulo = "El Libro de las Tareas",
                         subtitulo = "Lists & lógica",
-                        isCompleted = "3" in completadas,
+                        isCompleted = "el_libro_de_tareas" in completadas,
                         onStart = {
                             navController.navigate("leccion_reto/3") {
                                 launchSingleTop = true

@@ -19,5 +19,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Progress routes
     Route::get('/progress', [ProgressController::class, 'index']);
-    Route::post('/progress/lesson', [ProgressController::class, 'store']);
+    Route::post('/progress', [ProgressController::class, 'store']);
 });

@@ -9,6 +9,7 @@ import co.edu.unab.dracofocusapp.data.remote.ProgressRequest
 import co.edu.unab.dracofocusapp.museum.MuseumCatalog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import android.util.Log
 import java.time.OffsetDateTime
 
 /**
@@ -45,29 +46,41 @@ class LessonProgressRepository(
         flagsDao.observe(userId).map { it?.soloFundamentosEnvelopeClaimed ?: false }
 
     suspend fun markLessonCompleted(userId: String, lessonId: String) {
-        // 1. Local first
+        // 1. Determinar el slug (siempre preferimos slugs para persistencia local)
+        val lessonIdInt = lessonId.toIntOrNull()
+        val slug = if (lessonIdInt != null) {
+            lessonRepository.getSlugById(lessonIdInt)
+        } else {
+            lessonId
+        }
+
+        val idToStore = slug ?: lessonId
+
+        // 2. Local first using slug
+        Log.d("PROGRESS_SYNC", "Guardado en Room slug=$idToStore (originalId=$lessonId)")
         lessonDao.upsert(
             CompletedLessonEntity(
                 userId = userId,
-                lessonId = lessonId,
+                lessonId = idToStore,
                 completedAtMillis = System.currentTimeMillis(),
             )
         )
 
-        // 2. Sync to Laravel (only if lessons are available)
+        // 3. Sync to Laravel
         try {
             if (lessonRepository.ensureLessonsAvailable()) {
-                val lessonIdInt = lessonId.toIntOrNull()
-                val slug = lessonIdInt?.let { lessonRepository.getSlugById(it) }
-                if (slug != null) {
-                    apiService?.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = 100))
+                val finalSlug = if (idToStore in SOLO_FUNDAMENTOS_SLUGS) idToStore else slug
+                if (finalSlug != null) {
+                    Log.d("PROGRESS_SYNC", "Enviando progreso: lesson=$finalSlug, score=100, completed=true")
+                    apiService?.sendLessonProgress(ProgressRequest(lessonSlug = finalSlug, score = 100, completed = true))
                 } else {
-                    android.util.Log.e("LessonProgressRepo", "No slug found for lessonId: $lessonId, skipping sync")
+                    Log.e("PROGRESS_SYNC", "No slug found for lessonId: $lessonId, skipping sync")
                 }
             } else {
-                android.util.Log.e("LessonProgressRepo", "Lessons not available, skipping sync")
+                Log.e("PROGRESS_SYNC", "Lessons not available, skipping sync")
             }
         } catch (e: Exception) {
+            Log.e("PROGRESS_SYNC", "Error al enviar progreso", e)
             e.printStackTrace()
         }
     }
@@ -114,26 +127,31 @@ class LessonProgressRepository(
     suspend fun syncProgressFromServer(userId: String) {
         try {
             if (lessonRepository.ensureLessonsAvailable()) {
+                Log.d("PROGRESS_SYNC", "Obteniendo progreso del servidor...")
                 val response = apiService?.getProgress()
+                Log.d("PROGRESS_SYNC", "Respuesta GET /api/progress: code=${response?.code()}")
                 if (response != null && response.isSuccessful) {
-                    // Opcional: limpiar progreso local del usuario antes de re-sincronizar
-                    // lessonDao.clearForUser(userId) 
+                    val remoteProgress = response.body()?.data ?: emptyList()
+                    Log.d("PROGRESS_SYNC", "Lecciones completadas desde servidor: ${remoteProgress.size}")
                     
-                    response.body()?.data?.forEach { dto ->
-                        val localId = lessonRepository.getIdBySlug(dto.lessonId)?.toString() ?: dto.lessonId
+                    remoteProgress.forEach { dto ->
+                        val slugToStore = dto.lessonSlug
+                        Log.d("PROGRESS_SYNC", "Guardado en Room slug=$slugToStore desde servidor")
                         lessonDao.upsert(
                             CompletedLessonEntity(
                                 userId = userId,
-                                lessonId = localId,
-                                completedAtMillis = parseIsoDate(dto.completedAt)
+                                lessonId = slugToStore,
+                                completedAtMillis = dto.completedAt?.let { parseIsoDate(it) } ?: System.currentTimeMillis()
                             )
                         )
                     }
+                    Log.d("PROGRESS_SYNC", "UI actualizada con progreso remoto")
                 }
             } else {
-                android.util.Log.e("LessonProgressRepo", "Lessons not available, skipping sync")
+                Log.e("PROGRESS_SYNC", "Lessons not available, skipping sync")
             }
         } catch (e: Exception) {
+            Log.e("PROGRESS_SYNC", "Error en syncProgressFromServer", e)
             e.printStackTrace()
         }
     }

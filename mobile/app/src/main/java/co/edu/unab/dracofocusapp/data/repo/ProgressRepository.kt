@@ -6,6 +6,7 @@ import co.edu.unab.dracofocusapp.data.remote.ApiService
 import co.edu.unab.dracofocusapp.data.remote.ProgressRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import android.util.Log
 import java.time.OffsetDateTime
 
 /**
@@ -43,7 +44,9 @@ class ProgressRepository(
                 val lessonIdInt = lessonId.toIntOrNull()
                 val slug = lessonIdInt?.let { lessonRepository.getSlugById(it) }
                 if (slug != null) {
-                    val response = apiService.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = score))
+                    Log.d("PROGRESS_SYNC", "Enviando progreso: lesson=$slug, score=$score, completed=true")
+                    val response = apiService.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = score, completed = true))
+                    Log.d("PROGRESS_SYNC", "Respuesta POST /api/progress: code=${response.code()}, isSuccess=${response.isSuccessful}")
                     if (response.isSuccessful) {
                         Result.success(Unit)
                     } else {
@@ -69,17 +72,20 @@ class ProgressRepository(
     suspend fun syncProgressFromServer(userId: String): Result<Unit> {
         return try {
             if (lessonRepository.ensureLessonsAvailable()) {
+                Log.d("PROGRESS_SYNC", "Obteniendo progreso del servidor...")
                 val response = apiService.getProgress()
+                Log.d("PROGRESS_SYNC", "Respuesta GET /api/progress: code=${response.code()}, isSuccess=${response.isSuccessful}")
                 if (response.isSuccessful && response.body() != null) {
                     val remoteProgress = response.body()!!.data
+                    Log.d("PROGRESS_SYNC", "Sincronizando ${remoteProgress.size} lecciones desde el servidor")
                     
                     remoteProgress.forEach { dto ->
-                        val localId = lessonRepository.getIdBySlug(dto.lessonId)?.toString() ?: dto.lessonId
+                        val localId = lessonRepository.getIdBySlug(dto.lessonSlug)?.toString() ?: dto.lessonSlug
                         lessonDao.upsert(
                             CompletedLessonEntity(
                                 userId = userId,
                                 lessonId = localId,
-                                completedAtMillis = parseIsoDate(dto.completedAt)
+                                completedAtMillis = dto.completedAt?.let { parseIsoDate(it) } ?: System.currentTimeMillis()
                             )
                         )
                     }

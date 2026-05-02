@@ -8,8 +8,10 @@ import co.edu.unab.dracofocusapp.domain.rewards.RewardManager
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class LessonProgressViewModel(
     private val userId: String,
@@ -23,11 +25,13 @@ class LessonProgressViewModel(
         initialValue = 0f,
     )
 
-    val soloFundamentosCompleted = repository.observeSoloFundamentosCompletedIds(userId).stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        initialValue = emptySet(),
-    )
+    val soloFundamentosCompleted = repository.observeSoloFundamentosCompletedIds(userId)
+        .onEach { Log.d("PROGRESS_SYNC", "soloFundamentosCompleted emitió: $it") }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            initialValue = emptySet(),
+        )
 
     val museumCollectionFraction = repository.observeMuseumCollectionProgressFraction(userId).stateIn(
         viewModelScope,
@@ -44,6 +48,13 @@ class LessonProgressViewModel(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val envelopeUiEvents = MutableSharedFlow<RewardManager.EnvelopeOutcome>(extraBufferCapacity = 32)
+
+    fun refreshProgress() {
+        viewModelScope.launch {
+            Log.d("PROGRESS_SYNC", "refreshProgress ejecutado")
+            repository.syncProgressFromServer(userId)
+        }
+    }
 
     fun markLessonSucceeded(lessonId: String) {
         viewModelScope.launch {

@@ -40,14 +40,16 @@ data class ProgressResponse(
 data class UserProgressDto(
     val id: Int,
     @SerializedName("user_id") val userId: Int,
-    @SerializedName("lesson_id") val lessonId: String,
+    @SerializedName("lesson_slug") val lessonSlug: String,
     val score: Int,
-    @SerializedName("completed_at") val completedAt: String
+    val completed: Boolean,
+    @SerializedName("completed_at") val completedAt: String?
 )
 
 data class ProgressRequest(
     @SerializedName("lesson_slug") val lessonSlug: String,
-    val score: Int? = 100
+    val score: Int? = 100,
+    val completed: Boolean = true
 )
 
 data class SimpleResponse(

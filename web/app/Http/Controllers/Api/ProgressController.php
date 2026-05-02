@@ -21,9 +21,10 @@ class ProgressController extends Controller
                 return [
                     'id' => $item->id,
                     'user_id' => $item->user_id,
-                    'lesson_id' => $item->lesson->slug, // Android expects the slug as the ID
+                    'lesson_slug' => $item->lesson->slug,
                     'score' => $item->score,
-                    'completed_at' => $item->completed_at->toIso8601String(),
+                    'completed' => $item->completed,
+                    'completed_at' => $item->completed_at ? $item->completed_at->toIso8601String() : null,
                 ];
             });
 
@@ -42,6 +43,7 @@ class ProgressController extends Controller
             'lesson_id' => ['required_without:lesson_slug', 'exists:lessons,id'],
             'lesson_slug' => ['required_without:lesson_id', 'exists:lessons,slug'],
             'score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'completed' => ['nullable', 'boolean'],
         ]);
 
         $lessonId = $request->lesson_id;
@@ -57,6 +59,7 @@ class ProgressController extends Controller
             ],
             [
                 'score' => $request->score ?? 100,
+                'completed' => $request->completed ?? true,
                 'completed_at' => now(),
             ]
         );
@@ -64,7 +67,12 @@ class ProgressController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Progreso actualizado correctamente.',
-            'data' => $progress
+            'data' => [
+                'user_id' => $progress->user_id,
+                'lesson_slug' => $request->lesson_slug ?? $progress->lesson->slug,
+                'completed' => $progress->completed,
+                'score' => $progress->score
+            ]
         ]);
     }
 }
