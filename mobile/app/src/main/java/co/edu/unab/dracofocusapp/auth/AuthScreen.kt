@@ -220,7 +220,8 @@ fun AuthScreen(
                         onClick = {
                             val googleIdOption = GetGoogleIdOption.Builder()
                                 .setFilterByAuthorizedAccounts(false)
-                                .setServerClientId("659167749865-v6tt0qbr3ctn878qqmc4svt99nfo216u.apps.googleusercontent.com")
+                                .setServerClientId("461716187115-vtbahb3hngqj7kfeun641oqmjvq4mhgo.apps.googleusercontent.com")
+                                .setAutoSelectEnabled(false)
                                 .build()
 
                             val request = GetCredentialRequest.Builder()

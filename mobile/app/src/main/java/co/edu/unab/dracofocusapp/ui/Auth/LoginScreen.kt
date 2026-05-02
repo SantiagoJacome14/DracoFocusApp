@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.CustomCredential
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
@@ -40,6 +41,15 @@ fun LoginScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val credentialManager = CredentialManager.create(context)
+
+    var googleSignInError by remember { mutableStateOf<String?>(null) }
+
+    // Limpiar error de Google cuando cambia el estado general
+    LaunchedEffect(state.error) {
+        if (state.error != null) {
+            googleSignInError = null
+        }
+    }
 
     // Efecto para navegar cuando el login es exitoso
     LaunchedEffect(state.isSuccess) {
@@ -155,29 +165,46 @@ fun LoginScreen(
                     // Botón de Google Sign-In
                     OutlinedButton(
                         onClick = {
+                            Log.d("GOOGLE_LOGIN", "[1] Botón Google presionado")
+
                             val googleIdOption = GetGoogleIdOption.Builder()
                                 .setFilterByAuthorizedAccounts(false)
-                                .setServerClientId("659167749865-v6tt0qbr3ctn878qqmc4svt99nfo216u.apps.googleusercontent.com")
+                                .setServerClientId("461716187115-vtbahb3hngqj7kfeun641oqmjvq4mhgo.apps.googleusercontent.com")
+                                .setAutoSelectEnabled(false)
                                 .build()
 
                             val request = GetCredentialRequest.Builder()
                                 .addCredentialOption(googleIdOption)
                                 .build()
 
+                            Log.d("GOOGLE_LOGIN", "[2] GetCredentialRequest creado")
+
                             scope.launch {
                                 try {
+                                    Log.d("GOOGLE_LOGIN", "[3] Llamando a credentialManager.getCredential()")
                                     val result = credentialManager.getCredential(
                                         request = request,
                                         context = context
                                     )
                                     val credential = result.credential
+                                    Log.d("GOOGLE_LOGIN", "[4] Credential Manager respondió: type=${credential.type}")
+
                                     if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                                         val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                                         val idToken = googleIdTokenCredential.idToken
+                                        val tokenPreview = if (idToken.length > 20) idToken.take(20) + "..." else idToken
+                                        Log.d("GOOGLE_LOGIN", "[5] idToken obtenido: $tokenPreview")
+                                        Log.d("GOOGLE_LOGIN", "[6] Llamando a viewModel.onGoogleSignIn()")
                                         viewModel.onGoogleSignIn(idToken)
+                                    } else {
+                                        Log.e("GOOGLE_LOGIN", "[4] Credential NO es GoogleIdToken. type=${credential.type}, es CustomCredential=${credential is CustomCredential}")
                                     }
+                                } catch (e: NoCredentialException) {
+                                    Log.e("GOOGLE_LOGIN", "[3] NoCredentialException: No se encontraron credenciales Google. El dispositivo no tiene cuenta Google o usa imagen sin Google Play", e)
+                                    googleSignInError = "No se encontró una cuenta Google en este dispositivo. Agrega una cuenta Google (Configuración > Cuentas) o usa email y contraseña."
                                 } catch (e: Exception) {
-                                    Log.e("GOOGLE_LOGIN", "Error: ${e.message}", e)
+                                    Log.e("GOOGLE_LOGIN", "[3] Excepción en getCredential: ${e::class.simpleName} - ${e.message}", e)
+                                    googleSignInError = "Error al iniciar sesión con Google: ${e.message}"
                                 }
                             }
                         },
@@ -201,6 +228,17 @@ fun LoginScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Continuar con Google", fontWeight = FontWeight.Medium)
                         }
+                    }
+
+                    // Mostrar error de Google Sign-In si existe
+                    if (googleSignInError != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = googleSignInError!!,
+                            color = Color(0xFFFF6B6B),
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
