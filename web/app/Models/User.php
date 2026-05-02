@@ -28,6 +28,8 @@ class User extends Authenticatable
         'daily_goal',
         'current_streak',
         'total_xp',
+        'google_id',
+        'avatar',
     ];
 
     /**

@@ -25,7 +25,7 @@ object RetrofitClient {
     private val baseUrl: String by lazy {
         // IP
         // Dirección IPv4. . . . . . . . . . . . . . : 192.168.1.17
-        "http://192.168.1.17:8000/"
+        "http://192.168.1.22:8000/"
     }
 
     private val okHttpClient = OkHttpClient.Builder()

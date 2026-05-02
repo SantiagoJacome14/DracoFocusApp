@@ -77,12 +77,6 @@ fun LoginScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            Text(
-                text = "Sincronizado con Laravel",
-                color = Color(0xFFB0BEC5),
-                fontSize = 14.sp
-            )
-
             Spacer(modifier = Modifier.height(32.dp))
 
             // Card de Login

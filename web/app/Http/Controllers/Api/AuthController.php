@@ -69,6 +69,70 @@ class AuthController extends Controller
     }
 
     /**
+     * Handle login with Google.
+     */
+    public function loginWithGoogle(Request $request)
+    {
+        $request->validate([
+            'id_token' => ['required', 'string'],
+        ]);
+
+        try {
+            $client = new \Google_Client(['client_id' => env('GOOGLE_WEB_CLIENT_ID')]);
+            $payload = $client->verifyIdToken($request->id_token);
+
+            if ($payload) {
+                $googleId = $payload['sub'];
+                $email = $payload['email'];
+                $name = $payload['name'];
+                $picture = $payload['picture'] ?? null;
+
+                $user = User::where('google_id', $googleId)->orWhere('email', $email)->first();
+
+                if (! $user) {
+                    $user = User::create([
+                        'name' => $name,
+                        'email' => $email,
+                        'password' => Hash::make(\Illuminate\Support\Str::random(24)),
+                        'is_admin' => false,
+                        'daily_goal' => 50,
+                        'current_streak' => 0,
+                        'total_xp' => 0,
+                        'google_id' => $googleId,
+                        'avatar' => $picture,
+                    ]);
+                } else {
+                    $changed = false;
+                    if (! $user->google_id) {
+                        $user->google_id = $googleId;
+                        $changed = true;
+                    }
+                    if (! $user->avatar && $picture) {
+                        $user->avatar = $picture;
+                        $changed = true;
+                    }
+                    if ($changed) {
+                        $user->save();
+                    }
+                }
+
+                $token = $user->createToken('android-app')->plainTextToken;
+
+                return response()->json([
+                    'message' => 'Inicio de sesión con Google exitoso',
+                    'user' => $user,
+                    'access_token' => $token,
+                    'token_type' => 'Bearer'
+                ]);
+            } else {
+                return response()->json(['message' => 'Token de Google inválido'], 401);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error al autenticar con Google', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Log the user out (revoke token).
      */
     public function logout(Request $request)

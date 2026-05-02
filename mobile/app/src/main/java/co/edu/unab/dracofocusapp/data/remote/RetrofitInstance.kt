@@ -10,7 +10,7 @@ object RetrofitInstance {
     
     // Cambiar por tu IP local si pruebas con dispositivo físico (ej: 192.168.1.5)
     // Para el emulador de Android, 10.0.2.2 apunta al localhost de la PC
-    private const val BASE_URL = "http://10.0.2.2:8000/"
+    private const val BASE_URL = "http://192.168.1.22:8000/"
 
     fun getApiService(tokenManager: TokenManager): ApiService {
         val logging = HttpLoggingInterceptor().apply {
