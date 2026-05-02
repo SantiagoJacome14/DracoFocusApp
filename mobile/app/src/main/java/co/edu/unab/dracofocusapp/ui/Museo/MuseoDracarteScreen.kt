@@ -20,7 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import co.edu.unab.dracofocusapp.R
-import co.edu.unab.dracofocusapp.auth.ModernTopBar
+import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
 import androidx.compose.foundation.verticalScroll
 
 // Esta función representa la pantalla "Museo DracArte" dentro de la aplicación

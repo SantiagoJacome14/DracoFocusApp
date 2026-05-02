@@ -27,7 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.R
-import co.edu.unab.dracofocusapp.auth.ModernTopBar
+import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
 import co.edu.unab.dracofocusapp.domain.rewards.RewardManager
 import co.edu.unab.dracofocusapp.ui.Lecciones.ModernLessonCard
 import co.edu.unab.dracofocusapp.viewmodel.LessonProgressViewModel

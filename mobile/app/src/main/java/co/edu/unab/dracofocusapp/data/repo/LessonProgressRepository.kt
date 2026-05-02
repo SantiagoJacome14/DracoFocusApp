@@ -22,8 +22,8 @@ class LessonProgressRepository(
 ) {
 
     companion object {
-        /** Set “Fundamentos”: las 3 misiones del menú Draco Solitario. */
-        val SOLO_FUNDAMENTOS_IDS = setOf("1", "2", "3")
+        /** Set “Fundamentos”: las 3 misiones del menú Draco Solitario (usar slugs, no IDs de Laravel). */
+        val SOLO_FUNDAMENTOS_SLUGS = setOf("decisiones_de_fuego", "vuelo_infinito", "el_libro_de_tareas")
     }
 
     private val lessonDao get() = db.completedLessonDao()
@@ -32,13 +32,13 @@ class LessonProgressRepository(
 
     fun observeSoloFundamentosCompletedIds(userId: String): Flow<Set<String>> =
         lessonDao.observeCompletedIds(userId).map { ids ->
-            ids.filter { it in SOLO_FUNDAMENTOS_IDS }.toSet()
+            ids.filter { it in SOLO_FUNDAMENTOS_SLUGS }.toSet()
         }
 
     fun observeSoloFundamentosProgressFraction(userId: String): Flow<Float> =
         observeSoloFundamentosCompletedIds(userId).map { done ->
-            (done.size.coerceAtMost(SOLO_FUNDAMENTOS_IDS.size)).toFloat() /
-                SOLO_FUNDAMENTOS_IDS.size.toFloat()
+            (done.size.coerceAtMost(SOLO_FUNDAMENTOS_SLUGS.size)).toFloat() /
+                SOLO_FUNDAMENTOS_SLUGS.size.toFloat()
         }
 
     fun observeEnvelopeClaimedFlag(userId: String): Flow<Boolean> =
@@ -74,11 +74,11 @@ class LessonProgressRepository(
 
     suspend fun shouldShowSobreMisterioso(userId: String): Boolean {
         val ids = lessonDao.snapshotLessonIds(userId)
-            .filter { it in SOLO_FUNDAMENTOS_IDS }
+            .filter { it in SOLO_FUNDAMENTOS_SLUGS }
             .toSet()
         val envelopeClaimed =
             flagsDao.snapshot(userId)?.soloFundamentosEnvelopeClaimed ?: false
-        return ids.containsAll(SOLO_FUNDAMENTOS_IDS) && !envelopeClaimed
+        return ids.containsAll(SOLO_FUNDAMENTOS_SLUGS) && !envelopeClaimed
     }
 
     suspend fun markSoloEnvelopeClaimed(userId: String) {

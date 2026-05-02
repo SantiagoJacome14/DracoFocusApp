@@ -18,7 +18,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.shape.RoundedCornerShape
-import co.edu.unab.dracofocusapp.auth.ModernTopBar
+import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
 
 @Composable
 fun IngresarCodigoGrupoScreen(

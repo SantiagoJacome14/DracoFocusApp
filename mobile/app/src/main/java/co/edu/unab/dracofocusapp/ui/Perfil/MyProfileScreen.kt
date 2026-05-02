@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.edu.unab.dracofocusapp.R
-import co.edu.unab.dracofocusapp.auth.ModernTopBar
+import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
