@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import co.edu.unab.dracofocusapp.data.local.CompletedLessonEntity
+import co.edu.unab.dracofocusapp.data.local.LessonEntity
 import co.edu.unab.dracofocusapp.data.local.MuseumUnlockEntity
 import co.edu.unab.dracofocusapp.data.local.RewardFlagsEntity
 import kotlinx.coroutines.flow.Flow
@@ -52,4 +53,23 @@ interface MuseumUnlockDao {
 
     @Query("SELECT pieceCatalogId FROM museum_unlocks WHERE userId = :userId")
     suspend fun snapshotUnlockedPieceIds(userId: String): List<String>
+}
+
+@Dao
+interface LessonDao {
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLessons(lessons: List<LessonEntity>)
+
+    @Query("SELECT * FROM lessons")
+    suspend fun getAllLessons(): List<LessonEntity>
+
+    @Query("SELECT slug FROM lessons WHERE id = :lessonId")
+    suspend fun getSlugById(lessonId: Int): String?
+
+    @Query("SELECT id FROM lessons WHERE slug = :slug")
+    suspend fun getIdBySlug(slug: String): Int?
+
+    @Query("DELETE FROM lessons")
+    suspend fun clearAll()
 }

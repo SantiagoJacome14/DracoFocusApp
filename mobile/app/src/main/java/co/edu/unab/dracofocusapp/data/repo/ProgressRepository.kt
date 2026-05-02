@@ -3,7 +3,6 @@ package co.edu.unab.dracofocusapp.data.repo
 import co.edu.unab.dracofocusapp.data.local.CompletedLessonEntity
 import co.edu.unab.dracofocusapp.data.local.DracoDatabase
 import co.edu.unab.dracofocusapp.data.remote.ApiService
-import co.edu.unab.dracofocusapp.data.remote.LessonSlugMapper
 import co.edu.unab.dracofocusapp.data.remote.ProgressRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -14,7 +13,8 @@ import java.time.OffsetDateTime
  */
 class ProgressRepository(
     private val db: DracoDatabase,
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val lessonRepository: LessonRepository? = null
 ) {
     private val lessonDao = db.completedLessonDao()
 
@@ -37,14 +37,19 @@ class ProgressRepository(
             )
         )
 
-        // 2. Intentar enviar al servidor mapeando a slug
+        // 2. Intentar enviar al servidor mapeando a slug dinámicamente
         return try {
-            val slug = LessonSlugMapper.getSlugFromId(lessonId)
-            val response = apiService.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = score))
-            if (response.isSuccessful) {
-                Result.success(Unit)
+            val lessonIdInt = lessonId.toIntOrNull()
+            val slug = lessonIdInt?.let { lessonRepository?.getSlugById(it) }
+            if (slug != null) {
+                val response = apiService.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = score))
+                if (response.isSuccessful) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception("Error al sincronizar con el servidor: ${response.code()}"))
+                }
             } else {
-                Result.failure(Exception("Error al sincronizar con el servidor: ${response.code()}"))
+                Result.failure(Exception("No se pudo mapear lessonId $lessonId a slug"))
             }
         } catch (e: Exception) {
             // Manejar error de red, pero los datos ya están en Room
@@ -62,7 +67,7 @@ class ProgressRepository(
                 val remoteProgress = response.body()!!.data
                 
                 remoteProgress.forEach { dto ->
-                    val localId = LessonSlugMapper.getIdFromSlug(dto.lessonId)
+                    val localId = lessonRepository?.getIdBySlug(dto.lessonId)?.toString() ?: dto.lessonId
                     lessonDao.upsert(
                         CompletedLessonEntity(
                             userId = userId,

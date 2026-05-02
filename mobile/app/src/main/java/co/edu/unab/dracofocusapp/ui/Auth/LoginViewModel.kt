@@ -12,6 +12,7 @@ import co.edu.unab.dracofocusapp.data.remote.ApiService
 import co.edu.unab.dracofocusapp.data.remote.GoogleAuthRequest
 import co.edu.unab.dracofocusapp.data.remote.LoginRequest
 import co.edu.unab.dracofocusapp.data.repo.LessonProgressRepository
+import co.edu.unab.dracofocusapp.data.repo.LessonRepository
 import kotlinx.coroutines.launch
 
 data class LoginState(
@@ -23,7 +24,8 @@ data class LoginState(
 class LoginViewModel(
     private val apiService: ApiService,
     private val tokenManager: TokenManager,
-    private val repository: LessonProgressRepository
+    private val repository: LessonProgressRepository,
+    private val lessonRepository: LessonRepository? = null
 ) : ViewModel() {
 
     var email by mutableStateOf("")
@@ -49,7 +51,12 @@ class LoginViewModel(
                     
                     // Guardar Token y UserId
                     tokenManager.saveAuthData(loginResponse.accessToken, userId)
-                    
+
+                    // Fetch lecciones dinámicas desde el backend
+                    lessonRepository?.fetchLessonsFromApi()?.let { lessons ->
+                        lessonRepository.saveLessonsInRoom(lessons)
+                    }
+
                     // Sincronizar progreso inmediatamente tras el login
                     // El repositorio ahora filtrará por este userId
                     repository.syncProgressFromServer(userId)
@@ -86,6 +93,10 @@ class LoginViewModel(
                     Log.d("GOOGLE_LOGIN", "[VM-4] Login exitoso: userId=$userId, name=${loginResponse.user.name}")
 
                     tokenManager.saveAuthData(loginResponse.accessToken, userId)
+                    Log.d("GOOGLE_LOGIN", "[VM-5] Token guardado en DataStore, obteniendo lecciones dinámicas")
+                    lessonRepository?.fetchLessonsFromApi()?.let { lessons ->
+                        lessonRepository.saveLessonsInRoom(lessons)
+                    }
                     Log.d("GOOGLE_LOGIN", "[VM-5] Token guardado en DataStore, sincronizando progreso")
                     repository.syncProgressFromServer(userId)
 
@@ -112,10 +123,11 @@ class LoginViewModel(
     class Factory(
         private val apiService: ApiService,
         private val tokenManager: TokenManager,
-        private val repository: LessonProgressRepository
+        private val repository: LessonProgressRepository,
+        private val lessonRepository: LessonRepository? = null
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return LoginViewModel(apiService, tokenManager, repository) as T
+            return LoginViewModel(apiService, tokenManager, repository, lessonRepository) as T
         }
     }
 }

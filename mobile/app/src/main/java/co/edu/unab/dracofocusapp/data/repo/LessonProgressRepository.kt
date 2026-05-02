@@ -5,7 +5,6 @@ import co.edu.unab.dracofocusapp.data.local.DracoDatabase
 import co.edu.unab.dracofocusapp.data.local.MuseumUnlockEntity
 import co.edu.unab.dracofocusapp.data.local.RewardFlagsEntity
 import co.edu.unab.dracofocusapp.data.remote.ApiService
-import co.edu.unab.dracofocusapp.data.remote.LessonSlugMapper
 import co.edu.unab.dracofocusapp.data.remote.ProgressRequest
 import co.edu.unab.dracofocusapp.museum.MuseumCatalog
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +17,8 @@ import java.time.OffsetDateTime
  */
 class LessonProgressRepository(
     private val db: DracoDatabase,
-    private val apiService: ApiService? = null
+    private val apiService: ApiService? = null,
+    private val lessonRepository: LessonRepository? = null
 ) {
 
     companion object {
@@ -56,8 +56,11 @@ class LessonProgressRepository(
 
         // 2. Sync to Laravel
         try {
-            val slug = LessonSlugMapper.getSlugFromId(lessonId)
-            apiService?.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = 100))
+            val lessonIdInt = lessonId.toIntOrNull()
+            val slug = lessonIdInt?.let { lessonRepository?.getSlugById(it) }
+            if (slug != null) {
+                apiService?.sendLessonProgress(ProgressRequest(lessonSlug = slug, score = 100))
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -110,7 +113,7 @@ class LessonProgressRepository(
                 // lessonDao.clearForUser(userId) 
                 
                 response.body()?.data?.forEach { dto ->
-                    val localId = LessonSlugMapper.getIdFromSlug(dto.lessonId)
+                    val localId = lessonRepository?.getIdBySlug(dto.lessonId)?.toString() ?: dto.lessonId
                     lessonDao.upsert(
                         CompletedLessonEntity(
                             userId = userId,
