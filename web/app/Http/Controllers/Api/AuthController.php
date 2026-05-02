@@ -7,7 +7,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Google_Client;
 
 class AuthController extends Controller
 {
@@ -65,6 +67,43 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $user,
+        ]);
+    }
+
+    public function loginWithGoogle(Request $request)
+    {
+        $idToken = $request->input('id_token');
+
+        if (!$idToken) {
+            return response()->json(['error' => 'id_token requerido'], 400);
+        }
+
+        $client = new Google_Client([
+            'client_id' => '461716187115-vtbahb3hngqj7kfeun641oqmjvq4mhgo.apps.googleusercontent.com'
+        ]);
+
+        $payload = $client->verifyIdToken($idToken);
+
+        if (!$payload) {
+            return response()->json(['error' => 'Token inválido'], 401);
+        }
+
+        $email = $payload['email'];
+        $name = $payload['name'] ?? 'Usuario';
+
+        $user = User::firstOrCreate(
+            ['email' => $email],
+            [
+                'name' => $name,
+                'password' => bcrypt(Str::random(16))
+            ]
+        );
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'user' => $user,
+            'token' => $token
         ]);
     }
 
