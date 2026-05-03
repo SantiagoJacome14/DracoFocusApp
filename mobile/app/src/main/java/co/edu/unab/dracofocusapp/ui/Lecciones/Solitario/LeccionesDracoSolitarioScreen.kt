@@ -33,6 +33,7 @@ import co.edu.unab.dracofocusapp.domain.rewards.RewardManager
 import co.edu.unab.dracofocusapp.ui.Lecciones.ModernLessonCard
 import co.edu.unab.dracofocusapp.viewmodel.LessonProgressViewModel
 import kotlinx.coroutines.flow.collectLatest
+import co.edu.unab.dracofocusapp.viewmodel.SyncState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +60,8 @@ fun LeccionesDracoSolitarioScreen(
             rewardManager = app.rewardManager,
         ),
     )
-
+    
+    val syncState by lessonVm.syncState
     val snackbarHostState = remember { SnackbarHostState() }
     val completadas by lessonVm.soloFundamentosCompleted.collectAsState()
     val envelopeVisible by lessonVm.showEnvelopeHint.collectAsState()
@@ -105,148 +107,179 @@ fun LeccionesDracoSolitarioScreen(
         label = "sobrePulse",
     )
 
-    Scaffold(
-        modifier = Modifier.statusBarsPadding(),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            ModernTopBar(
-                title = "Lecciones Draco Solitario",
-                showBackButton = true,
-                onBackClick = { onBack() },
-            )
-        },
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(gradientBackground)
-                .padding(innerPadding)
-                .padding(horizontal = 20.dp, vertical = 10.dp),
+Scaffold(
+    modifier = Modifier.statusBarsPadding(),
+    snackbarHost = { SnackbarHost(snackbarHostState) },
+    topBar = {
+        ModernTopBar(
+            title = "Lecciones Draco Solitario",
+            showBackButton = true,
+            onBackClick = { onBack() },
+        )
+    },
+) { innerPadding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(gradientBackground)
+            .padding(innerPadding)
+            .padding(horizontal = 20.dp, vertical = 10.dp),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+            Text(
+                "Avanza completando misiones y gana XP.",
+                color = Color(0xFFB3B3B3),
+                fontSize = 15.sp,
+                textAlign = TextAlign.Center,
+            )
+
+            Text(
+                text = "Fundamentos de Programación",
+                color = dracoCyan,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+
+            Text(
+                text = "$doneCount/3 completadas",
+                color = Color.White,
+                fontSize = 14.sp,
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, dracoCyan, RoundedCornerShape(16.dp))
+                    .background(Color(0xFF0F1A2A), RoundedCornerShape(16.dp))
+                    .padding(16.dp),
             ) {
-                Text(
-                    "Avanza completando misiones y gana XP.",
-                    color = Color(0xFFB3B3B3),
-                    fontSize = 15.sp,
-                    textAlign = TextAlign.Center,
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    LinearProgressIndicator(
+                        progress = { progressFraction },
+                        color = dracoCyan,
+                        trackColor = Color(0xFF1C2541),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(50)),
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        if (faltantes == 0) "¡Set completado! Revisa el sobre 🎁" else "$faltantes lecciones restantes",
+                        color = Color(0xFFB3B3B3),
+                        fontSize = 13.sp,
+                    )
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                ModernLessonCard(
+                    icon = R.drawable.ic_lesson_fire,
+                    titulo = "Decisiones de Fuego",
+                    subtitulo = "Condicionales • retos mixtos",
+                    isCompleted = "decisiones_de_fuego" in completadas,
+                    onStart = {
+                        navController.navigate("leccion_reto/1") {
+                            launchSingleTop = true
+                        }
+                    },
                 )
 
-                Text(
-                    text = "Fundamentos de Programación",
-                    color = dracoCyan,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
+                ModernLessonCard(
+                    icon = R.drawable.ic_lesson_loop,
+                    titulo = "Vuelo Infinito",
+                    subtitulo = "Bucles • retos mixtos",
+                    isCompleted = "vuelo_infinito" in completadas,
+                    onStart = {
+                        navController.navigate("leccion_reto/2") {
+                            launchSingleTop = true
+                        }
+                    },
                 )
 
-                Text(
-                    text = "$doneCount/3 completadas",
-                    color = Color.White,
-                    fontSize = 14.sp,
+                ModernLessonCard(
+                    icon = R.drawable.ic_lesson_arrays,
+                    titulo = "El Libro de las Tareas",
+                    subtitulo = "Lists & lógica",
+                    isCompleted = "el_libro_de_tareas" in completadas,
+                    onStart = {
+                        navController.navigate("leccion_reto/3") {
+                            launchSingleTop = true
+                        }
+                    },
                 )
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, dracoCyan, RoundedCornerShape(16.dp))
-                        .background(Color(0xFF0F1A2A), RoundedCornerShape(16.dp))
+                        .background(Color(0xFF0F2B5D), RoundedCornerShape(15.dp))
+                        .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(15.dp))
                         .padding(16.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        LinearProgressIndicator(
-                            progress = { progressFraction },
-                            color = dracoCyan,
-                            trackColor = Color(0xFF1C2541),
+                        Image(
+                            painter = painterResource(R.drawable.img_sobre),
+                            contentDescription = "Sobre misterioso",
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(50)),
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            if (faltantes == 0) "¡Set completado! Revisa el sobre 🎁" else "$faltantes lecciones restantes",
-                            color = Color(0xFFB3B3B3),
-                            fontSize = 13.sp,
-                        )
-                    }
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    ModernLessonCard(
-                        icon = R.drawable.ic_lesson_fire,
-                        titulo = "Decisiones de Fuego",
-                        subtitulo = "Condicionales • retos mixtos",
-                        isCompleted = "decisiones_de_fuego" in completadas,
-                        onStart = {
-                            navController.navigate("leccion_reto/1") {
-                                launchSingleTop = true
-                            }
-                        },
-                    )
-
-                    ModernLessonCard(
-                        icon = R.drawable.ic_lesson_loop,
-                        titulo = "Vuelo Infinito",
-                        subtitulo = "Bucles • retos mixtos",
-                        isCompleted = "vuelo_infinito" in completadas,
-                        onStart = {
-                            navController.navigate("leccion_reto/2") {
-                                launchSingleTop = true
-                            }
-                        },
-                    )
-
-                    ModernLessonCard(
-                        icon = R.drawable.ic_lesson_arrays,
-                        titulo = "El Libro de las Tareas",
-                        subtitulo = "Lists & lógica",
-                        isCompleted = "el_libro_de_tareas" in completadas,
-                        onStart = {
-                            navController.navigate("leccion_reto/3") {
-                                launchSingleTop = true
-                            }
-                        },
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFF0F2B5D), RoundedCornerShape(15.dp))
-                            .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(15.dp))
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Image(
-                                painter = painterResource(R.drawable.img_sobre),
-                                contentDescription = "Sobre misterioso",
-                                modifier = Modifier
-                                    .size(88.dp)
-                                    .scale(sobrePulse)
-                                    .clickable(enabled = envelopeVisible) {
-                                        lessonVm.openSoloFundamentosEnvelope()
-                                    },
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Text(
-                                text = when {
-                                    envelopeVisible -> "Toca el sobre para revelar tu ficha del museo"
-                                    faltantes > 0 -> "Te faltan $faltantes lecciones para el sobre especial"
-                                    else -> "Ya reclamaste el sobre de esta temporada: sigue coleccionando en el museo."
+                                .size(88.dp)
+                                .scale(sobrePulse)
+                                .clickable(enabled = envelopeVisible) {
+                                    lessonVm.openSoloFundamentosEnvelope()
                                 },
-                                color = dracoCyan,
-                                textAlign = TextAlign.Center,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = when {
+                                envelopeVisible -> "Toca el sobre para revelar tu ficha del museo"
+                                faltantes > 0 -> "Te faltan $faltantes lecciones para el sobre especial"
+                                else -> "Ya reclamaste el sobre de esta temporada: sigue coleccionando en el museo."
+                            },
+                            color = dracoCyan,
+                            textAlign = TextAlign.Center,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
                 }
             }
         }
+
+        when (val state = syncState) {
+            is SyncState.Syncing -> {
+                Text(
+                    text = "Sincronizando...",
+                    color = Color.Cyan,
+                    fontSize = 12.sp,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
+
+            is SyncState.Synced -> {
+                Text(
+                    text = "Progreso guardado",
+                    color = Color.Green,
+                    fontSize = 12.sp,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
+
+            is SyncState.Error -> {
+                Text(
+                    text = "Error al sincronizar",
+                    color = Color.Red,
+                    fontSize = 12.sp,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
+
+            SyncState.Idle -> Unit
+        }
     }
+}
 }

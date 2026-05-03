@@ -13,6 +13,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import android.util.Log
 
+sealed class SyncState {
+    object Idle : SyncState()
+    object Syncing : SyncState()
+    object Synced : SyncState()
+    data class Error(val message: String) : SyncState()
+}
 class LessonProgressViewModel(
     private val userId: String,
     private val repository: LessonProgressRepository,
@@ -48,19 +54,35 @@ class LessonProgressViewModel(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val envelopeUiEvents = MutableSharedFlow<RewardManager.EnvelopeOutcome>(extraBufferCapacity = 32)
+    private val _syncState = androidx.compose.runtime.mutableStateOf<SyncState>(SyncState.Idle)
+    val syncState: androidx.compose.runtime.State<SyncState> = _syncState
 
     fun refreshProgress() {
-        viewModelScope.launch {
-            Log.d("PROGRESS_SYNC", "refreshProgress ejecutado")
+    viewModelScope.launch {
+        _syncState.value = SyncState.Syncing
+        Log.d("PROGRESS_SYNC", "refreshProgress ejecutado")
+
+        try {
             repository.syncProgressFromServer(userId)
+            _syncState.value = SyncState.Synced
+        } catch (e: Exception) {
+            _syncState.value = SyncState.Error("Error al sincronizar")
         }
     }
+}
 
     fun markLessonSucceeded(lessonId: String) {
-        viewModelScope.launch {
-            kotlin.runCatching { repository.markLessonCompleted(userId, lessonId) }
+    viewModelScope.launch {
+        _syncState.value = SyncState.Syncing
+
+        try {
+            repository.markLessonCompleted(userId, lessonId)
+            _syncState.value = SyncState.Synced
+        } catch (e: Exception) {
+            _syncState.value = SyncState.Error("No se pudo sincronizar")
         }
     }
+}
 
     fun openSoloFundamentosEnvelope() {
         viewModelScope.launch {
