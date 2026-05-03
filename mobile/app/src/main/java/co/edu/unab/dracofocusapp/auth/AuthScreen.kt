@@ -41,6 +41,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import android.util.Log
+import co.edu.unab.dracofocusapp.data.remote.LoginRequest
+import co.edu.unab.dracofocusapp.data.remote.RetrofitInstance
 
 // Pantalla autenticación Login
 @Composable
@@ -182,11 +184,33 @@ fun AuthScreen(
                                 uiState.loginEmail.trim(),
                                 uiState.loginPassword
                             ).addOnCompleteListener { task ->
-                                isLoading = false
                                 if (task.isSuccessful) {
-                                    viewModel.onLoginSuccess()
-                                    onNavigateToMain()
+                                    scope.launch {
+                                        try {
+                                            val apiService = RetrofitInstance.getApiService(tokenManager)
+                                            val response = apiService.login(
+                                                LoginRequest(
+                                                    uiState.loginEmail.trim(),
+                                                    uiState.loginPassword
+                                                )
+                                            )
+                                            if (response.isSuccessful && response.body() != null) {
+                                                tokenManager.saveAuthData(
+                                                    response.body()!!.accessToken,
+                                                    response.body()!!.user.id.toString()
+                                                )
+                                                Log.d("EMAIL_LOGIN", "userId guardado: ${response.body()!!.user.id}")
+                                            }
+                                        } catch (e: Exception) {
+                                            Log.e("EMAIL_LOGIN", "Error calling Laravel login", e)
+                                        } finally {
+                                            isLoading = false
+                                            viewModel.onLoginSuccess()
+                                            onNavigateToMain()
+                                        }
+                                    }
                                 } else {
+                                    isLoading = false
                                     val error = task.exception?.message ?: "Error al iniciar sesión."
                                     errorMessage = when {
                                         "password" in error.lowercase() -> "Contraseña incorrecta."

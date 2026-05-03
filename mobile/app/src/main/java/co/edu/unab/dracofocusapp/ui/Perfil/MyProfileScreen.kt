@@ -22,11 +22,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
+import co.edu.unab.dracofocusapp.auth.TokenManager
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +39,7 @@ fun MyProfileScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val user = Firebase.auth.currentUser
     var userName by remember { mutableStateOf("Usuario") }
@@ -184,9 +188,11 @@ fun MyProfileScreen(
                     onClick = {
                         Firebase.auth.signOut()
                         scope.launch {
+                            TokenManager(context).clearAuthData()
+                            Log.d("LOGOUT", "TokenManager limpiado")
                             snackbarHostState.showSnackbar("Sesión cerrada correctamente")
+                            onLogout()
                         }
-                        onLogout()
                     },
                     modifier = Modifier
                         .fillMaxWidth()

@@ -5,12 +5,11 @@ import co.edu.unab.dracofocusapp.data.local.DracoDatabase
 import co.edu.unab.dracofocusapp.data.local.MuseumUnlockEntity
 import co.edu.unab.dracofocusapp.data.local.RewardFlagsEntity
 import co.edu.unab.dracofocusapp.data.remote.ApiService
-import co.edu.unab.dracofocusapp.data.remote.ProgressRequest
+import co.edu.unab.dracofocusapp.data.remote.SyncProgressRequest
 import co.edu.unab.dracofocusapp.museum.MuseumCatalog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import android.util.Log
-import java.time.OffsetDateTime
 
 /**
  * Persistencia local: lecciones completadas, flags de sobres y desbloqueos del museo.
@@ -23,7 +22,7 @@ class LessonProgressRepository(
 ) {
 
     companion object {
-        /** Set “Fundamentos”: las 3 misiones del menú Draco Solitario (usar slugs, no IDs de Laravel). */
+        /** Set "Fundamentos": las 3 misiones del menú Draco Solitario (usar slugs, no IDs de Laravel). */
         val SOLO_FUNDAMENTOS_SLUGS = setOf("decisiones_de_fuego", "vuelo_infinito", "el_libro_de_tareas")
     }
 
@@ -46,7 +45,7 @@ class LessonProgressRepository(
         flagsDao.observe(userId).map { it?.soloFundamentosEnvelopeClaimed ?: false }
 
     suspend fun markLessonCompleted(userId: String, lessonId: String) {
-        // 1. Determinar el slug (siempre preferimos slugs para persistencia local)
+        // 1. Determinar el slug
         val lessonIdInt = lessonId.toIntOrNull()
         val slug = if (lessonIdInt != null) {
             lessonRepository.getSlugById(lessonIdInt)
@@ -56,7 +55,7 @@ class LessonProgressRepository(
 
         val idToStore = slug ?: lessonId
 
-        // 2. Local first using slug
+        // 2. Guardar local
         Log.d("PROGRESS_SYNC", "Guardado en Room slug=$idToStore (originalId=$lessonId)")
         lessonDao.upsert(
             CompletedLessonEntity(
@@ -66,22 +65,27 @@ class LessonProgressRepository(
             )
         )
 
-        // 3. Sync to Laravel
+        // 3. Enviar TODOS los slugs locales al servidor
         try {
-            if (lessonRepository.ensureLessonsAvailable()) {
-                val finalSlug = if (idToStore in SOLO_FUNDAMENTOS_SLUGS) idToStore else slug
-                if (finalSlug != null) {
-                    Log.d("PROGRESS_SYNC", "Enviando progreso: lesson=$finalSlug, score=100, completed=true")
-                    apiService?.sendLessonProgress(ProgressRequest(lessonSlug = finalSlug, score = 100, completed = true))
-                } else {
-                    Log.e("PROGRESS_SYNC", "No slug found for lessonId: $lessonId, skipping sync")
+            val localSlugs = lessonDao.snapshotLessonIds(userId)
+            Log.d("PROGRESS_SYNC", "Enviando sync con ${localSlugs.size} slugs: $localSlugs")
+            val syncResponse = apiService?.syncProgress(SyncProgressRequest(completedLessons = localSlugs))
+            if (syncResponse != null && syncResponse.isSuccessful && syncResponse.body() != null) {
+                val serverSlugs = syncResponse.body()!!.completedLessons
+                Log.d("PROGRESS_SYNC", "Respuesta sync del servidor: $serverSlugs")
+                lessonDao.clearForUser(userId)
+                serverSlugs.forEach { serverSlug ->
+                    lessonDao.upsert(
+                        CompletedLessonEntity(
+                            userId = userId,
+                            lessonId = serverSlug,
+                            completedAtMillis = System.currentTimeMillis(),
+                        )
+                    )
                 }
-            } else {
-                Log.e("PROGRESS_SYNC", "Lessons not available, skipping sync")
             }
         } catch (e: Exception) {
-            Log.e("PROGRESS_SYNC", "Error al enviar progreso", e)
-            e.printStackTrace()
+            Log.e("PROGRESS_SYNC", "Error al enviar sync", e)
         }
     }
 
@@ -122,45 +126,33 @@ class LessonProgressRepository(
         museumDao.snapshotUnlockedPieceIds(userId).toSet()
 
     /**
-     * Sincroniza el progreso desde el servidor hacia Room para un usuario específico.
+     * Sincroniza el progreso desde el servidor hacia Room.
+     * Usa GET /api/progress, borra progreso local y reemplaza con la respuesta del servidor.
      */
     suspend fun syncProgressFromServer(userId: String) {
         try {
-            if (lessonRepository.ensureLessonsAvailable()) {
-                Log.d("PROGRESS_SYNC", "Obteniendo progreso del servidor...")
-                val response = apiService?.getProgress()
-                Log.d("PROGRESS_SYNC", "Respuesta GET /api/progress: code=${response?.code()}")
-                if (response != null && response.isSuccessful) {
-                    val remoteProgress = response.body()?.data ?: emptyList()
-                    Log.d("PROGRESS_SYNC", "Lecciones completadas desde servidor: ${remoteProgress.size}")
-                    
-                    remoteProgress.forEach { dto ->
-                        val slugToStore = dto.lessonSlug
-                        Log.d("PROGRESS_SYNC", "Guardado en Room slug=$slugToStore desde servidor")
-                        lessonDao.upsert(
-                            CompletedLessonEntity(
-                                userId = userId,
-                                lessonId = slugToStore,
-                                completedAtMillis = dto.completedAt?.let { parseIsoDate(it) } ?: System.currentTimeMillis()
-                            )
+            Log.d("PROGRESS_SYNC", "Obteniendo progreso del servidor...")
+            val response = apiService?.getProgress()
+            Log.d("PROGRESS_SYNC", "Respuesta GET /api/progress: code=${response?.code()}")
+            if (response != null && response.isSuccessful && response.body() != null) {
+                val serverSlugs = response.body()!!.completedLessons
+                Log.d("PROGRESS_SYNC", "Lecciones completadas desde servidor: ${serverSlugs.size}")
+
+                lessonDao.clearForUser(userId)
+                serverSlugs.forEach { serverSlug ->
+                    Log.d("PROGRESS_SYNC", "Guardado en Room slug=$serverSlug desde servidor")
+                    lessonDao.upsert(
+                        CompletedLessonEntity(
+                            userId = userId,
+                            lessonId = serverSlug,
+                            completedAtMillis = System.currentTimeMillis()
                         )
-                    }
-                    Log.d("PROGRESS_SYNC", "UI actualizada con progreso remoto")
+                    )
                 }
-            } else {
-                Log.e("PROGRESS_SYNC", "Lessons not available, skipping sync")
+                Log.d("PROGRESS_SYNC", "UI actualizada con progreso remoto")
             }
         } catch (e: Exception) {
             Log.e("PROGRESS_SYNC", "Error en syncProgressFromServer", e)
-            e.printStackTrace()
-        }
-    }
-
-    private fun parseIsoDate(isoDate: String): Long {
-        return try {
-            OffsetDateTime.parse(isoDate).toInstant().toEpochMilli()
-        } catch (e: Exception) {
-            System.currentTimeMillis()
         }
     }
 }

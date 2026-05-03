@@ -33,28 +33,17 @@ data class UserDto(
 
 // Progress DTOs
 data class ProgressResponse(
-    val status: String,
-    val data: List<UserProgressDto>
+    @SerializedName("completed_lessons") val completedLessons: List<String>,
+    @SerializedName("completed_lesson_ids") val completedLessonIds: List<Int>
 )
 
-data class UserProgressDto(
-    val id: Int,
-    @SerializedName("user_id") val userId: Int,
-    @SerializedName("lesson_slug") val lessonSlug: String,
-    val score: Int,
-    val completed: Boolean,
-    @SerializedName("completed_at") val completedAt: String?
+data class SyncProgressRequest(
+    @SerializedName("completed_lessons") val completedLessons: List<String>
 )
 
-data class ProgressRequest(
-    @SerializedName("lesson_slug") val lessonSlug: String,
-    val score: Int? = 100,
-    val completed: Boolean = true
-)
-
-data class SimpleResponse(
-    val status: String,
-    val message: String
+data class ProgressSyncResponse(
+    @SerializedName("completed_lessons") val completedLessons: List<String>,
+    @SerializedName("completed_lesson_ids") val completedLessonIds: List<Int>
 )
 
 // Lesson DTO for dynamic slug mapping

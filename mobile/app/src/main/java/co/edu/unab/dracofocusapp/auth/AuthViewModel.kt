@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.edu.unab.dracofocusapp.data.remote.GoogleAuthRequest
+import co.edu.unab.dracofocusapp.data.remote.LoginRequest
 import co.edu.unab.dracofocusapp.data.remote.RetrofitInstance
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -15,35 +16,31 @@ import com.google.firebase.firestore.firestore
 import com.google.firebase.auth.auth
 import android.util.Log
 
-// Esta clase es para la lógica de la autenticación del login y el registro
-// Es la que hereda de ViewModel para que los datos sirvan despues de los cambiosde la pantalla como por ejemplo girar el telefono
 class AuthViewModel : ViewModel() {
-    //  necesario para llamar a signOut y a los metodos de login y registro
+
     private val auth: FirebaseAuth = Firebase.auth
     private val db: FirebaseFirestore = Firebase.firestore
-    // Se guarda el estado de la UI de AuthUiState
-    var uiState by mutableStateOf(AuthUiState()) // mutableStateOf y by para que sepa automáticamente cuándo debe rehacerse si cambia el estado
 
-    // Errores
-    // Error General de la Ui
+    var uiState by mutableStateOf(AuthUiState())
+
     fun onError(message: String?) {
         uiState = uiState.copy(
-            isLoading = false,  // Detiene la carga y pone el mensaje de abajo
+            isLoading = false,
             errorMessage = message ?: "Ocurrió un error inesperado."
         )
     }
-    // Oculta el mensaje de error
+
     fun clearError() {
         uiState = uiState.copy(errorMessage = null)
     }
-    // Para cambiar entre Login y Register
+
     fun onToggleAuthMode() {
         uiState = uiState.copy(
-            isSignUp = !uiState.isSignUp, // Esto lo que hace es cambiar el valor booleano por el contrario que tenia, si era falso lo pasa a verdadero y asi
-            errorMessage = null // Quitar el error cuando se cambia entre login y register
+            isSignUp = !uiState.isSignUp,
+            errorMessage = null
         )
     }
-    // Deja todos los campos que hay que rellenar, vacios
+
     fun clearForm() {
         uiState = uiState.copy(
             signUpName = "",
@@ -53,48 +50,45 @@ class AuthViewModel : ViewModel() {
             signUpConfirmPassword = "",
             loginEmail = "",
             loginPassword = "",
-            errorMessage = null // Quitar el error cuando se cambia entre login y register
+            errorMessage = null
         )
     }
-    // Cerrar sesion
-    fun signOut() {
-        // Cierra la sesion en Firebase auth
-        auth.signOut()
 
-        // Reinicia las banderas de estado para forzar la vuelta al login
+    fun signOut(tokenManager: TokenManager? = null) {
+        auth.signOut()
+        viewModelScope.launch {
+            tokenManager?.clearAuthData()
+        }
         uiState = uiState.copy(
             isSuccessLogin = false,
             isLoading = false,
             errorMessage = null
         )
-        clearForm() // limpia cualquier texto en login o register
+        clearForm()
     }
 
     // LOGIN
 
-    // Se utiliza cuando el user escribe en el campo de correo en Login
-    fun onLoginEmailChanged(value: String) { // Actualiza loginemail en el estado
-        uiState = uiState.copy(loginEmail = value.trim()) // El trim es para borrar espacios al principio y al final
+    fun onLoginEmailChanged(value: String) {
+        uiState = uiState.copy(loginEmail = value.trim())
     }
-    // Se utiliza cuando el user escribe en el campo de password en Login
-    fun onLoginPasswordChanged(value: String) { // Actualiza loginPassword en el estado
+
+    fun onLoginPasswordChanged(value: String) {
         uiState = uiState.copy(loginPassword = value)
     }
-    // Cuando el user le da click al boton de Iniciar Sesion
+
     fun onLoginClicked() {
-        if (uiState.loginEmail.isBlank() || uiState.loginPassword.isBlank()) { // Valida si los campos estan vacios
-            onError("Por favor, completa todos los campos.") // Y si estan vacios sale este mensaje
+        if (uiState.loginEmail.isBlank() || uiState.loginPassword.isBlank()) {
+            onError("Por favor, completa todos los campos.")
             return
         }
-        // Despues si pasa, empieza a cargar el estado
-
-        uiState = uiState.copy(isLoading = true, errorMessage = null) // Esto es un borrador para despues cambiarlo en FireBase
-        onLoginSuccess() //Simula
+        uiState = uiState.copy(isLoading = true, errorMessage = null)
+        onLoginSuccess()
     }
-// Llama a Firebase y confirma que el login fue exitoso
+
     fun onLoginSuccess() {
         uiState = uiState.copy(
-            isSuccessLogin = true, // true para que navegue
+            isSuccessLogin = true,
             isLoading = false,
             errorMessage = null
         )
@@ -106,7 +100,66 @@ class AuthViewModel : ViewModel() {
             isLoading = false,
             errorMessage = null
         )
-        clearForm() // Limpiamos el formulario después del éxito
+        clearForm()
+    }
+
+    /**
+     * Login con email/password vía Laravel.
+     * Guarda token + userId en TokenManager y llama syncProgressFromServer.
+     */
+    fun loginWithEmail(
+        email: String,
+        password: String,
+        tokenManager: TokenManager,
+        onSuccess: () -> Unit
+    ) {
+        uiState = uiState.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            try {
+                Log.d("EMAIL_LOGIN", "Llamando a Laravel /api/login")
+                val response = RetrofitInstance.getApiService(tokenManager)
+                    .login(LoginRequest(email, password))
+
+                Log.d("EMAIL_LOGIN", "Respuesta Laravel code: ${response.code()}")
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null) {
+                        tokenManager.saveAuthData(
+                            body.accessToken,
+                            body.user.id.toString()
+                        )
+                        Log.d("EMAIL_LOGIN", "Token y userId guardados. userId=${body.user.id}")
+
+                        uiState = uiState.copy(
+                            isSuccessLogin = true,
+                            isLoading = false
+                        )
+                        onSuccess()
+                    } else {
+                        onError("Respuesta vacía del servidor")
+                    }
+                } else {
+                    onError("Credenciales incorrectas")
+                }
+            } catch (e: Exception) {
+                Log.e("EMAIL_LOGIN", "Error en login email", e)
+                onError("Error de conexión: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Sincroniza progreso después de login exitoso.
+     */
+    fun syncAfterLogin(tokenManager: TokenManager) {
+        viewModelScope.launch {
+            val userId = tokenManager.userId
+            if (userId != null) {
+                Log.d("PROGRESS_SYNC", "syncAfterLogin para userId=$userId")
+                // Se delega al repository a través del Application o ViewModel
+            }
+        }
     }
 
     // GOOGLE SIGN IN
@@ -126,7 +179,6 @@ class AuthViewModel : ViewModel() {
                     val body = response.body()
 
                     if (body != null) {
-                        // guardar token y usuario
                         tokenManager.saveAuthData(
                             body.accessToken,
                             body.user.id.toString()
@@ -151,56 +203,50 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-
     // Registro
-    // Se llama cuando se escribe el nombre
     fun onSignUpNameChanged(value: String) {
-        val filtered = value.filter { it.isLetter() || it.isWhitespace() } // Solo permitir letras y espacios
+        val filtered = value.filter { it.isLetter() || it.isWhitespace() }
         uiState = uiState.copy(signUpName = filtered)
     }
-    // Se llama cuando se escribe el correo
+
     fun onSignUpEmailChanged(value: String) {
-        uiState = uiState.copy(signUpEmail = value.trim()) // El trim es para borrar espacios al principio y al final
+        uiState = uiState.copy(signUpEmail = value.trim())
     }
-    // Se llama cuando se escribe el semestre
+
     fun onSignUpSemesterChanged(value: String) {
-        val filtered = value.filter { it.isDigit() }.take(2) // Solo permitir digitos y toma los primeros 2
+        val filtered = value.filter { it.isDigit() }.take(2)
         uiState = uiState.copy(signUpSemester = filtered)
     }
-    // Se llama cuando se escribe la password del registro
+
     fun onSignUpPasswordChanged(value: String) {
         uiState = uiState.copy(signUpPassword = value)
     }
-    // Se llama cuando se escribe la confirmacion de password
+
     fun onSignUpConfirmPasswordChanged(value: String) {
         uiState = uiState.copy(signUpConfirmPassword = value)
     }
 
-    // Se llama cuando se le da click a registrarse
     fun onSignUpClicked() {
-        // Extraer todos los valores para simplificar la validacion
         val name = uiState.signUpName
         val email = uiState.signUpEmail
         val semester = uiState.signUpSemester
         val pass = uiState.signUpPassword
         val confirm = uiState.signUpConfirmPassword
 
-        // When para que revise todas las condiciones, una por una
         when {
-            name.isBlank() || email.isBlank() || semester.isBlank() || pass.isBlank() || confirm.isBlank() -> { //Cuando hay campos vacios
+            name.isBlank() || email.isBlank() || semester.isBlank() || pass.isBlank() || confirm.isBlank() -> {
                 onError("Completa todos los campos para continuar.")
             }
-            pass.length < 6 -> { // Cuando la password es muy cortta
+            pass.length < 6 -> {
                 onError("La contraseña debe tener al menos 6 caracteres.")
             }
-            pass != confirm -> { // Cuando las contrasenas no coinciden
+            pass != confirm -> {
                 onError("Las contraseñas no coinciden.")
             }
-            else -> { // Si pasa todas las validacionrs
-                uiState = uiState.copy(isLoading = true, errorMessage = null) // Cambia al estado de carga para empezar con firebase
-                onLoginSuccess() //Por el momento es una simulacion
+            else -> {
+                uiState = uiState.copy(isLoading = true, errorMessage = null)
+                onLoginSuccess()
             }
         }
     }
 }
-
