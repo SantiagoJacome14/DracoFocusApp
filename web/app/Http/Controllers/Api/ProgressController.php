@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Lesson;
 use App\Models\UserProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,21 +17,11 @@ class ProgressController extends Controller
     {
         $progress = UserProgress::where('user_id', Auth::id())
             ->with('lesson:id,slug')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'user_id' => $item->user_id,
-                    'lesson_slug' => $item->lesson->slug,
-                    'score' => $item->score,
-                    'completed' => $item->completed,
-                    'completed_at' => $item->completed_at ? $item->completed_at->toIso8601String() : null,
-                ];
-            });
+            ->get();
 
         return response()->json([
-            'status' => 'success',
-            'data' => $progress
+            'completed_lessons' => $progress->map(fn($item) => $item->lesson->slug)->values(),
+            'completed_lesson_ids' => $progress->map(fn($item) => $item->lesson_id)->values(),
         ]);
     }
 
@@ -73,6 +64,35 @@ class ProgressController extends Controller
                 'completed' => $progress->completed,
                 'score' => $progress->score
             ]
+        ]);
+    }
+
+    public function sync(Request $request)
+    {
+        $request->validate([
+            'completed_lessons' => ['required', 'array'],
+            'completed_lessons.*' => ['string', 'exists:lessons,slug'],
+        ]);
+
+        $slugs = $request->completed_lessons;
+        $lessonIds = Lesson::whereIn('slug', $slugs)->pluck('id', 'slug');
+
+        foreach ($lessonIds as $slug => $lessonId) {
+            UserProgress::firstOrCreate(
+                [
+                    'user_id' => Auth::id(),
+                    'lesson_id' => $lessonId,
+                ]
+            );
+        }
+
+        $progress = UserProgress::where('user_id', Auth::id())
+            ->with('lesson:id,slug')
+            ->get();
+
+        return response()->json([
+            'completed_lessons' => $progress->map(fn($item) => $item->lesson->slug)->values(),
+            'completed_lesson_ids' => $progress->map(fn($item) => $item->lesson_id)->values(),
         ]);
     }
 }

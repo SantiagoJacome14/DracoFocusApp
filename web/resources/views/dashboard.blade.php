@@ -2,7 +2,25 @@
 @section('title', 'Dashboard — Draco')
 
 @section('content')
-<div x-data="{ showProgressModal: false }">
+<div x-data="{
+    showProgressModal: false,
+    completedSlugs: [],
+    totalLessons: {{ count($lessonPath) }},
+    lessonData: {{ json_encode(collect($lessonPath)->map(fn($l) => ['id' => $l['id'], 'slug' => $l['slug'], 'status' => $l['status']])) }},
+    init() {
+        fetch('/api/progress', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(data => {
+                this.completedSlugs = data.completed_lessons || [];
+                this.lessonData.forEach(lesson => {
+                    if (this.completedSlugs.includes(lesson.slug)) {
+                        lesson.status = 'completed';
+                    }
+                });
+            })
+            .catch(() => {});
+    }
+}">
     <!-- ── Top Header Bar ── -->
     <div class="px-8 py-6 border-b border-slate-700/50 bg-gradient-to-r from-slate-800/80 via-slate-900/50 to-slate-800/80" style="backdrop-filter: blur(20px);">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
@@ -87,7 +105,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Lecciones</p>
-                        <p class="text-2xl font-extrabold text-purple-400 mt-1">{{ collect($lessonPath)->where('status', 'completed')->count() }}/{{ count($lessonPath) }}</p>
+                        <p class="text-2xl font-extrabold text-purple-400 mt-1"><span x-text="completedSlugs.length + '/' + totalLessons">{{ collect($lessonPath)->where('status', 'completed')->count() }}/{{ count($lessonPath) }}</span></p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📚</div>
                 </div>
@@ -116,15 +134,10 @@
 
                 <div class="grid gap-6" style="grid-template-columns: repeat({{ count($lessonPath) }}, minmax(140px, 1fr));">
                     @foreach($lessonPath as $index => $node)
-                    @php
-                        $isActive    = $node['status'] === 'active';
-                        $isCompleted = $node['status'] === 'completed';
-                        $isLocked    = $node['status'] === 'locked';
-                    @endphp
-
                     <div class="relative z-10 flex flex-col items-center text-center group">
-                        {{-- The node bubble --}}
-                        @if($isActive)
+
+                        {{-- Active node --}}
+                        <template x-if="lessonData[{{ $index }}]?.status === 'active'">
                         <a href="{{ route('lesson.show', ['slug' => $node['slug']]) }}"
                            class="block outline-none transform transition hover:scale-110 active:scale-95 duration-200">
                             <div class="w-[120px] h-[120px] mx-auto bg-gradient-to-br from-draco-emerald to-emerald-700 rounded-3xl flex items-center justify-center relative shadow-[0_8px_0_0_#059669] group-active:shadow-[0_2px_0_0_#059669] group-active:translate-y-2 transition-all border-2 border-emerald-400/40 pulse-glow">
@@ -139,8 +152,10 @@
                                 <p class="text-slate-400 text-xs mt-0.5">{{ $node['xp'] }} XP</p>
                             </div>
                         </a>
+                        </template>
 
-                        @elseif($isCompleted)
+                        {{-- Completed node --}}
+                        <template x-if="lessonData[{{ $index }}]?.status === 'completed'">
                         <a href="{{ route('lesson.show', ['slug' => $node['slug']]) }}"
                            class="block outline-none transform transition hover:scale-105 active:scale-95 duration-200">
                             <div class="w-[100px] h-[100px] mx-auto bg-slate-700/80 rounded-3xl flex items-center justify-center relative shadow-[0_6px_0_0_#10b981] group-active:shadow-[0_2px_0_0_#10b981] group-active:translate-y-2 transition-all border-2 border-draco-emerald/40 mt-[10px]">
@@ -154,8 +169,10 @@
                                 <h3 class="text-sm font-bold text-slate-300 mt-1 leading-tight">{{ $node['name'] }}</h3>
                             </div>
                         </a>
+                        </template>
 
-                        @else {{-- locked --}}
+                        {{-- Locked node --}}
+                        <template x-if="lessonData[{{ $index }}]?.status === 'locked'">
                         <div class="opacity-40 cursor-not-allowed">
                             <div class="w-[100px] h-[100px] mx-auto bg-slate-800/80 rounded-3xl flex items-center justify-center shadow-[0_6px_0_0_#1e293b] border-2 border-slate-700 mt-[10px]">
                                 <span class="text-3xl grayscale">🔒</span>
@@ -165,7 +182,7 @@
                                 <p class="text-slate-600 text-xs mt-0.5">{{ $node['xp'] }} XP</p>
                             </div>
                         </div>
-                        @endif
+                        </template>
                     </div>
                     @endforeach
                 </div>
@@ -198,14 +215,14 @@
                     <div class="flex-1">
                         <div class="flex justify-between items-center mb-1.5">
                             <span class="text-sm font-bold text-slate-200">{{ $node['name'] }}</span>
-                            <span class="text-xs font-black {{ $node['status'] === 'completed' ? 'text-draco-emerald-light' : 'text-slate-500' }}">
-                                {{ $node['status'] === 'completed' ? '100%' : '0%' }}
-                            </span>
+                             <span class="text-xs font-black" :class="completedSlugs.includes(@json($node['slug'])) ? 'text-draco-emerald-light' : 'text-slate-500'">
+                                 <span x-text="completedSlugs.includes(@json($node['slug'])) ? '100%' : '0%'"></span>
+                             </span>
                         </div>
                         <div class="w-full bg-slate-900 rounded-full h-2 border border-slate-700 overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-1000"
-                                 style="width: {{ $node['status'] === 'completed' ? '100' : '0' }}%; background: linear-gradient(to right, #059669, #34d399)">
-                            </div>
+                                 <div class="h-full rounded-full transition-all duration-1000"
+                                      :style="'width: ' + (completedSlugs.includes(@json($node['slug'])) ? '100' : '0') + '%; background: linear-gradient(to right, #059669, #34d399)'">
+                                 </div>
                         </div>
                     </div>
                 </div>

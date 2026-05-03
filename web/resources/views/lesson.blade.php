@@ -9,7 +9,7 @@
 
 <div class="min-h-screen flex flex-col"
      x-data="{
-        // ── State ──
+        // -- State --
         exercises: {{ $exercisesJson }},
         current: 0,
         state: 'reading',       /* reading | answering | correct | completed */
@@ -18,14 +18,16 @@
         totalFails: 0,
         lives: 5,
         showHint: false,
+        lessonSlug: '{{ $lesson->slug }}',
+        syncing: false,
 
-        // ── Computed helpers ──
+        // -- Computed helpers --
         get totalExercises() { return this.exercises.length },
         get progressPct() { return Math.round((this.current / this.totalExercises) * 100) },
         get ex() { return this.exercises[this.current] },
         get isCorrect() { return this.inputCode.trim().toLowerCase() === this.ex.answer.toLowerCase() },
 
-        // ── Actions ──
+        // -- Actions --
         checkAnswer() {
             if (this.isCorrect) {
                 this.state = 'correct';
@@ -51,6 +53,25 @@
                 this.showHint = false;
                 this.state = 'answering';
             }
+        },
+        async completeLesson() {
+            this.syncing = true;
+            try {
+                await fetch('/api/progress/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || document.querySelector('input[name=_token]')?.value || '',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ completed_lessons: [this.lessonSlug] })
+                });
+            } catch (e) {
+                console.warn('Sync failed, continuing with server flow', e);
+            }
+            this.syncing = false;
+            this.$refs.completeForm.submit();
         }
      }">
 
@@ -169,10 +190,10 @@
                 </div>
             </div>
 
-            <form action="{{ route('lesson.complete', ['slug' => $lesson->slug]) }}" method="POST">
+            <form x-ref="completeForm" action="{{ route('lesson.complete', ['slug' => $lesson->slug]) }}" method="POST">
                 @csrf
-                <button type="submit" class="w-full bg-draco-emerald py-4 rounded-2xl text-xl font-extrabold text-white shadow-[0_6px_0_0_#059669] active:shadow-[0_0px_0_0_#059669] active:translate-y-1.5 transition-all outline-none uppercase tracking-widest hover:brightness-110">
-                    Continuar
+                <button type="button" @click="completeLesson()" :disabled="syncing" class="w-full bg-draco-emerald py-4 rounded-2xl text-xl font-extrabold text-white shadow-[0_6px_0_0_#059669] active:shadow-[0_0px_0_0_#059669] active:translate-y-1.5 transition-all outline-none uppercase tracking-widest hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed">
+                    <span x-text="syncing ? 'Sincronizando...' : 'Continuar'"></span>
                 </button>
             </form>
         </div>
