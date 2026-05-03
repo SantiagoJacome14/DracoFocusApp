@@ -8,18 +8,11 @@ import androidx.lifecycle.viewModelScope
 import co.edu.unab.dracofocusapp.data.remote.GoogleAuthRequest
 import co.edu.unab.dracofocusapp.data.remote.LoginRequest
 import co.edu.unab.dracofocusapp.data.remote.RetrofitInstance
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
-import com.google.firebase.auth.auth
 import android.util.Log
+import co.edu.unab.dracofocusapp.data.remote.RegisterRequest
 
 class AuthViewModel : ViewModel() {
-
-    private val auth: FirebaseAuth = Firebase.auth
-    private val db: FirebaseFirestore = Firebase.firestore
 
     var uiState by mutableStateOf(AuthUiState())
 
@@ -55,7 +48,6 @@ class AuthViewModel : ViewModel() {
     }
 
     fun signOut(tokenManager: TokenManager? = null) {
-        auth.signOut()
         viewModelScope.launch {
             tokenManager?.clearAuthData()
         }
@@ -75,23 +67,6 @@ class AuthViewModel : ViewModel() {
 
     fun onLoginPasswordChanged(value: String) {
         uiState = uiState.copy(loginPassword = value)
-    }
-
-    fun onLoginClicked() {
-        if (uiState.loginEmail.isBlank() || uiState.loginPassword.isBlank()) {
-            onError("Por favor, completa todos los campos.")
-            return
-        }
-        uiState = uiState.copy(isLoading = true, errorMessage = null)
-        onLoginSuccess()
-    }
-
-    fun onLoginSuccess() {
-        uiState = uiState.copy(
-            isSuccessLogin = true,
-            isLoading = false,
-            errorMessage = null
-        )
     }
 
     fun onSuccess() {
@@ -226,7 +201,14 @@ class AuthViewModel : ViewModel() {
         uiState = uiState.copy(signUpConfirmPassword = value)
     }
 
-    fun onSignUpClicked() {
+    /**
+     * Registro vía Laravel backend.
+     * Guarda token + userId en TokenManager.
+     */
+    fun registerWithEmail(
+        tokenManager: TokenManager,
+        onSuccess: () -> Unit
+    ) {
         val name = uiState.signUpName
         val email = uiState.signUpEmail
         val semester = uiState.signUpSemester
@@ -235,17 +217,48 @@ class AuthViewModel : ViewModel() {
 
         when {
             name.isBlank() || email.isBlank() || semester.isBlank() || pass.isBlank() || confirm.isBlank() -> {
-                onError("Completa todos los campos para continuar.")
+                onError("Completa todos los campos.")
             }
-            pass.length < 6 -> {
-                onError("La contraseña debe tener al menos 6 caracteres.")
-            }
-            pass != confirm -> {
-                onError("Las contraseñas no coinciden.")
-            }
+            pass.length < 6 -> onError("Mínimo 6 caracteres.")
+            pass != confirm -> onError("Las contraseñas no coinciden.")
             else -> {
                 uiState = uiState.copy(isLoading = true, errorMessage = null)
-                onLoginSuccess()
+
+                viewModelScope.launch {
+                    try {
+                        val response = RetrofitInstance.getApiService(tokenManager)
+                            .register(
+                                RegisterRequest(
+                                    name = name,
+                                    email = email,
+                                    password = pass,
+                                    password_confirmation = confirm,
+                                    semester = semester
+                                )
+                            )
+
+                        if (response.isSuccessful) {
+                            val body = response.body()
+                            if (body != null) {
+                                tokenManager.saveAuthData(
+                                    body.accessToken,
+                                    body.user.id.toString()
+                                )
+
+                                uiState = uiState.copy(
+                                    isSuccessLogin = true,
+                                    isLoading = false,
+                                    errorMessage = null
+                                )
+                                onSuccess()
+                            } else onError("Respuesta vacía")
+                        } else {
+                            onError("Error registro: ${response.code()}")
+                        }
+                    } catch (e: Exception) {
+                        onError("Conexión: ${e.message}")
+                    }
+                }
             }
         }
     }

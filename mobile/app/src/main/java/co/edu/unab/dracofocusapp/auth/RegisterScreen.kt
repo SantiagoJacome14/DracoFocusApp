@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -26,10 +27,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import co.edu.unab.dracofocusapp.R
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,21 +66,15 @@ fun ModernTopBar(
 
 @Composable
 fun RegisterScreen(
+    viewModel: AuthViewModel = viewModel(),
     onBack: () -> Unit,
     onRegisterSuccess: () -> Unit
 ) {
-    val auth = Firebase.auth
-    val db = Firebase.firestore
-
-    var fullName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var semester by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
+    val uiState = viewModel.uiState
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
 
     var focusedField by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
@@ -137,8 +130,8 @@ fun RegisterScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CustomRegisterField(
-                            value = fullName,
-                            onValueChange = { if (it.all { c -> c.isLetter() || c.isWhitespace() }) fullName = it },
+                            value = uiState.signUpName,
+                            onValueChange = viewModel::onSignUpNameChanged,
                             label = "Nombre Completo",
                             icon = R.drawable.ic_user,
                             onFocus = { focusedField = "nombre" }
@@ -149,8 +142,8 @@ fun RegisterScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         CustomRegisterField(
-                            value = email,
-                            onValueChange = { email = it },
+                            value = uiState.signUpEmail,
+                            onValueChange = viewModel::onSignUpEmailChanged,
                             label = "Correo Electrónico",
                             icon = R.drawable.ic_email,
                             keyboardType = KeyboardType.Email,
@@ -162,8 +155,8 @@ fun RegisterScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         CustomRegisterField(
-                            value = semester,
-                            onValueChange = { if (it.all { c -> c.isDigit() }) semester = it },
+                            value = uiState.signUpSemester,
+                            onValueChange = viewModel::onSignUpSemesterChanged,
                             label = "Semestre",
                             icon = R.drawable.ic_school,
                             keyboardType = KeyboardType.Number,
@@ -175,8 +168,8 @@ fun RegisterScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         CustomRegisterField(
-                            value = password,
-                            onValueChange = { password = it },
+                            value = uiState.signUpPassword,
+                            onValueChange = viewModel::onSignUpPasswordChanged,
                             label = "Contraseña",
                             icon = R.drawable.ic_password,
                             isPassword = true,
@@ -189,8 +182,8 @@ fun RegisterScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         CustomRegisterField(
-                            value = confirmPassword,
-                            onValueChange = { confirmPassword = it },
+                            value = uiState.signUpConfirmPassword,
+                            onValueChange = viewModel::onSignUpConfirmPasswordChanged,
                             label = "Confirmar Contraseña",
                             icon = R.drawable.ic_password,
                             isPassword = true
@@ -200,77 +193,27 @@ fun RegisterScreen(
 
                         Button(
                             onClick = {
-                                if (fullName.isBlank() || email.isBlank() || semester.isBlank() ||
-                                    password.isBlank() || confirmPassword.isBlank()
-                                ) {
-                                    errorMessage = "Por favor completa todos los campos."
-                                    return@Button
+                                viewModel.registerWithEmail(tokenManager) {
+                                    onRegisterSuccess()
                                 }
-                                if (!email.contains("@")) {
-                                    errorMessage = "El correo debe contener '@'."
-                                    return@Button
-                                }
-                                if (password != confirmPassword) {
-                                    errorMessage = "Las contraseñas no coinciden."
-                                    return@Button
-                                }
-
-                                isLoading = true
-                                errorMessage = null
-
-                                auth.createUserWithEmailAndPassword(email.trim(), password)
-                                    .addOnCompleteListener { task ->
-                                        if (task.isSuccessful) {
-                                            val currentUser = auth.currentUser
-                                            val uid = currentUser?.uid ?: return@addOnCompleteListener
-
-                                            val profileUpdates =
-                                                com.google.firebase.auth.UserProfileChangeRequest.Builder()
-                                                    .setDisplayName(fullName)
-                                                    .build()
-
-                                            currentUser.updateProfile(profileUpdates)
-                                                .addOnCompleteListener {
-                                                    val userData = hashMapOf(
-                                                        "nombre" to fullName,
-                                                        "correo" to email.trim(),
-                                                        "semestre" to semester
-                                                    )
-
-                                                    db.collection("usuarios").document(uid)
-                                                        .set(userData)
-                                                        .addOnSuccessListener {
-                                                            isLoading = false
-                                                            onRegisterSuccess()
-                                                        }
-                                                        .addOnFailureListener {
-                                                            isLoading = false
-                                                            errorMessage = "Error guardando datos."
-                                                        }
-                                                }
-                                        } else {
-                                            isLoading = false
-                                            errorMessage = task.exception?.message
-                                                ?: "Error al registrar usuario."
-                                        }
-                                    }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
                             shape = MaterialTheme.shapes.medium,
+                            enabled = !uiState.isLoading,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFF22DDF2),
                                 contentColor = Color.Black
                             )
                         ) {
-                            if (isLoading)
+                            if (uiState.isLoading)
                                 CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(20.dp))
                             else
                                 Text("Crear Cuenta", fontWeight = FontWeight.Bold)
                         }
 
-                        errorMessage?.let {
+                        uiState.errorMessage?.let {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(it, color = Color.Red, fontSize = 13.sp)
                         }

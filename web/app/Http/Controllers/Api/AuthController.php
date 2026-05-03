@@ -22,12 +22,14 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'semester' => ['required', 'string', 'max:10'],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'semester' => $request->semester,
             'is_admin' => false,
             'daily_goal' => 50,
             'current_streak' => 0,

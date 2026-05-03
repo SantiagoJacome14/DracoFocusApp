@@ -30,6 +30,7 @@ class User extends Authenticatable
         'total_xp',
         'google_id',
         'avatar',
+        'semester',
     ];
 
     /**
