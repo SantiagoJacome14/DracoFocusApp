@@ -25,6 +25,10 @@ class LessonProgressViewModel(
     private val rewardManager: RewardManager,
 ) : ViewModel() {
 
+    init {
+        Log.d("PROGRESS_SYNC", "LessonProgressViewModel inicializado para userId=$userId")
+    }
+
     val soloFundamentosProgress = repository.observeSoloFundamentosProgressFraction(userId).stateIn(
         viewModelScope,
         SharingStarted.Eagerly,

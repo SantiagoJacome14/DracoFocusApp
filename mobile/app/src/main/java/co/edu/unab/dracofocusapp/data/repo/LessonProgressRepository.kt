@@ -48,12 +48,14 @@ class LessonProgressRepository(
         // 1. Determinar el slug
         val lessonIdInt = lessonId.toIntOrNull()
         val slug = if (lessonIdInt != null) {
+            lessonRepository.ensureLessonsAvailable()
             lessonRepository.getSlugById(lessonIdInt)
         } else {
             lessonId
         }
 
         val idToStore = slug ?: lessonId
+        Log.d("PROGRESS_SYNC", "markLessonCompleted: originalId=$lessonId -> idToStore=$idToStore")
 
         // 2. Guardar local
         Log.d("PROGRESS_SYNC", "Guardado en Room slug=$idToStore (originalId=$lessonId)")
@@ -133,14 +135,14 @@ class LessonProgressRepository(
         try {
             Log.d("PROGRESS_SYNC", "Obteniendo progreso del servidor...")
             val response = apiService?.getProgress()
-            Log.d("PROGRESS_SYNC", "Respuesta GET /api/progress: code=${response?.code()}")
+            Log.d("PROGRESS_SYNC", "GET /api/progress response: code=${response?.code()} body=${response?.body()}")
             if (response != null && response.isSuccessful && response.body() != null) {
-                val serverSlugs = response.body()!!.completedLessons
-                Log.d("PROGRESS_SYNC", "Lecciones completadas desde servidor: ${serverSlugs.size}")
+                val serverSlugs = response.body()!!.completedLessons.map { it.trim() }
+                Log.d("PROGRESS_SYNC", "Slugs recibidos y limpios del backend: $serverSlugs")
 
                 lessonDao.clearForUser(userId)
                 serverSlugs.forEach { serverSlug ->
-                    Log.d("PROGRESS_SYNC", "Guardado en Room slug=$serverSlug desde servidor")
+                    Log.d("PROGRESS_ROOM", "Guardando en Room userId=$userId slug=$serverSlug")
                     lessonDao.upsert(
                         CompletedLessonEntity(
                             userId = userId,

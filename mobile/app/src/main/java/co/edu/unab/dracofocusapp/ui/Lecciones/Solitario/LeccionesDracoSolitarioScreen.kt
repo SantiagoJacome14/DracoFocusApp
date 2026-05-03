@@ -54,6 +54,7 @@ fun LeccionesDracoSolitarioScreen(
     }
 
     val lessonVm = viewModel<LessonProgressViewModel>(
+        key = "LessonProgressViewModel_$currentUserId",
         factory = LessonProgressViewModel.factory(
             userId = currentUserId!!,
             repository = app.lessonProgressRepository,
@@ -72,7 +73,8 @@ fun LeccionesDracoSolitarioScreen(
     val faltantes = (3 - doneCount).coerceAtLeast(0)
 
     LaunchedEffect(completadas) {
-        Log.d("PROGRESS_SYNC", "Estado actual en UI: $doneCount/3 completadas")
+        Log.d("PROGRESS_SYNC", "Estado actual en UI para userId=$currentUserId: $doneCount/3 completadas")
+        Log.d("PROGRESS_UI", "Set de completadas: $completadas")
         Log.d("PROGRESS_SYNC", "Lección 'decisiones_de_fuego' completada: ${"decisiones_de_fuego" in completadas}")
         Log.d("PROGRESS_SYNC", "Lección 'vuelo_infinito' completada: ${"vuelo_infinito" in completadas}")
         Log.d("PROGRESS_SYNC", "Lección 'el_libro_de_tareas' completada: ${"el_libro_de_tareas" in completadas}")
@@ -176,11 +178,13 @@ Scaffold(
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                val isFireDone = "decisiones_de_fuego" in completadas
+                Log.d("PROGRESS_UI", "UI: decisiones_de_fuego completed=$isFireDone")
                 ModernLessonCard(
                     icon = R.drawable.ic_lesson_fire,
                     titulo = "Decisiones de Fuego",
                     subtitulo = "Condicionales • retos mixtos",
-                    isCompleted = "decisiones_de_fuego" in completadas,
+                    isCompleted = isFireDone,
                     onStart = {
                         navController.navigate("leccion_reto/1") {
                             launchSingleTop = true
@@ -188,11 +192,13 @@ Scaffold(
                     },
                 )
 
+                val isLoopDone = "vuelo_infinito" in completadas
+                Log.d("PROGRESS_UI", "UI: vuelo_infinito completed=$isLoopDone")
                 ModernLessonCard(
                     icon = R.drawable.ic_lesson_loop,
                     titulo = "Vuelo Infinito",
                     subtitulo = "Bucles • retos mixtos",
-                    isCompleted = "vuelo_infinito" in completadas,
+                    isCompleted = isLoopDone,
                     onStart = {
                         navController.navigate("leccion_reto/2") {
                             launchSingleTop = true
@@ -200,11 +206,13 @@ Scaffold(
                     },
                 )
 
+                val isArraysDone = "el_libro_de_tareas" in completadas
+                Log.d("PROGRESS_UI", "UI: el_libro_de_tareas completed=$isArraysDone")
                 ModernLessonCard(
                     icon = R.drawable.ic_lesson_arrays,
                     titulo = "El Libro de las Tareas",
                     subtitulo = "Lists & lógica",
-                    isCompleted = "el_libro_de_tareas" in completadas,
+                    isCompleted = isArraysDone,
                     onStart = {
                         navController.navigate("leccion_reto/3") {
                             launchSingleTop = true

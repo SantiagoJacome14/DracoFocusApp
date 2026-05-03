@@ -16,11 +16,12 @@ class ProgressController extends Controller
     public function index()
     {
         $progress = UserProgress::where('user_id', Auth::id())
+            ->where('completed', true)
             ->with('lesson:id,slug')
             ->get();
 
         return response()->json([
-            'completed_lessons' => $progress->map(fn($item) => $item->lesson->slug)->values(),
+            'completed_lessons' => $progress->map(fn($item) => $item->lesson?->slug)->filter()->values(),
             'completed_lesson_ids' => $progress->map(fn($item) => $item->lesson_id)->values(),
         ]);
     }
@@ -78,20 +79,26 @@ class ProgressController extends Controller
         $lessonIds = Lesson::whereIn('slug', $slugs)->pluck('id', 'slug');
 
         foreach ($lessonIds as $slug => $lessonId) {
-            UserProgress::firstOrCreate(
+            UserProgress::updateOrCreate(
                 [
                     'user_id' => Auth::id(),
                     'lesson_id' => $lessonId,
+                ],
+                [
+                    'completed' => true,
+                    'completed_at' => now(),
+                    'score' => 100
                 ]
             );
         }
 
         $progress = UserProgress::where('user_id', Auth::id())
+            ->where('completed', true)
             ->with('lesson:id,slug')
             ->get();
 
         return response()->json([
-            'completed_lessons' => $progress->map(fn($item) => $item->lesson->slug)->values(),
+            'completed_lessons' => $progress->map(fn($item) => $item->lesson?->slug)->filter()->values(),
             'completed_lesson_ids' => $progress->map(fn($item) => $item->lesson_id)->values(),
         ]);
     }
