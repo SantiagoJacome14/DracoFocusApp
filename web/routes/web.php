@@ -33,6 +33,8 @@ Route::middleware('auth')->group(function () {
 
     // Lessons
     Route::get('/lesson/{slug?}', [LessonController::class, 'show'])->name('lesson.show');
+    Route::post('/lesson/ai-feedback', [LessonController::class, 'aiFeedback'])->name('lesson.ai-feedback');
+    Route::post('/lesson/{slug}/progress', [LessonController::class, 'updateProgress'])->name('lesson.progress');
     Route::post('/lesson/{slug?}/complete', [LessonController::class, 'complete'])->name('lesson.complete');
 
     // User Profile

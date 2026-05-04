@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class Lesson extends Model
 {
     protected $fillable = ['title', 'slug', 'description', 'content', 'difficulty', 'type', 'xp_reward', 'order'];
-    protected $casts = ['content' => 'array'];
+    protected $casts = [
+    'content' => 'array',
+    'exercises' => 'array',
+];
 
     public function progress()
     {
