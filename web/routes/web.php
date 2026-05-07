@@ -17,6 +17,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/',  [AuthController::class, 'login'])->name('login.post');
     Route::get('/register',  [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
+
+    // Google OAuth
+    Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 
 /*
@@ -39,7 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
 
     // Logout
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
         Route::get('/users', [AdminController::class, 'users'])->name('users');

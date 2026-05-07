@@ -30,6 +30,113 @@ class ProfileController extends Controller
             'member_since'   => $monthName . ' ' . $userModel->created_at->format('Y'),
         ];
 
+        // ─── Admin gets a completely different profile ───
+        if ($userModel->is_admin) {
+            return $this->showAdminProfile($user, $userModel, $monthName);
+        }
+
+        // ─── Student Profile ───
+        return $this->showStudentProfile($user, $userModel, $monthName);
+    }
+
+    /**
+     * Admin Profile — Platform overview & management dashboard.
+     */
+    private function showAdminProfile(array $user, $userModel, string $monthName)
+    {
+        // Platform-wide statistics
+        $totalUsers = \App\Models\User::count();
+        $students = \App\Models\User::where('is_admin', false)->count();
+        $totalLessons = \App\Models\Lesson::count();
+        $totalCompletions = \App\Models\UserProgress::count();
+        $totalXpEarned = \App\Models\User::sum('total_xp');
+        $avgXp = $students > 0 ? round(\App\Models\User::where('is_admin', false)->avg('total_xp')) : 0;
+        $maxStreak = \App\Models\User::max('current_streak') ?? 0;
+
+        $platformStats = [
+            'total_users'       => $totalUsers,
+            'students'          => $students,
+            'total_lessons'     => $totalLessons,
+            'total_completions' => $totalCompletions,
+            'total_xp_earned'   => $totalXpEarned,
+            'avg_xp'            => $avgXp,
+            'max_streak'        => $maxStreak,
+        ];
+
+        // Lesson completion rates
+        $allLessons = \App\Models\Lesson::orderBy('order')->get();
+        $emojis = [
+            'variables' => '📦', 'operadores' => '➕', 'bucles' => '🔄',
+            'funciones' => '🔧', 'pseudocodigo' => '📝', 'poo' => '🏗️',
+        ];
+        $colors = [
+            'variables' => '#10b981', 'operadores' => '#f59e0b', 'bucles' => '#3b82f6',
+            'funciones' => '#6366f1', 'pseudocodigo' => '#8b5cf6', 'poo' => '#ec4899',
+        ];
+
+        $lessonStats = [];
+        foreach ($allLessons as $l) {
+            $completions = \App\Models\UserProgress::where('lesson_id', $l->id)->count();
+            $rate = $students > 0 ? round(($completions / $students) * 100) : 0;
+            $lessonStats[] = [
+                'title'       => $l->title,
+                'emoji'       => $emojis[$l->slug] ?? '📚',
+                'color'       => $colors[$l->slug] ?? '#10b981',
+                'completions' => $completions,
+                'rate'        => $rate,
+            ];
+        }
+
+        // Recent users (last 8 registrations)
+        $recentUsers = \App\Models\User::orderBy('created_at', 'desc')->take(8)->get();
+
+        // Top 3 students by XP
+        $topStudents = \App\Models\User::where('is_admin', false)
+            ->orderBy('total_xp', 'desc')
+            ->take(3)
+            ->get();
+
+        // All users with progress count for the table
+        $allUsers = \App\Models\User::withCount('progress')
+            ->orderBy('total_xp', 'desc')
+            ->take(20)
+            ->get();
+
+        // Weekly registration trend
+        $weeklyRegistrations = [
+            'Lun' => 0, 'Mar' => 0, 'Mie' => 0, 'Jue' => 0, 
+            'Vie' => 0, 'Sab' => 0, 'Dom' => 0
+        ];
+        $startOfWeek = \Carbon\Carbon::now()->startOfWeek();
+        $endOfWeek = \Carbon\Carbon::now()->endOfWeek();
+        $regsThisWeek = \App\Models\User::whereBetween('created_at', [$startOfWeek, $endOfWeek])->get();
+        $dayMap = [1 => 'Lun', 2 => 'Mar', 3 => 'Mie', 4 => 'Jue', 5 => 'Vie', 6 => 'Sab', 7 => 'Dom'];
+        foreach ($regsThisWeek as $u) {
+            $dow = $u->created_at->dayOfWeekIso;
+            if (isset($dayMap[$dow])) {
+                $weeklyRegistrations[$dayMap[$dow]]++;
+            }
+        }
+
+        // Recent lesson completions
+        $recentCompletions = \App\Models\UserProgress::join('users', 'user_progress.user_id', '=', 'users.id')
+            ->join('lessons', 'user_progress.lesson_id', '=', 'lessons.id')
+            ->select('users.name as user_name', 'lessons.title as lesson_title', 'user_progress.completed_at')
+            ->orderBy('user_progress.completed_at', 'desc')
+            ->take(8)
+            ->get();
+
+        return view('admin.profile', compact(
+            'user', 'platformStats', 'lessonStats', 'recentUsers',
+            'topStudents', 'allUsers', 'weeklyRegistrations', 'recentCompletions'
+        ));
+    }
+
+    /**
+     * Student Profile — Personal stats and progress.
+     */
+    private function showStudentProfile(array $user, $userModel, string $monthName)
+    {
         // 2. Daily XP earned per day of the week (Mon-Sun)
         $dailyProgress = [
             'Lun' => 0, 'Mar' => 0, 'Mie' => 0, 'Jue' => 0, 
