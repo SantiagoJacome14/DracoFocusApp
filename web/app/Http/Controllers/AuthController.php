@@ -90,4 +90,60 @@ class AuthController extends Controller
 
         return redirect()->route('login');
     }
+
+    /**
+     * Redirect to Google OAuth.
+     */
+    public function redirectToGoogle()
+    {
+        return \Laravel\Socialite\Facades\Socialite::driver('google')->redirect();
+    }
+
+    /**
+     * Handle Google OAuth callback.
+     */
+    public function handleGoogleCallback(Request $request)
+    {
+        try {
+            $googleUser = \Laravel\Socialite\Facades\Socialite::driver('google')->user();
+        } catch (\Exception $e) {
+            return redirect()->route('login')->withErrors(['google' => 'Error al autenticar con Google. Inténtalo de nuevo.']);
+        }
+
+        // Find existing user by google_id or email
+        $user = User::where('google_id', $googleUser->getId())
+                     ->orWhere('email', $googleUser->getEmail())
+                     ->first();
+
+        if ($user) {
+            // Update google_id if not set
+            if (!$user->google_id) {
+                $user->google_id = $googleUser->getId();
+                $user->avatar = $googleUser->getAvatar();
+                $user->save();
+            }
+        } else {
+            // Create new user
+            $user = User::create([
+                'name'           => $googleUser->getName(),
+                'email'          => $googleUser->getEmail(),
+                'google_id'      => $googleUser->getId(),
+                'avatar'         => $googleUser->getAvatar(),
+                'password'       => Hash::make(uniqid() . time()),
+                'is_admin'       => false,
+                'daily_goal'     => 50,
+                'current_streak' => 0,
+                'total_xp'       => 0,
+            ]);
+        }
+
+        Auth::login($user, true);
+        $request->session()->regenerate();
+
+        if ($user->is_admin) {
+            session(['is_admin' => true]);
+        }
+
+        return redirect()->route('dashboard');
+    }
 }

@@ -181,11 +181,28 @@
                 Mi Perfil
             </a>
 
+            @if(auth()->user() && auth()->user()->role === 'teacher')
+            <a href="{{ route('teacher.questions.index') }}" class="nav-link {{ request()->routeIs('teacher.questions*') ? 'active' : '' }}">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                Preguntas
+            </a>
+            @endif
+
             @if(auth()->user() && auth()->user()->is_admin)
             <div class="nav-section-title" style="margin-top: 1.5rem;">Administración</div>
-            <a href="{{ route('admin.users') }}" class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}">
-                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
-                Panel Admin
+
+            <a href="{{ route('admin.users') }}" class="nav-link {{ request()->routeIs('admin.users') ? 'active' : '' }}">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>
+                </svg>
+                Usuarios
+            </a>
+
+            <a href="{{ route('admin.teachers.index') }}" class="nav-link {{ request()->routeIs('admin.teachers*') ? 'active' : '' }}">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm6 2h-2.18c-.42.62-.96 1.16-1.59 1.58C16.36 16.23 18 17.33 18 19v1h4v-1c0-2.21-1.79-4-4-4zm-12 0c-2.21 0-4 1.79-4 4v1h14v-1c0-2.21-1.79-4-4-4H6z"/>
+                </svg>
+                Profesores
             </a>
             @endif
         </nav>
@@ -198,7 +215,12 @@
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-bold text-slate-200 truncate">{{ auth()->user()->name }}</p>
-                    <p class="text-xs text-slate-500 font-medium truncate">{{ auth()->user()->is_admin ? 'Admin' : 'Estudiante' }}</p>
+                    <p class="text-xs text-slate-500 font-medium truncate">
+                        @if(auth()->user()->is_admin) Admin
+                        @elseif(auth()->user()->role === 'teacher') Profesor
+                        @else Estudiante
+                        @endif
+                    </p>
                 </div>
             </div>
 
@@ -228,6 +250,12 @@
                     Volver a mi cuenta Admin
                 </button>
             </form>
+        </div>
+        @endif
+
+        @if(session('error'))
+        <div class="mx-8 mt-4 bg-red-400/15 border border-red-400/40 text-red-400 px-5 py-3 rounded-2xl font-medium flex items-center gap-2" role="alert">
+            <span>⚠️</span> {{ session('error') }}
         </div>
         @endif
 

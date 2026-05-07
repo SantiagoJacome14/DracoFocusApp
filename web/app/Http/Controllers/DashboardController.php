@@ -15,6 +15,21 @@ class DashboardController extends Controller
         // Use the authenticated user
         $userModel = auth()->user();
 
+        if ($userModel->role === 'teacher') {
+            $students = User::where('role', 'student')->get()->map(function ($student) {
+                $completedLessons = UserProgress::where('user_id', $student->id)->count();
+                $totalLessons = Lesson::count();
+                $percentage = $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100) : 0;
+                
+                $student->completed_lessons = $completedLessons;
+                $student->total_lessons = $totalLessons;
+                $student->pending_lessons = $totalLessons - $completedLessons;
+                $student->progress_percentage = $percentage;
+                return $student;
+            });
+            return view('teacher.dashboard', compact('students'));
+        }
+
         // 2. Calculate XP earned today
         $xpToday = UserProgress::where('user_id', $userModel->id)
             ->whereDate('completed_at', Carbon::today())
