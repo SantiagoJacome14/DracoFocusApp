@@ -34,10 +34,12 @@ class LessonController extends Controller
 
         // 1. Determine source of exercises
         $dbExercises = $lesson->exercises ?? [];
-        if (count($dbExercises) < 5) {
-            $rawExercises = ExerciseBank::random($topic, 8);
-        } else {
+        
+        // Use DB if not empty, otherwise fallback to ExerciseBank
+        if (!empty($dbExercises)) {
             $rawExercises = $dbExercises;
+        } else {
+            $rawExercises = ExerciseBank::random($topic, 8);
         }
 
         // 2. Transform exercises
