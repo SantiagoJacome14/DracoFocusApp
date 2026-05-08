@@ -31,8 +31,9 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            // Set admin session flag if user is admin
-            if (Auth::user()->is_admin) {
+            // Redirection logic is handled by DashboardController, 
+            // but we can also set the session robustly here
+            if (Auth::user()->isAdmin()) {
                 session(['is_admin' => true]);
             }
 
@@ -68,7 +69,8 @@ class AuthController extends Controller
             'name'           => $request->name,
             'email'          => $request->email,
             'password'       => $request->password,
-            'is_admin'       => false,   // Always 'estudiante' role
+            'is_admin'       => false,
+            'role'           => 'estudiante',
             'daily_goal'     => 50,
             'current_streak' => 0,
             'total_xp'       => 0,

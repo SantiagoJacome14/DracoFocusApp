@@ -25,6 +25,7 @@ class User extends Authenticatable
         'email',
         'password',
         'is_admin',
+        'role',
         'daily_goal',
         'current_streak',
         'total_xp',
@@ -53,7 +54,26 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_admin' => 'boolean',
+            'role' => 'string',
         ];
+    }
+
+    /**
+     * Check if the user is an admin.
+     * is_admin = true has priority, but role = 'admin' is also accepted.
+     */
+    public function isAdmin(): bool
+    {
+        return (bool) $this->is_admin || $this->role === 'admin';
+    }
+
+    /**
+     * Check if the user is a teacher.
+     */
+    public function isTeacher(): bool
+    {
+        return $this->role === 'teacher';
     }
 
     public function progress()

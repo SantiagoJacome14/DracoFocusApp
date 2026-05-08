@@ -14,11 +14,16 @@
                     Volver al Dashboard
                 </a>
 
-                @if($user['is_admin'])
+                @if(auth()->user()->isAdmin())
                 <a href="{{ route('admin.users') }}" class="flex items-center gap-2 bg-draco-gold/15 border border-draco-gold/30 text-draco-gold px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-widest hover:bg-draco-gold/25 transition">
                     <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
                     Admin
                 </a>
+                @elseif(auth()->user()->isTeacher())
+                <div class="flex items-center gap-1.5 bg-sky-400/15 border border-sky-400/30 text-sky-400 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>
+                    Profesor
+                </div>
                 @else
                 <div class="flex items-center gap-1.5 bg-slate-700/40 border border-slate-600/50 text-slate-400 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest">
                     <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>

@@ -181,11 +181,19 @@
                 Mi Perfil
             </a>
 
-            @if(auth()->user() && auth()->user()->is_admin)
+            @if(auth()->user() && auth()->user()->isAdmin())
             <div class="nav-section-title" style="margin-top: 1.5rem;">Administración</div>
             <a href="{{ route('admin.users') }}" class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
                 Panel Admin
+            </a>
+            @endif
+
+            @if(auth()->user() && auth()->user()->isTeacher())
+            <div class="nav-section-title" style="margin-top: 1.5rem;">Docencia</div>
+            <a href="{{ route('teacher.dashboard') }}" class="nav-link {{ request()->routeIs('teacher.*') ? 'active' : '' }}">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>
+                Panel Profesor
             </a>
             @endif
         </nav>
@@ -198,7 +206,11 @@
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-bold text-slate-200 truncate">{{ auth()->user()->name }}</p>
-                    <p class="text-xs text-slate-500 font-medium truncate">{{ auth()->user()->is_admin ? 'Admin' : 'Estudiante' }}</p>
+                    <p class="text-xs text-slate-500 font-medium truncate">
+                        @if(auth()->user()->isAdmin()) Admin
+                        @elseif(auth()->user()->isTeacher()) Profesor
+                        @else Estudiante @endif
+                    </p>
                 </div>
             </div>
 
