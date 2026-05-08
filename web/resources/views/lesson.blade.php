@@ -64,12 +64,21 @@
             </template>
 
             <template x-if="ex.type === 'fill'">
-                <div class="bg-slate-900 p-6 rounded-2xl font-mono text-lg shadow-inner border border-slate-700 flex items-center justify-center flex-wrap gap-2">
-                    <input type="text"
-                           x-model="inputCode"
-                           @keydown.enter="checkAnswer()"
-                           class="bg-slate-800 text-draco-emerald-light font-bold w-48 outline-none border-b-2 border-draco-gold focus:border-draco-emerald transition-colors px-3 py-2 rounded-lg text-center"
-                           placeholder="Escribe...">
+                <div class="bg-slate-900 p-8 rounded-2xl font-mono text-lg shadow-inner border border-slate-700 flex flex-col items-center gap-6">
+                    <div class="flex items-center justify-center flex-wrap gap-2 leading-loose">
+                        <span x-show="ex.code_before" x-text="ex.code_before" class="text-slate-400"></span>
+                        <input type="text"
+                               x-model="inputCode"
+                               @keydown.enter="checkAnswer()"
+                               class="bg-slate-800 text-draco-emerald-light font-bold w-40 outline-none border-b-2 border-draco-gold focus:border-draco-emerald transition-colors px-3 py-1 rounded-lg text-center"
+                               :placeholder="ex.hint ? 'Pista...' : 'Escribe...'">
+                        <span x-show="ex.code_after" x-text="ex.code_after" class="text-slate-400"></span>
+                    </div>
+                    
+                    <div x-show="ex.hint" class="flex items-center gap-2 text-slate-500 text-sm bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-700/50">
+                        <span class="text-draco-gold">💡</span>
+                        <span x-text="ex.hint"></span>
+                    </div>
                 </div>
             </template>
 
