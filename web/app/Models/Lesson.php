@@ -21,4 +21,9 @@ class Lesson extends Model
     {
         return $this->hasMany(Question::class);
     }
+
+    public function exercises()
+    {
+        return $this->hasMany(Exercise::class);
+    }
 }

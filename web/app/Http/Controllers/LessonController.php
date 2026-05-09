@@ -8,6 +8,7 @@ use App\Models\UserProgress;
 use Carbon\Carbon;
 use App\Data\ExerciseBank;
 use Illuminate\Http\Request;
+use App\Models\Exercise;
 
 class LessonController extends Controller
 {
@@ -21,6 +22,35 @@ class LessonController extends Controller
         return response()->json($lessons);
     }
 
+    /**
+     * API: Get exercises for a specific lesson slug.
+     */
+    public function getExercisesApi($slug)
+    {
+        $lesson = Lesson::where('slug', $slug)->first();
+
+        if (!$lesson) {
+            return response()->json(['message' => 'Lesson not found'], 404);
+        }
+
+        $exercises = $lesson->exercises()
+            ->where('language', 'kotlin')
+            ->where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->get();
+
+        return response()->json([
+            'lesson' => [
+                'id' => $lesson->id,
+                'slug' => $lesson->slug,
+                'title' => $lesson->title,
+                'description' => $lesson->description,
+                'xp_reward' => $lesson->xp_reward,
+            ],
+            'exercises' => $exercises
+        ]);
+    }
+
 
     public function show(Request $request, $slug = null)
     {
@@ -31,24 +61,36 @@ class LessonController extends Controller
             return redirect()->route('dashboard')->with('error', 'Lección no encontrada.');
         }
 
-        // 1. Determine source of exercises
-        $dbExercises = $lesson->exercises ?? [];
-        
-        // Use DB if not empty, otherwise fallback to ExerciseBank
-        if (!empty($dbExercises)) {
-            $rawExercises = $dbExercises;
+        // 1. Determine source of exercises (Priority: exercises table > lesson JSON column > bank)
+        $exercisesTable = $lesson->exercises()
+            ->where('language', 'kotlin')
+            ->where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->get();
+
+        if ($exercisesTable->isNotEmpty()) {
+            $rawExercises = $exercisesTable;
+        } elseif (!empty($lesson->exercises)) {
+            $rawExercises = $lesson->exercises;
         } else {
             $rawExercises = ExerciseBank::random($topic, 8);
         }
 
         // 2. Transform exercises
         $exercises = collect($rawExercises)->map(function ($ex) {
-            $ex = (array) $ex;
-            if (!isset($ex['type'])) $ex['type'] = 'fill';
-            if (!isset($ex['correct_answer']) && isset($ex['answer'])) {
-                $ex['correct_answer'] = $ex['answer'];
+            // Convert Eloquent model or object to array
+            $data = is_object($ex) ? $ex->toArray() : (array)$ex;
+            
+            // If it's from the Exercises table, it has a 'data' JSON column with code_before/after
+            if (isset($data['data']) && is_array($data['data'])) {
+                $data = array_merge($data, $data['data']);
             }
-            return $ex;
+
+            if (!isset($data['type'])) $data['type'] = 'fill';
+            if (!isset($data['correct_answer']) && isset($data['answer'])) {
+                $data['correct_answer'] = $data['answer'];
+            }
+            return $data;
         })->toArray();
 
         if (empty($exercises)) {
