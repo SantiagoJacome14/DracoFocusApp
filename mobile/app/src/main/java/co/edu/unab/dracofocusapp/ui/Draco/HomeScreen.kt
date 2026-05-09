@@ -130,7 +130,7 @@ fun HomeScreen(navController: NavController) {
                 }
 
                 MejorButton("LECCIONES", R.drawable.ic_book, Color(0xFF22DDF2)) {
-                    navController.navigate("menu_lecciones") {
+                    navController.navigate("lecciones") {
                         popUpTo(navController.graph.startDestinationId) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
