@@ -52,6 +52,41 @@ data class ProgressSyncResponse(
     @SerializedName("total_xp") val totalXp: Int = 0,
 )
 
+// User Stats DTO (GET /api/user/stats)
+data class CompletedLessonStatsDto(
+    val slug: String,
+    val title: String?,
+    @SerializedName("completed_at") val completedAt: String?,
+    @SerializedName("xp_reward") val xpReward: Int = 0,
+)
+
+data class BadgeDto(
+    val id: String,
+    val title: String,
+    val description: String,
+    val earned: Boolean,
+)
+
+data class ChartDataDto(
+    val completed: Int = 0,
+    val pending: Int = 0,
+    @SerializedName("xp_current_level") val xpCurrentLevel: Int = 0,
+    @SerializedName("xp_next_level") val xpNextLevel: Int = 200,
+)
+
+data class UserStatsDto(
+    @SerializedName("total_xp") val totalXp: Int = 0,
+    @SerializedName("current_streak") val currentStreak: Int = 0,
+    @SerializedName("daily_goal") val dailyGoal: Int = 50,
+    val level: Int = 1,
+    @SerializedName("completed_lessons_count") val completedLessonsCount: Int = 0,
+    @SerializedName("total_lessons_count") val totalLessonsCount: Int = 0,
+    @SerializedName("progress_percent") val progressPercent: Int = 0,
+    @SerializedName("completed_lessons") val completedLessons: List<CompletedLessonStatsDto> = emptyList(),
+    val badges: List<BadgeDto> = emptyList(),
+    @SerializedName("chart_data") val chartData: ChartDataDto? = null,
+)
+
 // Lesson DTO for dynamic slug mapping
 data class LessonDto(
     val id: Int,

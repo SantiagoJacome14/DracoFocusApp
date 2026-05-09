@@ -7,6 +7,7 @@ use App\Models\Lesson;
 use App\Models\UserProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ProgressController extends Controller
 {
@@ -65,6 +66,62 @@ class ProgressController extends Controller
                 'completed' => $progress->completed,
                 'score' => $progress->score
             ]
+        ]);
+    }
+
+    public function stats()
+    {
+        $user = Auth::user();
+
+        $completedProgress = UserProgress::where('user_id', $user->id)
+            ->where('completed', true)
+            ->with('lesson:id,slug,title,xp_reward')
+            ->orderBy('completed_at', 'desc')
+            ->get();
+
+        $totalLessons = Lesson::count();
+        $completedCount = $completedProgress->count();
+        $progressPercent = $totalLessons > 0
+            ? (int) round(($completedCount / $totalLessons) * 100)
+            : 0;
+        $level = (int) floor($user->total_xp / 200) + 1;
+        $xpInLevel = $user->total_xp % 200;
+
+        $badges = [];
+        if ($completedCount >= 1) {
+            $badges[] = ['id' => 'first_step', 'title' => 'Primer Paso', 'description' => 'Completaste tu primera lección', 'earned' => true];
+        }
+        if ($completedCount >= 3) {
+            $badges[] = ['id' => 'apprentice', 'title' => 'Aprendiz Draco', 'description' => 'Completaste 3 lecciones', 'earned' => true];
+        }
+        if ($user->current_streak >= 3) {
+            $badges[] = ['id' => 'consistent', 'title' => 'Constante', 'description' => 'Racha de 3 días consecutivos', 'earned' => true];
+        }
+        if ($totalLessons > 0 && $completedCount >= $totalLessons) {
+            $badges[] = ['id' => 'explorer', 'title' => 'Explorador', 'description' => 'Completaste todas las lecciones disponibles', 'earned' => true];
+        }
+
+        return response()->json([
+            'total_xp'               => $user->total_xp,
+            'current_streak'         => $user->current_streak,
+            'daily_goal'             => $user->daily_goal,
+            'level'                  => $level,
+            'completed_lessons_count' => $completedCount,
+            'total_lessons_count'    => $totalLessons,
+            'progress_percent'       => $progressPercent,
+            'completed_lessons'      => $completedProgress->map(fn($p) => [
+                'slug'         => $p->lesson?->slug,
+                'title'        => $p->lesson?->title,
+                'completed_at' => $p->completed_at?->toIso8601String(),
+                'xp_reward'    => $p->lesson?->xp_reward ?? 0,
+            ])->filter(fn($item) => $item['slug'] !== null)->values(),
+            'badges'     => $badges,
+            'chart_data' => [
+                'completed'       => $completedCount,
+                'pending'         => max(0, $totalLessons - $completedCount),
+                'xp_current_level' => $xpInLevel,
+                'xp_next_level'   => 200,
+            ],
         ]);
     }
 

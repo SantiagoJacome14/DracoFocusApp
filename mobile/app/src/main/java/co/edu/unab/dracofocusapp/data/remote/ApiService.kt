@@ -28,6 +28,9 @@ interface ApiService {
     @POST("api/progress/sync")
     suspend fun syncProgress(@Body request: SyncProgressRequest): Response<ProgressSyncResponse>
 
+    @GET("api/user/stats")
+    suspend fun getUserStats(): Response<UserStatsDto>
+
     @GET("api/lessons")
     suspend fun getLessons(): Response<List<LessonDto>>
 
