@@ -6,20 +6,18 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class IsAdmin
+class IsTeacher
 {
     /**
      * Handle an incoming request.
-     * Only users with is_admin = true can access admin routes.
      *
-     * @param  Closure(Request): (Response)  $next
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check authenticated user's is_admin flag or role
-        if (!$request->user() || !$request->user()->isAdmin()) {
+        if (!$request->user() || !$request->user()->isTeacher()) {
             return redirect()->route('dashboard')
-                ->with('error', 'No tienes permisos para acceder a esa área.');
+                ->with('error', 'No tienes permisos para acceder al área de profesores.');
         }
 
         return $next($request);

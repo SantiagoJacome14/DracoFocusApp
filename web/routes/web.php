@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TeacherController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +38,8 @@ Route::middleware('auth')->group(function () {
 
     // Lessons
     Route::get('/lesson/{slug?}', [LessonController::class, 'show'])->name('lesson.show');
+    Route::post('/lesson/ai-feedback', [LessonController::class, 'aiFeedback'])->name('lesson.ai-feedback');
+    Route::post('/lesson/{slug}/progress', [LessonController::class, 'updateProgress'])->name('lesson.progress');
     Route::post('/lesson/{slug?}/complete', [LessonController::class, 'complete'])->name('lesson.complete');
 
     // User Profile
@@ -45,9 +48,30 @@ Route::middleware('auth')->group(function () {
     // Logout
     Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
+    Route::prefix('teacher')->name('teacher.')->middleware('teacher')->group(function () {
+        Route::get('/dashboard', [TeacherController::class, 'dashboard'])->name('dashboard');
+        Route::get('/questions', [\App\Http\Controllers\TeacherQuestionController::class, 'index'])->name('questions.index');
+        Route::get('/questions/create', [\App\Http\Controllers\TeacherQuestionController::class, 'create'])->name('questions.create');
+        Route::post('/questions', [\App\Http\Controllers\TeacherQuestionController::class, 'store'])->name('questions.store');
+        Route::get('/questions/{question}/edit', [\App\Http\Controllers\TeacherQuestionController::class, 'edit'])->name('questions.edit');
+        Route::put('/questions/{question}', [\App\Http\Controllers\TeacherQuestionController::class, 'update'])->name('questions.update');
+        Route::delete('/questions/{question}', [\App\Http\Controllers\TeacherQuestionController::class, 'destroy'])->name('questions.destroy');
+        
+        // Teacher profile
+        Route::get('/profile/edit', [ProfileController::class, 'editTeacherProfile'])->name('profile.edit');
+        Route::put('/profile', [ProfileController::class, 'updateTeacherProfile'])->name('profile.update');
+    });
+
+    // Admin Routes
     Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
         Route::get('/users', [AdminController::class, 'users'])->name('users');
         Route::post('/users/{user}/impersonate', [AdminController::class, 'impersonate'])->name('users.impersonate');
         Route::delete('/users/{user}', [AdminController::class, 'destroyUser'])->name('users.destroy');
+        Route::get('/teachers', [AdminController::class, 'teachers'])->name('teachers.index');
+        Route::get('/teachers/create', [AdminController::class, 'createTeacher'])->name('teachers.create');
+        Route::post('/teachers', [AdminController::class, 'storeTeacher'])->name('teachers.store');
+        Route::get('/teachers/{user}/edit', [AdminController::class, 'editTeacher'])->name('teachers.edit');
+        Route::put('/teachers/{user}', [AdminController::class, 'updateTeacher'])->name('teachers.update');
+        Route::delete('/teachers/{user}', [AdminController::class, 'destroyTeacher'])->name('teachers.destroy');
     });
 });

@@ -12,8 +12,16 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Use the authenticated user
         $userModel = auth()->user();
+
+        // 1. Redirection based on roles
+        if ($userModel->isAdmin()) {
+            return redirect()->route('admin.users');
+        }
+
+        if ($userModel->isTeacher()) {
+            return redirect()->route('teacher.dashboard');
+        }
 
         // 2. Calculate XP earned today
         $xpToday = UserProgress::where('user_id', $userModel->id)
