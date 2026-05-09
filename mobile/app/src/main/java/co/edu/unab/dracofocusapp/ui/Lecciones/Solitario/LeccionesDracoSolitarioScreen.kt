@@ -186,7 +186,7 @@ Scaffold(
                     subtitulo = "Condicionales • retos mixtos",
                     isCompleted = isFireDone,
                     onStart = {
-                        navController.navigate("leccion_reto/1") {
+                        navController.navigate("leccion_reto/decisiones_de_fuego") {
                             launchSingleTop = true
                         }
                     },
@@ -200,7 +200,7 @@ Scaffold(
                     subtitulo = "Bucles • retos mixtos",
                     isCompleted = isLoopDone,
                     onStart = {
-                        navController.navigate("leccion_reto/2") {
+                        navController.navigate("leccion_reto/vuelo_infinito") {
                             launchSingleTop = true
                         }
                     },
@@ -214,7 +214,7 @@ Scaffold(
                     subtitulo = "Lists & lógica",
                     isCompleted = isArraysDone,
                     onStart = {
-                        navController.navigate("leccion_reto/3") {
+                        navController.navigate("leccion_reto/el_libro_de_tareas") {
                             launchSingleTop = true
                         }
                     },
