@@ -1,5 +1,6 @@
 package co.edu.unab.dracofocusapp.ui.Lecciones
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,15 +36,6 @@ import co.edu.unab.dracofocusapp.viewmodel.LessonProgressViewModel
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-internal fun selectableTipos(leccion: Leccion): List<RetoTipo> = buildList {
-    add(RetoTipo.PUZZLE_OR_CODE_BLOCKS)
-    val quizOk =
-        leccion.opcionesQuiz.size >= 2 && leccion.indiceQuizCorrecto >= 0 && leccion.indiceQuizCorrecto < leccion.opcionesQuiz.size
-    if (quizOk) add(RetoTipo.QUIZ_TECH)
-    val fillOk = !(leccion.lineaCodigoHueca.isNullOrBlank() || leccion.respuestaRelleno.isNullOrBlank())
-    if (fillOk) add(RetoTipo.FILL_LINE)
-}.distinct()
-
 @OptIn(
     ExperimentalLayoutApi::class,
     ExperimentalMaterial3Api::class,
@@ -73,212 +65,136 @@ fun LeccionRetoScreen(
         ),
     )
 
-    val leccionBase = remember(lessonId) { LeccionRepository.getLeccionById(lessonId) }
-        ?: run {
-            Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0B132B))) {
-                Text(
-                    text = "Reto no disponible.",
-                    color = Color.White,
-                    modifier = Modifier.padding(24.dp),
-                )
-            }
-            return
-        }
+    val exerciseVm = viewModel<co.edu.unab.dracofocusapp.viewmodel.LessonExerciseViewModel>(
+        factory = co.edu.unab.dracofocusapp.viewmodel.LessonExerciseViewModel.factory(app.lessonRepository)
+    )
 
-    val tiposOk = remember(leccionBase.id) { selectableTipos(leccionBase) }.ifEmpty {
-        listOf(RetoTipo.PUZZLE_OR_CODE_BLOCKS)
+    val uiState by exerciseVm.uiState.collectAsState()
+
+    LaunchedEffect(lessonId) {
+        exerciseVm.loadExercises(lessonId)
     }
 
-    val tipoNombreGuardado = rememberSaveable(leccionBase.id, coopRoomId) {
-        mutableStateOf(tiposOk.random().name)
-    }
-    val tipoReto =
-        kotlin.runCatching { RetoTipo.valueOf(tipoNombreGuardado.value) }
-            .getOrDefault(RetoTipo.PUZZLE_OR_CODE_BLOCKS)
-
-    var piezasDisponibles by remember(leccionBase.id) {
-        mutableStateOf(leccionBase.piezasDisponibles.shuffled())
-    }
-    var piezasSolucion by remember(leccionBase.id) { mutableStateOf(listOf<String>()) }
-
-    var indiceSeleccionQuiz by remember(leccionBase.id) { mutableStateOf<Int?>(null) }
-    var textoRelleno by remember(leccionBase.id) { mutableStateOf("") }
-
-    val soloPct by progressVm.soloFundamentosProgress.collectAsState()
-
-    LaunchedEffect(coopRoomId, soloPct) {
-        val roomId = coopRoomId ?: return@LaunchedEffect
-        LessonCooperativeSync.publishAggregateProgressPct(roomId, soloPct)
-    }
-
-    var partnerSummary by remember { mutableStateOf("") }
-
-    DisposableEffect(coopRoomId, lessonId) {
-        val room = coopRoomId
-        val registration = room?.takeUnless { it.isBlank() }?.let { rid ->
-            LessonCooperativeSync.attachSummariesListener(rid, lessonId) { texto ->
-                partnerSummary = texto
+    when (val state = uiState) {
+        is co.edu.unab.dracofocusapp.viewmodel.LessonExerciseState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0B132B)), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color(0xFF22DDF2))
             }
         }
-        onDispose {
-            registration?.let { attach ->
-                val listener = attach.first
-                attach.second.removeEventListener(listener)
+        is co.edu.unab.dracofocusapp.viewmodel.LessonExerciseState.Error -> {
+            Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0B132B)), contentAlignment = Alignment.Center) {
+                Text(text = state.message, color = Color.White)
             }
         }
-    }
-
-    fun buildPresenceSummary(): String {
-        val extra = when (tipoReto) {
-            RetoTipo.PUZZLE_OR_CODE_BLOCKS -> piezasSolucion.joinToString(" ").ifBlank { "(vacío)" }
-            RetoTipo.QUIZ_TECH -> indiceSeleccionQuiz?.let { leccionBase.opcionesQuiz.getOrNull(it) } ?: "(sin opción)"
-            RetoTipo.FILL_LINE -> textoRelleno.ifBlank { "____" }
+        is co.edu.unab.dracofocusapp.viewmodel.LessonExerciseState.Success -> {
+            ExerciseSessionContent(
+                navController = navController,
+                lesson = state.lesson,
+                exercises = state.exercises,
+                progressVm = progressVm,
+                coopRoomId = coopRoomId,
+                onBack = onBack
+            )
         }
-        return "${tipoReto.name} → $extra"
+        else -> Unit
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun ExerciseSessionContent(
+    navController: NavController,
+    lesson: co.edu.unab.dracofocusapp.data.remote.LessonDto,
+    exercises: List<co.edu.unab.dracofocusapp.data.remote.ExerciseDto>,
+    progressVm: LessonProgressViewModel,
+    coopRoomId: String?,
+    onBack: () -> Unit
+) {
+    var currentIndex by remember { mutableIntStateOf(0) }
+    val currentExercise = exercises.getOrNull(currentIndex) ?: return
+
+    LaunchedEffect(currentIndex) {
+        Log.d("EXERCISE_RENDER", "type=${currentExercise.type} data=${currentExercise.data}")
     }
 
-    LaunchedEffect(
-        coopRoomId,
-        tipoReto.name,
-        piezasSolucion,
-        indiceSeleccionQuiz,
-        textoRelleno,
-        lessonId,
-    ) {
-        val roomId = coopRoomId ?: return@LaunchedEffect
-        LessonCooperativeSync.publishLessonSummary(roomId, lessonId, buildPresenceSummary())
+    // Exercise state
+    var piezasSolucion by remember(currentIndex) { mutableStateOf(listOf<String>()) }
+    var piezasDisponibles by remember(currentIndex) {
+        val rawPieces = (currentExercise.data?.get("pieces") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+        mutableStateOf(rawPieces.shuffled())
     }
-
-    val ia = remember { IAFeedbackManager() }
+    var indiceSeleccionQuiz by remember(currentIndex) { mutableStateOf<Int?>(null) }
+    var textoRelleno by remember(currentIndex) { mutableStateOf("") }
+    
     val scope = rememberCoroutineScope()
-
+    val ia = remember { IAFeedbackManager() }
     val dracoCyan = Color(0xFF22DDF2)
-
-    fun evalCorrecto(): Boolean {
-        return when (tipoReto) {
-            RetoTipo.PUZZLE_OR_CODE_BLOCKS ->
-                piezasSolucion == leccionBase.solucionCorrecta
-
-            RetoTipo.QUIZ_TECH ->
-                indiceSeleccionQuiz != null && indiceSeleccionQuiz == leccionBase.indiceQuizCorrecto
-
-            RetoTipo.FILL_LINE -> {
-                val expected = normalize(leccionBase.respuestaRelleno ?: "")
-                normalize(textoRelleno) == expected
-            }
-        }
-    }
+    val fondo = Brush.verticalGradient(listOf(Color(0xFF0B132B), Color(0xFF1C2541)))
 
     var isSending by remember { mutableStateOf(false) }
     var overlayFeedback by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val fondo =
-        Brush.verticalGradient(listOf(Color(0xFF0B132B), Color(0xFF1C2541)))
+    val tipoReto = when (currentExercise.type) {
+        "multiple_choice" -> RetoTipo.QUIZ_TECH
+        "fill_blank" -> RetoTipo.FILL_LINE
+        "code_puzzle" -> RetoTipo.PUZZLE_OR_CODE_BLOCKS
+        else -> RetoTipo.PUZZLE_OR_CODE_BLOCKS
+    }
 
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(fondo),
-    ) {
+    fun evalCorrecto(): Boolean {
+        return when (tipoReto) {
+            RetoTipo.QUIZ_TECH -> {
+                if (indiceSeleccionQuiz == null) return false
+                val correctIdx = (currentExercise.data?.get("correct_index") as? Double)?.toInt()
+                if (correctIdx != null) {
+                    indiceSeleccionQuiz == correctIdx
+                } else {
+                    val options = (currentExercise.data?.get("options") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                    options.getOrNull(indiceSeleccionQuiz!!) == currentExercise.correctAnswer
+                }
+            }
+            RetoTipo.FILL_LINE -> {
+                normalize(textoRelleno) == normalize(currentExercise.correctAnswer ?: "")
+            }
+            RetoTipo.PUZZLE_OR_CODE_BLOCKS -> {
+                val solution = (currentExercise.data?.get("solution") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                if (solution.isNotEmpty()) piezasSolucion == solution
+                else piezasSolucion.joinToString(" ") == currentExercise.correctAnswer
+            }
+        }
+    }
+
+    Box(Modifier.fillMaxSize().background(fondo)) {
         Column(
-            Modifier
-                .padding(horizontal = 20.dp, vertical = 12.dp)
-                .verticalScroll(rememberScrollState()),
+            Modifier.padding(horizontal = 20.dp, vertical = 12.dp).verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(leccionBase.titulo.uppercase(), color = dracoCyan, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+            Text("${lesson.title.uppercase()} (${currentIndex + 1}/${exercises.size})", color = dracoCyan, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
 
             AssistChip(onClick = {}, enabled = false, label = { Text(describeTipoBadge(tipoReto)) })
-            Text(leccionBase.contexto, color = Color.White.copy(alpha = 0.9f), fontSize = 15.sp)
+            Text(currentExercise.question, color = Color.White.copy(alpha = 0.9f), fontSize = 16.sp, textAlign = TextAlign.Center)
             Spacer(modifier = Modifier.height(22.dp))
 
-            if (coopRoomId != null && partnerSummary.isNotBlank()) {
-                AssistChip(enabled = false, onClick = {}, label = {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text("Compañero (tiempo real)", color = Color(0xFF8FA3BD), fontSize = 11.sp)
-                        Text(partnerSummary, fontSize = 12.sp)
-                    }
-                })
-                Spacer(modifier = Modifier.height(14.dp))
-            }
-
             when (tipoReto) {
-                RetoTipo.PUZZLE_OR_CODE_BLOCKS -> {
-                    Text(
-                        text = "Ordena las piezas dentro del marco:",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = Color(0xFFCDF4F2)),
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .defaultMinSize(minHeight = 130.dp)
-                            .background(Color(0xFF0F1A2A), RoundedCornerShape(12.dp))
-                            .border(2.dp, dracoCyan, RoundedCornerShape(12.dp))
-                            .padding(12.dp),
-                    ) {
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            piezasSolucion.forEach { pieza ->
-                                CodigoPill(pieza) {
-                                    piezasSolucion = piezasSolucion - pieza
-                                    piezasDisponibles = piezasDisponibles + pieza
-                                }
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(22.dp))
-
-                    FlowRow(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        piezasDisponibles.forEach { pieza ->
-                            CodigoPill(pieza, color = Color(0xFF1C2541)) {
-                                piezasDisponibles = piezasDisponibles - pieza
-                                piezasSolucion = piezasSolucion + pieza
-                            }
-                        }
-                    }
-                }
-
                 RetoTipo.QUIZ_TECH -> {
-                    Text(
-                        "Selección múltiple técnica",
-                        color = Color(0xFFCDF4F2),
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-
+                    val options = (currentExercise.data?.get("options") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
                     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        leccionBase.opcionesQuiz.forEachIndexed { index, texto ->
+                        options.forEachIndexed { index, texto ->
                             val elegido = indiceSeleccionQuiz == index
                             Surface(
                                 onClick = { indiceSeleccionQuiz = index },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 color = Color(0xFF0F1A2A),
-                                border = androidx.compose.foundation.BorderStroke(
-                                    1.dp,
-                                    if (elegido) dracoCyan else dracoCyan.copy(alpha = 0.3f),
-                                ),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, if (elegido) dracoCyan else dracoCyan.copy(alpha = 0.3f))
                             ) {
-                                Row(
-                                    Modifier.padding(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
+                                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
-                                        imageVector =
-                                        if (elegido) Icons.Default.RadioButtonChecked else Icons.Default.RadioButtonUnchecked,
+                                        imageVector = if (elegido) Icons.Default.RadioButtonChecked else Icons.Default.RadioButtonUnchecked,
                                         tint = dracoCyan,
-                                        contentDescription = null,
+                                        contentDescription = null
                                     )
                                     Spacer(Modifier.width(10.dp))
                                     Text(texto, color = Color.White, fontSize = 14.sp)
@@ -287,26 +203,16 @@ fun LeccionRetoScreen(
                         }
                     }
                 }
-
                 RetoTipo.FILL_LINE -> {
-                    Text(
-                        "Completa el hueco _____",
-                        color = Color(0xFFCDF4F2),
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Surface(
-                        color = Color(0xFF0F1A2A),
-                        shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, dracoCyan.copy(alpha = 0.35f)),
-                    ) {
-                        Text(
-                            text = leccionBase.lineaCodigoHueca ?: "",
-                            color = Color.White,
-                            modifier = Modifier.padding(14.dp),
-                            fontSize = 15.sp,
-                        )
+                    val codeBefore = (currentExercise.data?.get("code_before") as? String) ?: ""
+                    val codeAfter = (currentExercise.data?.get("code_after") as? String) ?: ""
+                    
+                    Surface(color = Color(0xFF0F1A2A), shape = RoundedCornerShape(12.dp), border = androidx.compose.foundation.BorderStroke(1.dp, dracoCyan.copy(alpha = 0.35f))) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            if (codeBefore.isNotBlank()) Text(codeBefore, color = Color.Gray, fontSize = 14.sp)
+                            Text(text = "_____", color = dracoCyan, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            if (codeAfter.isNotBlank()) Text(codeAfter, color = Color.Gray, fontSize = 14.sp)
+                        }
                     }
                     Spacer(modifier = Modifier.height(14.dp))
                     OutlinedTextField(
@@ -314,112 +220,138 @@ fun LeccionRetoScreen(
                         onValueChange = { textoRelleno = it },
                         label = { Text("Tu respuesta") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth()
                     )
+                }
+                RetoTipo.PUZZLE_OR_CODE_BLOCKS -> {
+                    if (piezasSolucion.isNotEmpty()) {
+                        Text("Tu solución:", color = dracoCyan, fontSize = 12.sp, modifier = Modifier.align(Alignment.Start))
+                        Spacer(Modifier.height(6.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            piezasSolucion.forEach { piece ->
+                                Surface(
+                                    onClick = {
+                                        piezasSolucion = piezasSolucion - piece
+                                        piezasDisponibles = piezasDisponibles + piece
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = dracoCyan.copy(alpha = 0.15f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, dracoCyan)
+                                ) {
+                                    Text(piece, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), color = dracoCyan, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
+
+                    Text("Piezas disponibles:", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp, modifier = Modifier.align(Alignment.Start))
+                    Spacer(Modifier.height(6.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        piezasDisponibles.forEach { piece ->
+                            Surface(
+                                onClick = {
+                                    piezasDisponibles = piezasDisponibles - piece
+                                    piezasSolucion = piezasSolucion + piece
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFF0F1A2A),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, dracoCyan.copy(alpha = 0.4f))
+                            ) {
+                                Text(piece, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), color = Color.White, fontSize = 13.sp)
+                            }
+                        }
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                OutlinedButton(
-                    onClick = onBack,
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, dracoCyan),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = dracoCyan),
-                ) { Text("REGRESAR") }
-
+                OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f).height(50.dp)) { Text("SALIR") }
                 Button(
                     onClick = {
-                        val tieneEntrada =
-                            when (tipoReto) {
-                                RetoTipo.PUZZLE_OR_CODE_BLOCKS -> piezasSolucion.isNotEmpty()
-                                RetoTipo.QUIZ_TECH -> indiceSeleccionQuiz != null
-                                RetoTipo.FILL_LINE -> textoRelleno.isNotBlank()
-                            }
-                        if (!tieneEntrada || isSending) return@Button
-
                         scope.launch {
                             isSending = true
-                            val resultado = evalCorrecto()
-                            val entrada = when (tipoReto) {
-                                RetoTipo.PUZZLE_OR_CODE_BLOCKS -> piezasSolucion.joinToString(" ")
-                                RetoTipo.QUIZ_TECH -> indiceSeleccionQuiz?.let { leccionBase.opcionesQuiz[it] } ?: "--"
+                            val result = evalCorrecto()
+                            
+                            val leccionLegacy = Leccion(
+                                id = lesson.id.toString(),
+                                titulo = lesson.title,
+                                contexto = currentExercise.question,
+                                piezasDisponibles = emptyList(),
+                                solucionCorrecta = listOf(currentExercise.correctAnswer ?: ""),
+                                opcionesQuiz = (currentExercise.data?.get("options") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
+                                respuestaRelleno = currentExercise.correctAnswer
+                            )
+                            
+                            val entrada = when(tipoReto) {
+                                RetoTipo.QUIZ_TECH -> {
+                                    val options = (currentExercise.data?.get("options") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                                    indiceSeleccionQuiz?.let { options.getOrNull(it) } ?: ""
+                                }
                                 RetoTipo.FILL_LINE -> textoRelleno
+                                else -> ""
                             }
 
-                            val mensaje = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                                ia.generarFeedbackReto(leccionBase, tipoReto, entrada, resultado)
-                            }
-
-                            overlayFeedback = mensaje to resultado
-                            if (resultado) {
-                                progressVm.markLessonSucceeded(leccionBase.id)
-                            }
+                            val feedback = ia.generarFeedbackReto(leccionLegacy, tipoReto, entrada, result)
+                            overlayFeedback = feedback to result
                             isSending = false
                         }
                     },
                     modifier = Modifier.weight(1f).height(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = dracoCyan, contentColor = Color.Black),
-                    enabled = !isSending,
+                    enabled = !isSending
                 ) {
-                    Icon(Icons.Default.CheckCircleOutline, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
                     Text("ENVIAR", fontWeight = FontWeight.Bold)
                 }
             }
-            Spacer(modifier = Modifier.height(92.dp))
+            Spacer(modifier = Modifier.height(80.dp))
         }
 
-        LaunchedEffect(overlayFeedback) {
-            if (overlayFeedback != null) {
-                scope.launch { sheetState.show() }
-            }
-        }
-
-        overlayFeedback?.let { (mensajeFinal, resultadoOk) ->
+        // FEEDBACK SHEET
+        overlayFeedback?.let { (msg, isOk) ->
             ModalBottomSheet(
                 onDismissRequest = {
                     overlayFeedback = null
-                    scope.launch { sheetState.hide() }
-                    if (resultadoOk) navController.popBackStack()
+                    if (isOk) {
+                        if (currentIndex < exercises.size - 1) {
+                            currentIndex++
+                        } else {
+                            progressVm.markLessonSucceeded(lesson.slug)
+                            navController.popBackStack()
+                        }
+                    }
                 },
                 sheetState = sheetState,
-                containerColor = Color(0xFF0F1A2A),
+                containerColor = Color(0xFF0F1A2A)
             ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.dragon_dracofocus1),
-                        contentDescription = "Draco",
-                        modifier = Modifier.size(164.dp),
-                    )
-                    Text(
-                        if (resultadoOk) "¡Celebración Draco!" else "Draco te da una pista",
-                        color = dracoCyan,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(mensajeFinal, color = Color.White, textAlign = TextAlign.Center)
-                    Spacer(modifier = Modifier.height(18.dp))
+                Column(Modifier.padding(20.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Image(painter = painterResource(id = R.drawable.dragon_dracofocus1), contentDescription = null, modifier = Modifier.size(120.dp))
+                    Text(if (isOk) "¡Excelente!" else "Draco dice...", color = dracoCyan, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text(msg, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.padding(vertical = 12.dp))
                     Button(onClick = {
-                        overlayFeedback = null
-                        scope.launch { sheetState.hide() }
-                        if (resultadoOk) navController.popBackStack()
-                    }) {
-                        Text("CONTINUAR")
-                    }
-                    Spacer(modifier = Modifier.height(30.dp))
+                        scope.launch {
+                            sheetState.hide()
+                            overlayFeedback = null
+                            if (isOk) {
+                                if (currentIndex < exercises.size - 1) {
+                                    currentIndex++
+                                } else {
+                                    progressVm.markLessonSucceeded(lesson.slug)
+                                    navController.popBackStack()
+                                }
+                            }
+                        }
+                    }) { Text("CONTINUAR") }
+                    Spacer(Modifier.height(40.dp))
                 }
-            }
-        }
-
-        if (isSending && overlayFeedback == null) {
-            Box(Modifier.fillMaxSize()) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = dracoCyan)
             }
         }
     }
