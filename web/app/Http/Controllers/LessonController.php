@@ -194,7 +194,7 @@ class LessonController extends Controller
             'type' => ['required', 'string', 'max:50'],
         ]);
 
-        $fallback = $this->fallbackAiFeedback();
+        $fallback = $this->fallbackAiFeedback($data['type'] ?? '');
 
         if (!config('services.openai.key')) {
             return response()->json(['feedback' => $fallback]);
@@ -263,9 +263,14 @@ class LessonController extends Controller
             ->with('success', "¡Lección completada! +{$lesson->xp_reward} XP 🎉");
     }
 
-    private function fallbackAiFeedback(): string
+    private function fallbackAiFeedback(string $type = ''): string
     {
-        return 'Draco detectó un error. Revisa el concepto principal e inténtalo otra vez.';
+        return match ($type) {
+            'multiple' => 'Casi… Draco revisó tu selección técnica. Piensa cuál sintaxis encaja mejor con el objetivo. ¿Estás usando la construcción adecuada para este caso?',
+            'fill'     => 'Hmm… ese hueco pide algo más preciso para la condición/objetivo. Relee la consigna y prueba otro símbolo corto antes de la palabra clave.',
+            'order'    => 'Casi lo logras. Recuerda que en Kotlin el orden importa. ¡Inténtalo de nuevo!',
+            default    => 'Draco detectó un error. Revisa el concepto principal e inténtalo otra vez.',
+        };
     }
 
     private function answerToText($answer): string

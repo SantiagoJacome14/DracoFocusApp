@@ -60,6 +60,8 @@ class LessonProgressViewModel(
     val envelopeUiEvents = MutableSharedFlow<RewardManager.EnvelopeOutcome>(extraBufferCapacity = 32)
     private val _syncState = androidx.compose.runtime.mutableStateOf<SyncState>(SyncState.Idle)
     val syncState: androidx.compose.runtime.State<SyncState> = _syncState
+    private val _lastXpEarned = MutableSharedFlow<Int>(extraBufferCapacity = 8)
+    val lastXpEarned: kotlinx.coroutines.flow.SharedFlow<Int> = _lastXpEarned
 
     fun refreshProgress() {
     viewModelScope.launch {
@@ -76,17 +78,17 @@ class LessonProgressViewModel(
 }
 
     fun markLessonSucceeded(lessonId: String) {
-    viewModelScope.launch {
-        _syncState.value = SyncState.Syncing
-
-        try {
-            repository.markLessonCompleted(userId, lessonId)
-            _syncState.value = SyncState.Synced
-        } catch (e: Exception) {
-            _syncState.value = SyncState.Error("No se pudo sincronizar")
+        viewModelScope.launch {
+            _syncState.value = SyncState.Syncing
+            try {
+                val xpEarned = repository.markLessonCompleted(userId, lessonId)
+                if (xpEarned > 0) _lastXpEarned.emit(xpEarned)
+                _syncState.value = SyncState.Synced
+            } catch (e: Exception) {
+                _syncState.value = SyncState.Error("No se pudo sincronizar")
+            }
         }
     }
-}
 
     fun openSoloFundamentosEnvelope() {
         viewModelScope.launch {

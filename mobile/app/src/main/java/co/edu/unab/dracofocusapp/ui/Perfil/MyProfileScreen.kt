@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Notifications
@@ -23,9 +24,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
 import co.edu.unab.dracofocusapp.auth.TokenManager
+import co.edu.unab.dracofocusapp.viewmodel.ProfileViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
@@ -41,16 +45,11 @@ fun MyProfileScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val user = Firebase.auth.currentUser
-    var userName by remember { mutableStateOf("Usuario") }
-    var userEmail by remember { mutableStateOf("Sin correo") }
-
-    LaunchedEffect(Unit) {
-        Firebase.auth.currentUser?.reload()
-        val updatedUser = Firebase.auth.currentUser
-        userName = updatedUser?.displayName ?: "Usuario"
-        userEmail = updatedUser?.email ?: "Sin correo"
-    }
+    val app = context.applicationContext as DracoFocusApplication
+    val profileVm = viewModel<ProfileViewModel>(
+        factory = ProfileViewModel.factory(app.apiService)
+    )
+    val profileState by profileVm.state.collectAsState()
 
     var notificationsEnabled by remember { mutableStateOf(true) }
     var soundEnabled by remember { mutableStateOf(true) }
@@ -102,7 +101,7 @@ fun MyProfileScreen(
                         )
 
                         Text(
-                            text = userName,
+                            text = profileState.name.ifBlank { "Cargando..." },
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp
@@ -111,36 +110,79 @@ fun MyProfileScreen(
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            text = userEmail,
+                            text = profileState.email.ifBlank { "" },
                             color = Color(0xFFB0BEC5),
                             fontSize = 14.sp
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Text(
-                            text = "Nivel 9",
-                            color = Color(0xFF22DDF2),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
-                        )
-                        Text(
-                            text = "1670 XP",
-                            color = Color.White,
-                            fontSize = 14.sp
-                        )
+                        if (profileState.isLoading && !profileState.hasData) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(28.dp),
+                                color = Color(0xFF22DDF2),
+                                strokeWidth = 3.dp,
+                            )
+                        } else {
+                            Text(
+                                text = "Nivel ${profileState.level}",
+                                color = Color(0xFF22DDF2),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp,
+                            )
+                            Text(
+                                text = "${profileState.totalXp} XP",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                            )
 
-                        Spacer(modifier = Modifier.height(18.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            StatItem("9", "Racha")
-                            StatItem("6", "Cursos")
-                            StatItem("17h", "Estudio")
+                            LinearProgressIndicator(
+                                progress = { profileState.currentLevelXp / 200f },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(50)),
+                                color = Color(0xFF22DDF2),
+                                trackColor = Color(0xFF1C2541),
+                            )
+                            Text(
+                                text = "${profileState.currentLevelXp} / 200 XP → Nivel ${profileState.level + 1}",
+                                color = Color(0xFFB0BEC5),
+                                fontSize = 11.sp,
+                            )
+
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                StatItem("${profileState.currentStreak}", "Racha")
+                                StatItem("${profileState.completedLessonsCount}", "Cursos")
+                                StatItem("${profileState.dailyGoal} XP", "Meta/día")
+                            }
                         }
                     }
+                }
+
+                if (profileState.error != null) {
+                    OutlinedButton(
+                        onClick = { profileVm.load() },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF22DDF2)),
+                    ) {
+                        Text("Reintentar conexión")
+                    }
+                }
+
+                if (profileState.isRefreshing) {
+                    Text(
+                        text = "Actualizando...",
+                        color = Color(0xFF22DDF2),
+                        fontSize = 11.sp,
+                    )
                 }
 
                 Column(
@@ -186,12 +228,16 @@ fun MyProfileScreen(
 
                 Button(
                     onClick = {
+                        // Navegar inmediatamente — cleanup en background
+                        onLogout()
                         Firebase.auth.signOut()
                         scope.launch {
-                            TokenManager(context).clearAuthData()
-                            Log.d("LOGOUT", "TokenManager limpiado")
-                            snackbarHostState.showSnackbar("Sesión cerrada correctamente")
-                            onLogout()
+                            try {
+                                TokenManager(context).clearAuthData()
+                                Log.d("LOGOUT", "TokenManager limpiado")
+                            } catch (e: Exception) {
+                                Log.e("LOGOUT", "Error limpiando token: ${e.message}")
+                            }
                         }
                     },
                     modifier = Modifier

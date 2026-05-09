@@ -1,5 +1,6 @@
 package co.edu.unab.dracofocusapp.data.repo
 
+import androidx.room.withTransaction
 import co.edu.unab.dracofocusapp.data.local.CompletedLessonEntity
 import co.edu.unab.dracofocusapp.data.local.DracoDatabase
 import co.edu.unab.dracofocusapp.data.local.MuseumUnlockEntity
@@ -44,7 +45,20 @@ class LessonProgressRepository(
     fun observeEnvelopeClaimedFlag(userId: String): Flow<Boolean> =
         flagsDao.observe(userId).map { it?.soloFundamentosEnvelopeClaimed ?: false }
 
-    suspend fun markLessonCompleted(userId: String, lessonId: String) {
+    /** Upsert local inmediato — no hace red. Llámalo ANTES de navegar para que el Flow emita al instante. */
+    suspend fun markLessonCompletedLocalOnly(userId: String, lessonSlug: String) {
+        lessonDao.upsert(
+            CompletedLessonEntity(
+                userId = userId,
+                lessonId = lessonSlug,
+                completedAtMillis = System.currentTimeMillis(),
+            )
+        )
+        Log.d("PROGRESS_SYNC", "markLessonCompletedLocalOnly: userId=$userId slug=$lessonSlug")
+    }
+
+    /** Sincroniza con backend y retorna XP ganado (0 si la lección ya estaba completada o falla). */
+    suspend fun markLessonCompleted(userId: String, lessonId: String): Int {
         // 1. Determinar el slug
         val lessonIdInt = lessonId.toIntOrNull()
         val slug = if (lessonIdInt != null) {
@@ -57,8 +71,7 @@ class LessonProgressRepository(
         val idToStore = slug ?: lessonId
         Log.d("PROGRESS_SYNC", "markLessonCompleted: originalId=$lessonId -> idToStore=$idToStore")
 
-        // 2. Guardar local
-        Log.d("PROGRESS_SYNC", "Guardado en Room slug=$idToStore (originalId=$lessonId)")
+        // 2. Guardar local (también lo hace markLessonCompletedLocalOnly antes de navegar, pero por si acaso)
         lessonDao.upsert(
             CompletedLessonEntity(
                 userId = userId,
@@ -68,27 +81,38 @@ class LessonProgressRepository(
         )
 
         // 3. Enviar TODOS los slugs locales al servidor
+        var xpEarned = 0
         try {
             val localSlugs = lessonDao.snapshotLessonIds(userId)
             Log.d("PROGRESS_SYNC", "Enviando sync con ${localSlugs.size} slugs: $localSlugs")
             val syncResponse = apiService?.syncProgress(SyncProgressRequest(completedLessons = localSlugs))
             if (syncResponse != null && syncResponse.isSuccessful && syncResponse.body() != null) {
-                val serverSlugs = syncResponse.body()!!.completedLessons
-                Log.d("PROGRESS_SYNC", "Respuesta sync del servidor: $serverSlugs")
-                lessonDao.clearForUser(userId)
-                serverSlugs.forEach { serverSlug ->
-                    lessonDao.upsert(
-                        CompletedLessonEntity(
-                            userId = userId,
-                            lessonId = serverSlug,
-                            completedAtMillis = System.currentTimeMillis(),
+                val body = syncResponse.body()!!
+                val serverSlugs = body.completedLessons
+                xpEarned = body.xpEarned
+                Log.d("PROGRESS_SYNC", "Respuesta sync: slugs=$serverSlugs xpEarned=$xpEarned totalXp=${body.totalXp}")
+                // Transacción atómica: evita parpadeo en la UI entre clear e inserts
+                db.withTransaction {
+                    lessonDao.clearForUser(userId)
+                    serverSlugs.forEach { serverSlug ->
+                        lessonDao.upsert(
+                            CompletedLessonEntity(
+                                userId = userId,
+                                lessonId = serverSlug,
+                                completedAtMillis = System.currentTimeMillis(),
+                            )
                         )
-                    )
+                    }
+                }
+                // Invalidar cache de perfil para que muestre XP actualizado
+                if (xpEarned > 0) {
+                    Log.d("PROGRESS_SYNC", "XP ganado: +$xpEarned → invalidando cache perfil")
                 }
             }
         } catch (e: Exception) {
             Log.e("PROGRESS_SYNC", "Error al enviar sync", e)
         }
+        return xpEarned
     }
 
     suspend fun shouldShowSobreMisterioso(userId: String): Boolean {
@@ -139,17 +163,19 @@ class LessonProgressRepository(
             if (response != null && response.isSuccessful && response.body() != null) {
                 val serverSlugs = response.body()!!.completedLessons.map { it.trim() }
                 Log.d("PROGRESS_SYNC", "Slugs recibidos y limpios del backend: $serverSlugs")
-
-                lessonDao.clearForUser(userId)
-                serverSlugs.forEach { serverSlug ->
-                    Log.d("PROGRESS_ROOM", "Guardando en Room userId=$userId slug=$serverSlug")
-                    lessonDao.upsert(
-                        CompletedLessonEntity(
-                            userId = userId,
-                            lessonId = serverSlug,
-                            completedAtMillis = System.currentTimeMillis()
+                // Transacción atómica: observers solo reciben 1 notificación con el estado final
+                db.withTransaction {
+                    lessonDao.clearForUser(userId)
+                    serverSlugs.forEach { serverSlug ->
+                        Log.d("PROGRESS_ROOM", "Guardando en Room userId=$userId slug=$serverSlug")
+                        lessonDao.upsert(
+                            CompletedLessonEntity(
+                                userId = userId,
+                                lessonId = serverSlug,
+                                completedAtMillis = System.currentTimeMillis()
+                            )
                         )
-                    )
+                    }
                 }
                 Log.d("PROGRESS_SYNC", "UI actualizada con progreso remoto")
             }

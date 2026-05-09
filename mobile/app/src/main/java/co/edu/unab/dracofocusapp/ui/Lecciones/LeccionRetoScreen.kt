@@ -5,10 +5,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
@@ -99,6 +101,10 @@ fun LeccionRetoScreen(
                 savedExerciseIndex = if (reviewMode) 0 else state.savedIndex,
                 onSaveProgress = { index -> if (!reviewMode) exerciseVm.saveCurrentExercise(state.lesson.slug, index) },
                 onClearProgress = { exerciseVm.clearCurrentExercise(state.lesson.slug) },
+                onMarkCompleted = { slug ->
+                    // Upsert local ANTES de navegar — garantiza que el Flow emita y la card quede verde sin reiniciar
+                    app.lessonProgressRepository.markLessonCompletedLocalOnly(currentUserId!!, slug)
+                },
             )
         }
         else -> Unit
@@ -117,6 +123,7 @@ fun ExerciseSessionContent(
     savedExerciseIndex: Int = 0,
     onSaveProgress: (Int) -> Unit = {},
     onClearProgress: () -> Unit = {},
+    onMarkCompleted: suspend (String) -> Unit = {},
     reviewMode: Boolean = false,
 ) {
     var currentIndex by remember { mutableIntStateOf(savedExerciseIndex.coerceIn(0, (exercises.size - 1).coerceAtLeast(0))) }
@@ -222,8 +229,25 @@ fun ExerciseSessionContent(
     }
 
     Box(Modifier.fillMaxSize().background(fondo)) {
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .statusBarsPadding()
+                .padding(4.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.ArrowBack,
+                contentDescription = "Volver",
+                tint = Color.White,
+            )
+        }
+
         Column(
-            Modifier.padding(horizontal = 20.dp, vertical = 12.dp).verticalScroll(rememberScrollState()),
+            Modifier
+                .statusBarsPadding()
+                .padding(start = 20.dp, end = 20.dp, top = 52.dp, bottom = 12.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val sessionPrefix = if (reviewMode) "REPASO: " else ""
@@ -330,45 +354,42 @@ fun ExerciseSessionContent(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f).height(50.dp)) { Text("SALIR") }
-                Button(
-                    onClick = {
-                        scope.launch {
-                            isSending = true
-                            val result = evalCorrecto()
-                            
-                            val leccionLegacy = Leccion(
-                                id = lesson.id.toString(),
-                                titulo = lesson.title,
-                                contexto = currentExercise.question,
-                                piezasDisponibles = emptyList(),
-                                solucionCorrecta = currentExercise.dataStringList("solution")
-                                    ?: listOf(currentExercise.dataString("answer") ?: currentExercise.dataString("correct_answer") ?: ""),
-                                opcionesQuiz = currentExercise.dataStringList("options") ?: emptyList(),
-                                respuestaRelleno = currentExercise.dataString("answer") ?: currentExercise.dataString("correct_answer")
-                            )
-                            
-                            val entrada = when(tipoReto) {
-                                RetoTipo.QUIZ_TECH -> {
-                                    val options = (currentExercise.data?.get("options") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                                    indiceSeleccionQuiz?.let { options.getOrNull(it) } ?: ""
-                                }
-                                RetoTipo.FILL_LINE -> textoRelleno
-                                else -> ""
-                            }
+            Button(
+                onClick = {
+                    scope.launch {
+                        isSending = true
+                        val result = evalCorrecto()
 
-                            val feedback = ia.generarFeedbackReto(leccionLegacy, tipoReto, entrada, result)
-                            overlayFeedback = feedback to result
-                            isSending = false
+                        val leccionLegacy = Leccion(
+                            id = lesson.id.toString(),
+                            titulo = lesson.title,
+                            contexto = currentExercise.question,
+                            piezasDisponibles = emptyList(),
+                            solucionCorrecta = currentExercise.dataStringList("solution")
+                                ?: listOf(currentExercise.dataString("answer") ?: currentExercise.dataString("correct_answer") ?: ""),
+                            opcionesQuiz = currentExercise.dataStringList("options") ?: emptyList(),
+                            respuestaRelleno = currentExercise.dataString("answer") ?: currentExercise.dataString("correct_answer"),
+                        )
+
+                        val entrada = when (tipoReto) {
+                            RetoTipo.QUIZ_TECH -> {
+                                val options = (currentExercise.data?.get("options") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                                indiceSeleccionQuiz?.let { options.getOrNull(it) } ?: ""
+                            }
+                            RetoTipo.FILL_LINE -> textoRelleno
+                            else -> ""
                         }
-                    },
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = dracoCyan, contentColor = Color.Black),
-                    enabled = !isSending
-                ) {
-                    Text("ENVIAR", fontWeight = FontWeight.Bold)
-                }
+
+                        val feedback = ia.generarFeedbackReto(leccionLegacy, tipoReto, entrada, result)
+                        overlayFeedback = feedback to result
+                        isSending = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = dracoCyan, contentColor = Color.Black),
+                enabled = !isSending,
+            ) {
+                Text("COMPROBAR", fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(80.dp))
         }
@@ -385,7 +406,11 @@ fun ExerciseSessionContent(
                         } else {
                             onClearProgress()
                             if (!reviewMode) progressVm.markLessonSucceeded(lesson.slug)
-                            navController.popBackStack()
+                            scope.launch {
+                                // Upsert local primero (garantiza verde inmediato), luego navegar
+                                if (!reviewMode) onMarkCompleted(lesson.slug)
+                                navController.popBackStack()
+                            }
                         }
                     }
                 },
@@ -394,7 +419,7 @@ fun ExerciseSessionContent(
             ) {
                 Column(Modifier.padding(20.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Image(painter = painterResource(id = R.drawable.dragon_dracofocus1), contentDescription = null, modifier = Modifier.size(120.dp))
-                    Text(if (isOk) "¡Excelente!" else "Draco dice...", color = dracoCyan, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text(if (isOk) "¡Excelente!" else "❌ Incorrecto", color = if (isOk) dracoCyan else Color(0xFFFF5252), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Text(msg, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.padding(vertical = 12.dp))
                     Button(onClick = {
                         scope.launch {
@@ -407,6 +432,8 @@ fun ExerciseSessionContent(
                                 } else {
                                     onClearProgress()
                                     if (!reviewMode) progressVm.markLessonSucceeded(lesson.slug)
+                                    // Upsert local primero (garantiza verde inmediato), luego navegar
+                                    if (!reviewMode) onMarkCompleted(lesson.slug)
                                     navController.popBackStack()
                                 }
                             }

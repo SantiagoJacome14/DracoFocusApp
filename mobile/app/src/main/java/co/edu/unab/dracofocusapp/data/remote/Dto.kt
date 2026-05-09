@@ -29,7 +29,10 @@ data class LoginResponse(
 data class UserDto(
     val id: Int,
     val name: String,
-    val email: String
+    val email: String,
+    @SerializedName("total_xp") val totalXp: Int = 0,
+    @SerializedName("current_streak") val currentStreak: Int = 0,
+    @SerializedName("daily_goal") val dailyGoal: Int = 50,
 )
 
 // Progress DTOs
@@ -44,7 +47,9 @@ data class SyncProgressRequest(
 
 data class ProgressSyncResponse(
     @SerializedName("completed_lessons") val completedLessons: List<String>,
-    @SerializedName("completed_lesson_ids") val completedLessonIds: List<Int>
+    @SerializedName("completed_lesson_ids") val completedLessonIds: List<Int>,
+    @SerializedName("xp_earned") val xpEarned: Int = 0,
+    @SerializedName("total_xp") val totalXp: Int = 0,
 )
 
 // Lesson DTO for dynamic slug mapping

@@ -75,24 +75,36 @@ class ProgressController extends Controller
             'completed_lessons.*' => ['string', 'exists:lessons,slug'],
         ]);
 
+        $user = Auth::user();
         $slugs = $request->completed_lessons;
-        $lessonIds = Lesson::whereIn('slug', $slugs)->pluck('id', 'slug');
+        $lessons = Lesson::whereIn('slug', $slugs)->get()->keyBy('id');
+        $lessonIds = $lessons->pluck('id', 'slug');
+
+        $xpEarned = 0;
 
         foreach ($lessonIds as $slug => $lessonId) {
+            // Solo sumar XP si la lección NO estaba completada antes
+            $alreadyDone = UserProgress::where('user_id', $user->id)
+                ->where('lesson_id', $lessonId)
+                ->where('completed', true)
+                ->exists();
+
             UserProgress::updateOrCreate(
-                [
-                    'user_id' => Auth::id(),
-                    'lesson_id' => $lessonId,
-                ],
-                [
-                    'completed' => true,
-                    'completed_at' => now(),
-                    'score' => 100
-                ]
+                ['user_id' => $user->id, 'lesson_id' => $lessonId],
+                ['completed' => true, 'completed_at' => now(), 'score' => 100]
             );
+
+            if (!$alreadyDone && isset($lessons[$lessonId])) {
+                $xpEarned += $lessons[$lessonId]->xp_reward ?? 0;
+            }
         }
 
-        $progress = UserProgress::where('user_id', Auth::id())
+        if ($xpEarned > 0) {
+            $user->total_xp += $xpEarned;
+            $user->save();
+        }
+
+        $progress = UserProgress::where('user_id', $user->id)
             ->where('completed', true)
             ->with('lesson:id,slug')
             ->get();
@@ -100,6 +112,8 @@ class ProgressController extends Controller
         return response()->json([
             'completed_lessons' => $progress->map(fn($item) => $item->lesson?->slug)->filter()->values(),
             'completed_lesson_ids' => $progress->map(fn($item) => $item->lesson_id)->values(),
+            'xp_earned' => $xpEarned,
+            'total_xp' => $user->fresh()->total_xp,
         ]);
     }
 }

@@ -156,9 +156,7 @@
                     Draco esta analizando tu respuesta...
                 </p>
                 <p x-show="!aiLoading && aiHint" class="text-sm text-draco-gold font-semibold" x-text="aiHint"></p>
-                <p x-show="!aiLoading && !aiHint" class="text-sm text-draco-gold font-semibold">
-                    Draco detectó un error. Revisa el concepto principal e inténtalo otra vez.
-                </p>
+                <p x-show="!aiLoading && !aiHint" class="text-sm text-draco-gold font-semibold" x-text="typedFallback(ex.type)"></p>
             </div>
 
             <div x-show="fails > 0" x-transition class="mt-4 text-center">
@@ -428,6 +426,13 @@ function lessonPage(exercises, lessonSlug, initialCurrent) {
             return this.correctAnswerText();
         },
 
+        typedFallback(type) {
+            if (type === 'multiple') return 'Casi… Draco revisó tu selección técnica. Piensa cuál sintaxis encaja mejor con el objetivo. ¿Estás usando la construcción adecuada para este caso?';
+            if (type === 'fill')     return 'Hmm… ese hueco pide algo más preciso para la condición/objetivo. Relee la consigna y prueba otro símbolo corto antes de la palabra clave.';
+            if (type === 'order')    return 'Casi lo logras. Recuerda que en Kotlin el orden importa. ¡Inténtalo de nuevo!';
+            return 'Draco detectó un error. Revisa el concepto principal e inténtalo otra vez.';
+        },
+
         clearAiHint() {
             this.aiRequestId++;
             this.showHint = false;
@@ -459,10 +464,10 @@ function lessonPage(exercises, lessonSlug, initialCurrent) {
 
                 const data = await response.json();
                 if (requestId !== this.aiRequestId) return;
-                this.aiHint = data.feedback || 'Draco detectó un error. Revisa el concepto principal e inténtalo otra vez.';
+                this.aiHint = data.feedback || this.typedFallback(this.ex.type);
             } catch (e) {
                 if (requestId !== this.aiRequestId) return;
-                this.aiHint = 'Draco detectó un error. Revisa el concepto principal e inténtalo otra vez.';
+                this.aiHint = this.typedFallback(this.ex.type);
             } finally {
                 if (requestId === this.aiRequestId) {
                     this.aiLoading = false;
