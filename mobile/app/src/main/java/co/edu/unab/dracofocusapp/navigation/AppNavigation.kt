@@ -48,7 +48,7 @@ object AppRoutes {
     const val MENU_LECCIONES = "menu_lecciones"
     const val FEEDBACK_SCREEN = "feedback_screen"
     const val INGRESAR_CODIGO_GRUPO = "ingresar_codigo_grupo/{leccionId}"
-    const val LECCION_RETO = "leccion_reto/{lessonId}"
+    const val LECCION_RETO = "leccion_reto/{lessonId}?review={review}"
     const val LECCION_RETO_COOP = "leccion_reto_coop/{lessonId}/{roomId}"
 }
 
@@ -155,14 +155,19 @@ fun AppNavigation() {
 
         composable(
             route = AppRoutes.LECCION_RETO,
-            arguments = listOf(navArgument("lessonId") { type = NavType.StringType }),
+            arguments = listOf(
+                navArgument("lessonId") { type = NavType.StringType },
+                navArgument("review") { type = NavType.BoolType; defaultValue = false },
+            ),
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("lessonId") ?: return@composable
+            val review = backStackEntry.arguments?.getBoolean("review") ?: false
             LeccionRetoScreen(
                 navController = navController,
                 lessonId = id,
                 coopRoomId = null,
                 onBack = { navController.popBackStack() },
+                reviewMode = review,
             )
         }
 

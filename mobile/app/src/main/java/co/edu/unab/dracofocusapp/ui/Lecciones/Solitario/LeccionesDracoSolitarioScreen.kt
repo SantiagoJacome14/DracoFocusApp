@@ -186,9 +186,8 @@ Scaffold(
                     subtitulo = "Condicionales • retos mixtos",
                     isCompleted = isFireDone,
                     onStart = {
-                        navController.navigate("leccion_reto/decisiones_de_fuego") {
-                            launchSingleTop = true
-                        }
+                        val route = if (isFireDone) "leccion_reto/decisiones_de_fuego?review=true" else "leccion_reto/decisiones_de_fuego"
+                        navController.navigate(route) { launchSingleTop = true }
                     },
                 )
 
@@ -200,9 +199,8 @@ Scaffold(
                     subtitulo = "Bucles • retos mixtos",
                     isCompleted = isLoopDone,
                     onStart = {
-                        navController.navigate("leccion_reto/vuelo_infinito") {
-                            launchSingleTop = true
-                        }
+                        val route = if (isLoopDone) "leccion_reto/vuelo_infinito?review=true" else "leccion_reto/vuelo_infinito"
+                        navController.navigate(route) { launchSingleTop = true }
                     },
                 )
 
@@ -214,9 +212,8 @@ Scaffold(
                     subtitulo = "Lists & lógica",
                     isCompleted = isArraysDone,
                     onStart = {
-                        navController.navigate("leccion_reto/el_libro_de_tareas") {
-                            launchSingleTop = true
-                        }
+                        val route = if (isArraysDone) "leccion_reto/el_libro_de_tareas?review=true" else "leccion_reto/el_libro_de_tareas"
+                        navController.navigate(route) { launchSingleTop = true }
                     },
                 )
 

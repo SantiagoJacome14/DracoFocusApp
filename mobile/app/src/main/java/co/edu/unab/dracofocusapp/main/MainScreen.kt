@@ -172,14 +172,19 @@ fun BottomNavGraph(
         }
         composable(
             route = AppRoutes.LECCION_RETO,
-            arguments = listOf(navArgument("lessonId") { type = NavType.StringType }),
+            arguments = listOf(
+                navArgument("lessonId") { type = NavType.StringType },
+                navArgument("review") { type = NavType.BoolType; defaultValue = false },
+            ),
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("lessonId") ?: return@composable
+            val review = backStackEntry.arguments?.getBoolean("review") ?: false
             LeccionRetoScreen(
                 navController = navController,
                 lessonId = id,
                 coopRoomId = null,
                 onBack = { navController.popBackStack() },
+                reviewMode = review,
             )
         }
         composable(

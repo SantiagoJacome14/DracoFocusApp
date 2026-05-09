@@ -46,6 +46,7 @@ fun LeccionRetoScreen(
     lessonId: String,
     coopRoomId: String?,
     onBack: () -> Unit,
+    reviewMode: Boolean = false,
 ) {
     val app = LocalContext.current.applicationContext as DracoFocusApplication
     val currentUserId by app.tokenManager.userId.collectAsState(initial = null)
@@ -94,8 +95,9 @@ fun LeccionRetoScreen(
                 progressVm = progressVm,
                 coopRoomId = coopRoomId,
                 onBack = onBack,
-                savedExerciseIndex = state.savedIndex,
-                onSaveProgress = { index -> exerciseVm.saveCurrentExercise(state.lesson.slug, index) },
+                reviewMode = reviewMode,
+                savedExerciseIndex = if (reviewMode) 0 else state.savedIndex,
+                onSaveProgress = { index -> if (!reviewMode) exerciseVm.saveCurrentExercise(state.lesson.slug, index) },
                 onClearProgress = { exerciseVm.clearCurrentExercise(state.lesson.slug) },
             )
         }
@@ -115,6 +117,7 @@ fun ExerciseSessionContent(
     savedExerciseIndex: Int = 0,
     onSaveProgress: (Int) -> Unit = {},
     onClearProgress: () -> Unit = {},
+    reviewMode: Boolean = false,
 ) {
     var currentIndex by remember { mutableIntStateOf(savedExerciseIndex.coerceIn(0, (exercises.size - 1).coerceAtLeast(0))) }
     val currentExercise = exercises.getOrNull(currentIndex) ?: return
@@ -223,7 +226,8 @@ fun ExerciseSessionContent(
             Modifier.padding(horizontal = 20.dp, vertical = 12.dp).verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("${lesson.title.uppercase()} (${currentIndex + 1}/${exercises.size})", color = dracoCyan, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            val sessionPrefix = if (reviewMode) "REPASO: " else ""
+            Text("$sessionPrefix${lesson.title.uppercase()} (${currentIndex + 1}/${exercises.size})", color = dracoCyan, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(12.dp))
 
             AssistChip(onClick = {}, enabled = false, label = { Text(describeTipoBadge(tipoReto)) })
@@ -380,7 +384,7 @@ fun ExerciseSessionContent(
                             onSaveProgress(currentIndex)
                         } else {
                             onClearProgress()
-                            progressVm.markLessonSucceeded(lesson.slug)
+                            if (!reviewMode) progressVm.markLessonSucceeded(lesson.slug)
                             navController.popBackStack()
                         }
                     }
@@ -402,12 +406,12 @@ fun ExerciseSessionContent(
                                     onSaveProgress(currentIndex)
                                 } else {
                                     onClearProgress()
-                                    progressVm.markLessonSucceeded(lesson.slug)
+                                    if (!reviewMode) progressVm.markLessonSucceeded(lesson.slug)
                                     navController.popBackStack()
                                 }
                             }
                         }
-                    }) { Text("CONTINUAR") }
+                    }) { Text(if (reviewMode && currentIndex >= exercises.size - 1) "FINALIZAR REPASO" else "CONTINUAR") }
                     Spacer(Modifier.height(40.dp))
                 }
             }
