@@ -24,3 +24,7 @@ Thumbs.db
 /node_modules/
 /.env
 /storage/*.key
+
+#IA 
+.claude/
+CLAUDE.md
