@@ -61,27 +61,25 @@ class LessonController extends Controller
             return redirect()->route('dashboard')->with('error', 'Lección no encontrada.');
         }
 
-        // 1. Determine source of exercises (Priority: exercises table > lesson JSON column > bank)
+        // 1. Fetch exercises ONLY from the dedicated table
         $exercisesTable = $lesson->exercises()
             ->where('language', 'kotlin')
             ->where('is_active', true)
             ->orderBy('sort_order', 'asc')
             ->get();
 
+        // 2. Determine source with fallback to Bank ONLY if table is empty
         if ($exercisesTable->isNotEmpty()) {
             $rawExercises = $exercisesTable;
-        } elseif (!empty($lesson->exercises)) {
-            $rawExercises = $lesson->exercises;
         } else {
             $rawExercises = ExerciseBank::random($topic, 8);
         }
 
-        // 2. Transform exercises
+        // 3. Transform exercises
         $exercises = collect($rawExercises)->map(function ($ex) {
-            // Convert Eloquent model or object to array
             $data = is_object($ex) ? $ex->toArray() : (array)$ex;
             
-            // If it's from the Exercises table, it has a 'data' JSON column with code_before/after
+            // Flatten the 'data' JSON column if it exists (for code_before/after)
             if (isset($data['data']) && is_array($data['data'])) {
                 $data = array_merge($data, $data['data']);
             }
@@ -97,7 +95,10 @@ class LessonController extends Controller
             $exercises = ExerciseBank::random('variables', 8);
         }
 
-        // 3. Load saved progress
+        // Log the exercise count for diagnostic purposes
+        \Log::info('Exercises loaded for web view', ['slug' => $topic, 'count' => count($exercises)]);
+
+        // 4. Load saved progress
         $currentExercise = 0;
         $progress = UserProgress::where('user_id', auth()->id())
             ->where('lesson_id', $lesson->id)
