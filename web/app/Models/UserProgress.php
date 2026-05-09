@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserProgress extends Model
 {
-    protected $fillable = ['user_id', 'lesson_id', 'score', 'completed', 'completed_at'];
+    protected $fillable = ['user_id', 'lesson_id', 'score', 'current_exercise', 'completed', 'completed_at'];
     protected $casts = [
         'completed_at' => 'datetime',
         'completed' => 'boolean'

@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Middleware\TeacherMiddleware;
 
 class ProfileController extends Controller
 {
     public function show()
     {
-        // Use the authenticated user
         $userModel = auth()->user();
+
+        // Redirect teachers to their own profile view
+        if ($userModel->role === 'teacher') {
+            return view('teacher.profile', compact('userModel'));
+        }
 
         // Translating month for Spanish display
         $months = [
@@ -239,5 +244,37 @@ class ProfileController extends Controller
             'user', 'dailyProgress', 'maxDaily',
             'monthlyProgress', 'maxMonthly', 'stats', 'lessons', 'monthName'
         ));
+    }
+
+    // ── Teacher-specific profile methods ─────────────────────────────────────
+
+    public function editTeacherProfile()
+    {
+        if (auth()->user()->role !== 'teacher') {
+            return redirect()->route('dashboard')->with('error', 'Acceso denegado.');
+        }
+
+        $userModel = auth()->user();
+        return view('teacher.profile-edit', compact('userModel'));
+    }
+
+    public function updateTeacherProfile(Request $request)
+    {
+        if (auth()->user()->role !== 'teacher') {
+            return redirect()->route('dashboard')->with('error', 'Acceso denegado.');
+        }
+
+        $validated = $request->validate([
+            'bio'          => ['nullable', 'string', 'max:1000'],
+            'specialty'    => ['nullable', 'string', 'max:255'],
+            'location'     => ['nullable', 'string', 'max:255'],
+            'github_url'   => ['nullable', 'url', 'max:255'],
+            'linkedin_url' => ['nullable', 'url', 'max:255'],
+            'website_url'  => ['nullable', 'url', 'max:255'],
+        ]);
+
+        auth()->user()->update($validated);
+
+        return redirect()->route('profile')->with('success', 'Perfil actualizado correctamente.');
     }
 }
