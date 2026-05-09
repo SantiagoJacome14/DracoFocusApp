@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import co.edu.unab.dracofocusapp.data.local.CompletedLessonEntity
 import co.edu.unab.dracofocusapp.data.local.LessonEntity
+import co.edu.unab.dracofocusapp.data.local.LessonExerciseProgressEntity
 import co.edu.unab.dracofocusapp.data.local.MuseumUnlockEntity
 import co.edu.unab.dracofocusapp.data.local.RewardFlagsEntity
 import kotlinx.coroutines.flow.Flow
@@ -53,6 +54,16 @@ interface MuseumUnlockDao {
 
     @Query("SELECT pieceCatalogId FROM museum_unlocks WHERE userId = :userId")
     suspend fun snapshotUnlockedPieceIds(userId: String): List<String>
+}
+
+@Dao
+interface LessonExerciseProgressDao {
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(entity: LessonExerciseProgressEntity)
+
+    @Query("SELECT currentIndex FROM lesson_exercise_progress WHERE userId = :userId AND lessonSlug = :lessonSlug LIMIT 1")
+    suspend fun getIndex(userId: String, lessonSlug: String): Int?
 }
 
 @Dao

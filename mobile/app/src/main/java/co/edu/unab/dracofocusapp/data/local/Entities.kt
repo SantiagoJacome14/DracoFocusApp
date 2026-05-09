@@ -37,3 +37,14 @@ data class MuseumUnlockEntity(
     val pieceCatalogId: String,
     val unlockedAtMillis: Long,
 )
+
+/** Persists the last correctly-answered exercise index per lesson, per user. */
+@Entity(
+    tableName = "lesson_exercise_progress",
+    primaryKeys = ["userId", "lessonSlug"]
+)
+data class LessonExerciseProgressEntity(
+    val userId: String,
+    val lessonSlug: String,
+    val currentIndex: Int,
+)

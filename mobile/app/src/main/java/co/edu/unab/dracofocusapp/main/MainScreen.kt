@@ -149,7 +149,7 @@ fun BottomNavGraph(
         composable(AppRoutes.LECCION_DECISIONES_DE_FUEGO) {
             LeccionRetoScreen(
                 navController = navController,
-                lessonId = "1",
+                lessonId = "decisiones_de_fuego",
                 coopRoomId = null,
                 onBack = { navController.popBackStack() },
             )
@@ -157,7 +157,7 @@ fun BottomNavGraph(
         composable(AppRoutes.LECCION_VUELO_INFINITO) {
             LeccionRetoScreen(
                 navController = navController,
-                lessonId = "2",
+                lessonId = "vuelo_infinito",
                 coopRoomId = null,
                 onBack = { navController.popBackStack() },
             )
@@ -165,7 +165,7 @@ fun BottomNavGraph(
         composable(AppRoutes.LECCION_LIBRO_TAREAS) {
             LeccionRetoScreen(
                 navController = navController,
-                lessonId = "3",
+                lessonId = "el_libro_de_tareas",
                 coopRoomId = null,
                 onBack = { navController.popBackStack() },
             )

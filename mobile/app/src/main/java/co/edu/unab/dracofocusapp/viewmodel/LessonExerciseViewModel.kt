@@ -14,12 +14,17 @@ import kotlinx.coroutines.launch
 sealed class LessonExerciseState {
     object Idle : LessonExerciseState()
     object Loading : LessonExerciseState()
-    data class Success(val lesson: LessonDto, val exercises: List<ExerciseDto>) : LessonExerciseState()
+    data class Success(
+        val lesson: LessonDto,
+        val exercises: List<ExerciseDto>,
+        val savedIndex: Int = 0,
+    ) : LessonExerciseState()
     data class Error(val message: String) : LessonExerciseState()
 }
 
 class LessonExerciseViewModel(
-    private val lessonRepository: LessonRepository
+    private val lessonRepository: LessonRepository,
+    private val userId: String,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LessonExerciseState>(LessonExerciseState.Idle)
@@ -44,8 +49,9 @@ class LessonExerciseViewModel(
 
                 val response = lessonRepository.fetchExercisesForLesson(slug)
                 if (response != null) {
-                    Log.d("LESSON_DEBUG", "Exercises loaded successfully for slug=$slug, count=${response.exercises.size}")
-                    _uiState.value = LessonExerciseState.Success(response.lesson, response.exercises)
+                    val savedIndex = lessonRepository.loadExerciseProgress(userId, slug)
+                    Log.d("LESSON_DEBUG", "Exercises loaded for slug=$slug count=${response.exercises.size} savedIndex=$savedIndex")
+                    _uiState.value = LessonExerciseState.Success(response.lesson, response.exercises, savedIndex)
                 } else {
                     Log.e("LESSON_DEBUG", "Failed to load exercises for slug=$slug (null response)")
                     _uiState.value = LessonExerciseState.Error("No se pudieron cargar los ejercicios")
@@ -57,12 +63,25 @@ class LessonExerciseViewModel(
         }
     }
 
-    companion object {
-        fun factory(repository: LessonRepository): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return LessonExerciseViewModel(repository) as T
-            }
+    fun saveCurrentExercise(lessonSlug: String, index: Int) {
+        viewModelScope.launch {
+            lessonRepository.saveExerciseProgress(userId, lessonSlug, index)
         }
+    }
+
+    fun clearCurrentExercise(lessonSlug: String) {
+        viewModelScope.launch {
+            lessonRepository.clearExerciseProgress(userId, lessonSlug)
+        }
+    }
+
+    companion object {
+        fun factory(repository: LessonRepository, userId: String): ViewModelProvider.Factory =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return LessonExerciseViewModel(repository, userId) as T
+                }
+            }
     }
 }

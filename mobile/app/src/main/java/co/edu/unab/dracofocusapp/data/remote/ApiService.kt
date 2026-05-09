@@ -6,6 +6,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface ApiService {
 
@@ -29,6 +30,9 @@ interface ApiService {
 
     @GET("api/lessons")
     suspend fun getLessons(): Response<List<LessonDto>>
+
+    @GET("api/lessons/{slug}/exercises")
+    suspend fun getLessonExercises(@Path("slug") slug: String): Response<LessonExercisesResponse>
 
     @POST("api/evaluar")
     suspend fun evaluar(@Body request: EvaluacionRequest): EvaluacionResponse

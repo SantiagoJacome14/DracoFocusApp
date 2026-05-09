@@ -18,10 +18,7 @@
                      :style="'width:' + progressPct + '%'"></div>
             </div>
 
-            <div class="flex items-center text-red-500 font-extrabold text-base gap-1.5 bg-red-500/10 px-3 py-1.5 rounded-xl border border-red-500/20">
-                <span>❤️</span>
-                <span x-text="lives"></span>
-            </div>
+            {{-- lives counter hidden from UI; variable kept internally for AI feedback logic --}}
         </div>
     </div>
 
@@ -82,6 +79,11 @@
                 </div>
             </template>
 
+            {{-- DEBUG: visible solo en local/staging; muestra tipo e info de datos del ejercicio actual --}}
+            <div class="text-xs text-slate-600 text-center mb-2 font-mono"
+                 x-text="'[debug] type=' + ex.type + ' | opts=' + (Array.isArray(ex.options) ? ex.options.length : 'n/a') + ' | items=' + (Array.isArray(ex.items) ? ex.items.length : 'n/a')">
+            </div>
+
             <template x-if="ex.type === 'true_false'">
                 <div class="grid grid-cols-2 gap-4">
                     <button type="button"
@@ -140,6 +142,18 @@
                 </div>
             </template>
 
+            {{-- Fallback: si el tipo no coincide con ningún template conocido, muestra un input de texto genérico --}}
+            <template x-if="!['fill','multiple','order','true_false'].includes(ex.type)">
+                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-700 flex flex-col items-center gap-4">
+                    <p class="text-xs text-amber-400 font-semibold">Tipo: <span x-text="ex.type"></span></p>
+                    <input type="text"
+                           x-model="inputCode"
+                           @keydown.enter="checkAnswer()"
+                           class="bg-slate-800 text-draco-emerald-light font-bold w-full outline-none border-b-2 border-draco-gold focus:border-draco-emerald transition-colors px-3 py-2 rounded-lg text-center"
+                           placeholder="Tu respuesta...">
+                </div>
+            </template>
+
             <div x-show="fails > 0" x-transition class="mt-6 bg-draco-gold/10 border border-draco-gold/30 rounded-2xl p-4 text-center">
                 <p x-show="aiLoading" class="text-sm text-draco-gold font-semibold">
                     Draco esta analizando tu respuesta...
@@ -181,10 +195,7 @@
                     <div class="text-3xl font-black text-draco-emerald-light" x-text="totalExercises + '/' + totalExercises"></div>
                     <div class="text-xs text-slate-400 font-semibold mt-1">Ejercicios</div>
                 </div>
-                <div class="text-center">
-                    <div class="text-3xl font-black text-red-400" x-text="lives"></div>
-                    <div class="text-xs text-slate-400 font-semibold mt-1">Vidas</div>
-                </div>
+                {{-- lives stat removed from completed screen --}}
             </div>
 
             <form x-ref="completeForm" action="{{ route('lesson.complete', ['slug' => $lesson->slug]) }}" method="POST">
@@ -247,6 +258,18 @@ function lessonPage(exercises, lessonSlug, initialCurrent) {
         aiRequestId: 0,
         syncing: false,
 
+        init() {
+            console.log('[DracoLesson] exercises recibidos:', this.exercises.map((e, i) => ({
+                idx: i,
+                type: e.type,
+                hasOptions: Array.isArray(e.options),
+                optionsLen: e.options ? e.options.length : 'n/a',
+                hasItems: Array.isArray(e.items),
+                itemsLen: e.items ? e.items.length : 'n/a',
+                correctAnswer: e.correct_answer,
+            })));
+        },
+
         get totalExercises() {
             return this.exercises.length;
         },
@@ -284,7 +307,8 @@ function lessonPage(exercises, lessonSlug, initialCurrent) {
                 return this.selectedOrder.length === (this.ex.correct_answer || []).length;
             }
 
-            return false;
+            // Fallback for unmapped types
+            return String(this.inputCode).trim().length > 0;
         },
 
         normalize(value) {
@@ -319,7 +343,8 @@ function lessonPage(exercises, lessonSlug, initialCurrent) {
                 return JSON.stringify(this.selectedOrder) === JSON.stringify(this.ex.correct_answer);
             }
 
-            return false;
+            // Fallback for unmapped types: treat inputCode as a fill-blank answer
+            return this.normalize(this.inputCode) === this.normalize(this.ex.correct_answer ?? this.ex.answer ?? '');
         },
 
         selectOption(value) {

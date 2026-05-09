@@ -66,7 +66,7 @@ fun LeccionRetoScreen(
     )
 
     val exerciseVm = viewModel<co.edu.unab.dracofocusapp.viewmodel.LessonExerciseViewModel>(
-        factory = co.edu.unab.dracofocusapp.viewmodel.LessonExerciseViewModel.factory(app.lessonRepository)
+        factory = co.edu.unab.dracofocusapp.viewmodel.LessonExerciseViewModel.factory(app.lessonRepository, currentUserId!!)
     )
 
     val uiState by exerciseVm.uiState.collectAsState()
@@ -93,7 +93,10 @@ fun LeccionRetoScreen(
                 exercises = state.exercises,
                 progressVm = progressVm,
                 coopRoomId = coopRoomId,
-                onBack = onBack
+                onBack = onBack,
+                savedExerciseIndex = state.savedIndex,
+                onSaveProgress = { index -> exerciseVm.saveCurrentExercise(state.lesson.slug, index) },
+                onClearProgress = { exerciseVm.clearCurrentExercise(state.lesson.slug) },
             )
         }
         else -> Unit
@@ -108,9 +111,12 @@ fun ExerciseSessionContent(
     exercises: List<co.edu.unab.dracofocusapp.data.remote.ExerciseDto>,
     progressVm: LessonProgressViewModel,
     coopRoomId: String?,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    savedExerciseIndex: Int = 0,
+    onSaveProgress: (Int) -> Unit = {},
+    onClearProgress: () -> Unit = {},
 ) {
-    var currentIndex by remember { mutableIntStateOf(0) }
+    var currentIndex by remember { mutableIntStateOf(savedExerciseIndex.coerceIn(0, (exercises.size - 1).coerceAtLeast(0))) }
     val currentExercise = exercises.getOrNull(currentIndex) ?: return
 
     LaunchedEffect(currentIndex) {
@@ -371,7 +377,9 @@ fun ExerciseSessionContent(
                     if (isOk) {
                         if (currentIndex < exercises.size - 1) {
                             currentIndex++
+                            onSaveProgress(currentIndex)
                         } else {
+                            onClearProgress()
                             progressVm.markLessonSucceeded(lesson.slug)
                             navController.popBackStack()
                         }
@@ -391,7 +399,9 @@ fun ExerciseSessionContent(
                             if (isOk) {
                                 if (currentIndex < exercises.size - 1) {
                                     currentIndex++
+                                    onSaveProgress(currentIndex)
                                 } else {
+                                    onClearProgress()
                                     progressVm.markLessonSucceeded(lesson.slug)
                                     navController.popBackStack()
                                 }

@@ -124,8 +124,20 @@ class LessonController extends Controller
             $exercises = ExerciseBank::random('variables', 8);
         }
 
-        // Log the exercise count for diagnostic purposes
-        \Log::info('Exercises loaded for web view', ['slug' => $topic, 'count' => count($exercises)]);
+        // Diagnostic log: inspect transformed types so we can trace missing-options bugs
+        \Log::info('Exercises loaded for web view', [
+            'slug'  => $topic,
+            'count' => count($exercises),
+            'types' => array_map(fn($e) => [
+                'type'         => $e['type'] ?? '?',
+                'has_options'  => isset($e['options'])  && is_array($e['options']),
+                'options_len'  => isset($e['options'])  ? count((array) $e['options'])  : 0,
+                'has_items'    => isset($e['items'])    && is_array($e['items']),
+                'items_len'    => isset($e['items'])    ? count((array) $e['items'])    : 0,
+                'has_correct'  => isset($e['correct_answer']),
+                'has_answer'   => isset($e['answer']),
+            ], $exercises),
+        ]);
 
         // 4. Load saved progress
         $currentExercise = 0;
