@@ -11,6 +11,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/auth/google', [AuthController::class, 'loginWithGoogle']);
 Route::get('/lessons', [LessonController::class, 'index']);
+Route::get('/lessons/{slug}/exercises', [LessonController::class, 'getExercisesApi']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
