@@ -79,10 +79,7 @@
                 </div>
             </template>
 
-            {{-- DEBUG: visible solo en local/staging; muestra tipo e info de datos del ejercicio actual --}}
-            <div class="text-xs text-slate-600 text-center mb-2 font-mono"
-                 x-text="'[debug] type=' + ex.type + ' | opts=' + (Array.isArray(ex.options) ? ex.options.length : 'n/a') + ' | items=' + (Array.isArray(ex.items) ? ex.items.length : 'n/a')">
-            </div>
+           
 
             <template x-if="ex.type === 'true_false'">
                 <div class="grid grid-cols-2 gap-4">
