@@ -33,6 +33,7 @@ data class UserDto(
     @SerializedName("total_xp") val totalXp: Int = 0,
     @SerializedName("current_streak") val currentStreak: Int = 0,
     @SerializedName("daily_goal") val dailyGoal: Int = 50,
+    @SerializedName("daily_progress_xp") val dailyProgressXp: Int = 0,
 )
 
 // Progress DTOs

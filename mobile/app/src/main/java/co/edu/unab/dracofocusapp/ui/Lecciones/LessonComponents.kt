@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -26,46 +27,76 @@ fun ModernLessonCard(
     titulo: String,
     subtitulo: String,
     isCompleted: Boolean,
-    onStart: () -> Unit
+    isLocked: Boolean = false,
+    onStart: () -> Unit,
 ) {
     val dracoCyan = Color(0xFF22DDF2)
-    
+    val borderColor = when {
+        isLocked    -> Color(0xFF2A3A4A)
+        isCompleted -> Color(0xFF58FF99)
+        else        -> dracoCyan.copy(alpha = 0.3f)
+    }
+    val iconBgColor = when {
+        isLocked    -> Color(0xFF151E2D)
+        isCompleted -> Color(0xFF005C41)
+        else        -> Color(0xFF1C2541)
+    }
+    val iconTint = when {
+        isLocked    -> Color(0xFF3D4E60)
+        isCompleted -> Color(0xFF58FF99)
+        else        -> dracoCyan
+    }
+    val rightIcon = when {
+        isLocked    -> Icons.Default.Lock
+        isCompleted -> Icons.Default.CheckCircle
+        else        -> Icons.Default.PlayArrow
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onStart() },
+            .clickable(enabled = !isLocked) { onStart() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0F1A2A)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, if(isCompleted) Color(0xFF58FF99) else dracoCyan.copy(alpha = 0.3f))
+        border = BorderStroke(1.dp, borderColor),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Surface(
-                color = if(isCompleted) Color(0xFF005C41) else Color(0xFF1C2541),
+                color = iconBgColor,
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.size(50.dp)
+                modifier = Modifier.size(50.dp),
             ) {
                 Icon(
                     painter = painterResource(id = icon),
                     contentDescription = null,
-                    tint = if(isCompleted) Color(0xFF58FF99) else dracoCyan,
-                    modifier = Modifier.padding(12.dp)
+                    tint = iconTint,
+                    modifier = Modifier.padding(12.dp),
                 )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(titulo, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text(subtitulo, color = Color.Gray, fontSize = 12.sp)
+                Text(
+                    titulo,
+                    color = if (isLocked) Color(0xFF3D4E60) else Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    if (isLocked) "Completa la lección anterior para desbloquear" else subtitulo,
+                    color = if (isLocked) Color(0xFF2D3E50) else Color.Gray,
+                    fontSize = 12.sp,
+                )
             }
 
             Icon(
-                imageVector = if(isCompleted) Icons.Default.CheckCircle else Icons.Default.PlayArrow,
+                imageVector = rightIcon,
                 contentDescription = null,
-                tint = if(isCompleted) Color(0xFF58FF99) else dracoCyan
+                tint = iconTint,
             )
         }
     }

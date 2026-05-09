@@ -24,6 +24,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.util.Log
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.DracoFocusApplication
@@ -64,6 +66,18 @@ fun LeccionesDracoSolitarioScreen(
     
     val syncState by lessonVm.syncState
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Refresca cuando la app vuelve a foreground (cubre el caso de completar en Web con Android abierto)
+    val activity = LocalContext.current as? androidx.activity.ComponentActivity
+    DisposableEffect(activity) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                lessonVm.refreshProgress()
+            }
+        }
+        activity?.lifecycle?.addObserver(observer)
+        onDispose { activity?.lifecycle?.removeObserver(observer) }
+    }
     val completadas by lessonVm.soloFundamentosCompleted.collectAsState()
     val envelopeVisible by lessonVm.showEnvelopeHint.collectAsState()
 
@@ -178,8 +192,16 @@ Scaffold(
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                val isFireDone = "decisiones_de_fuego" in completadas
-                Log.d("PROGRESS_UI", "UI: decisiones_de_fuego completed=$isFireDone")
+                val isFireDone  = "decisiones_de_fuego" in completadas
+                val isLoopDone  = "vuelo_infinito" in completadas
+                val isArraysDone = "el_libro_de_tareas" in completadas
+
+                // Bloqueo progresivo: cada lección requiere la anterior completada
+                val isVueloLocked  = !isFireDone
+                val isArraysLocked = !isLoopDone
+
+                Log.d("PROGRESS_UI", "UI: fire=$isFireDone vuelo=$isLoopDone (locked=$isVueloLocked) arrays=$isArraysDone (locked=$isArraysLocked)")
+
                 ModernLessonCard(
                     icon = R.drawable.ic_lesson_fire,
                     titulo = "Decisiones de Fuego",
@@ -191,26 +213,24 @@ Scaffold(
                     },
                 )
 
-                val isLoopDone = "vuelo_infinito" in completadas
-                Log.d("PROGRESS_UI", "UI: vuelo_infinito completed=$isLoopDone")
                 ModernLessonCard(
                     icon = R.drawable.ic_lesson_loop,
                     titulo = "Vuelo Infinito",
                     subtitulo = "Bucles • retos mixtos",
                     isCompleted = isLoopDone,
+                    isLocked = isVueloLocked,
                     onStart = {
                         val route = if (isLoopDone) "leccion_reto/vuelo_infinito?review=true" else "leccion_reto/vuelo_infinito"
                         navController.navigate(route) { launchSingleTop = true }
                     },
                 )
 
-                val isArraysDone = "el_libro_de_tareas" in completadas
-                Log.d("PROGRESS_UI", "UI: el_libro_de_tareas completed=$isArraysDone")
                 ModernLessonCard(
                     icon = R.drawable.ic_lesson_arrays,
                     titulo = "El Libro de las Tareas",
                     subtitulo = "Lists & lógica",
                     isCompleted = isArraysDone,
+                    isLocked = isArraysLocked,
                     onStart = {
                         val route = if (isArraysDone) "leccion_reto/el_libro_de_tareas?review=true" else "leccion_reto/el_libro_de_tareas"
                         navController.navigate(route) { launchSingleTop = true }

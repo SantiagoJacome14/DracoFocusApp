@@ -162,16 +162,6 @@ fun ExerciseSessionContent(
     var showXpBanner by remember { mutableStateOf(false) }
     val appCtx = LocalContext.current.applicationContext as DracoFocusApplication
 
-    LaunchedEffect(progressVm) {
-        progressVm.lastXpEarned.collect { xp ->
-            appCtx.sessionXpToday.value += xp
-            xpBannerXp = xp
-            showXpBanner = true
-            delay(2500)
-            showXpBanner = false
-        }
-    }
-
     val tipoReto = when (currentExercise.type) {
         "multiple_choice" -> RetoTipo.QUIZ_TECH
         "fill_blank" -> RetoTipo.FILL_LINE
@@ -448,12 +438,19 @@ fun ExerciseSessionContent(
                             currentIndex++
                             onSaveProgress(currentIndex)
                         } else {
-                            onClearProgress()
-                            if (!reviewMode) progressVm.markLessonSucceeded(lesson.slug)
                             scope.launch {
-                                // Upsert local primero (garantiza verde inmediato), luego navegar
-                                if (!reviewMode) onMarkCompleted(lesson.slug)
-                                navController.popBackStack()
+                                onClearProgress()
+                                if (!reviewMode) {
+                                    onMarkCompleted(lesson.slug)   // 1. upsert local inmediato
+                                    val xp = progressVm.completeLessonNow(lesson.slug)  // 2. sync backend (await)
+                                    if (xp > 0) {
+                                        appCtx.sessionXpToday.value += xp  // 3. actualizar Home
+                                        xpBannerXp = xp
+                                        showXpBanner = true
+                                        delay(1400)   // 4. mostrar banner antes de navegar
+                                    }
+                                }
+                                navController.popBackStack()  // 5. navegar después de confirmar
                             }
                         }
                     }
@@ -475,10 +472,17 @@ fun ExerciseSessionContent(
                                     onSaveProgress(currentIndex)
                                 } else {
                                     onClearProgress()
-                                    if (!reviewMode) progressVm.markLessonSucceeded(lesson.slug)
-                                    // Upsert local primero (garantiza verde inmediato), luego navegar
-                                    if (!reviewMode) onMarkCompleted(lesson.slug)
-                                    navController.popBackStack()
+                                    if (!reviewMode) {
+                                        onMarkCompleted(lesson.slug)   // 1. upsert local inmediato
+                                        val xp = progressVm.completeLessonNow(lesson.slug)  // 2. sync backend (await)
+                                        if (xp > 0) {
+                                            appCtx.sessionXpToday.value += xp  // 3. actualizar Home
+                                            xpBannerXp = xp
+                                            showXpBanner = true
+                                            delay(1400)   // 4. mostrar banner antes de navegar
+                                        }
+                                    }
+                                    navController.popBackStack()  // 5. navegar después de confirmar
                                 }
                             }
                         }

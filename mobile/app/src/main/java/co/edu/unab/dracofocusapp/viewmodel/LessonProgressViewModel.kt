@@ -77,6 +77,25 @@ class LessonProgressViewModel(
     }
 }
 
+    /**
+     * Versión suspend: corre en la corrutina del caller (scope del composable),
+     * NO en viewModelScope. Garantiza que el sync completa antes de que el caller
+     * pueda navegar con popBackStack(). Retorna el XP ganado (0 si ya estaba completada).
+     */
+    suspend fun completeLessonNow(lessonSlug: String): Int {
+        _syncState.value = SyncState.Syncing
+        return try {
+            val xp = repository.markLessonCompleted(userId, lessonSlug)
+            _syncState.value = SyncState.Synced
+            xp
+        } catch (e: Exception) {
+            Log.e("PROGRESS_SYNC", "completeLessonNow error: ${e.message}")
+            _syncState.value = SyncState.Error("No se pudo sincronizar")
+            0
+        }
+    }
+
+    /** Kept for backward compatibility. Prefer completeLessonNow() from composable scope. */
     fun markLessonSucceeded(lessonId: String) {
         viewModelScope.launch {
             _syncState.value = SyncState.Syncing

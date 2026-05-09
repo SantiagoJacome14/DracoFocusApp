@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -153,10 +154,19 @@ class AuthController extends Controller
     }
 
     /**
-     * Get the authenticated user data.
+     * Get the authenticated user data, including today's XP progress.
      */
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user();
+
+        $dailyXp = (int) UserProgress::where('user_id', $user->id)
+            ->where('completed', true)
+            ->whereDate('completed_at', now()->toDateString())
+            ->with('lesson:id,xp_reward')
+            ->get()
+            ->sum(fn($p) => $p->lesson?->xp_reward ?? 0);
+
+        return response()->json(array_merge($user->toArray(), ['daily_progress_xp' => $dailyXp]));
     }
 }

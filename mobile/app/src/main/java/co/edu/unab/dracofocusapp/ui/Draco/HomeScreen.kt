@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -44,8 +45,13 @@ fun HomeScreen(navController: NavController) {
     val profileState by profileVm.state.collectAsState()
     val sessionXp by app.sessionXpToday.collectAsState()
 
+    // Refresca daily_progress_xp del backend cada vez que el usuario vuelve a Home
+    LaunchedEffect(Unit) { profileVm.load() }
+
+    // Usa el mayor entre backend (incluye Web) y local optimista (XP ganado en esta sesión Android)
+    val dailyXp = maxOf(profileState.dailyProgressXp, sessionXp)
     val dailyGoal = profileState.dailyGoal.coerceAtLeast(1)
-    val dailyProgress = (sessionXp.toFloat() / dailyGoal.toFloat()).coerceIn(0f, 1f)
+    val dailyProgress = (dailyXp.toFloat() / dailyGoal.toFloat()).coerceIn(0f, 1f)
 
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
@@ -123,7 +129,7 @@ fun HomeScreen(navController: NavController) {
                 color = Color(0xFF22DDF2)
             )
             Spacer(Modifier.height(4.dp))
-            Text("$sessionXp / $dailyGoal XP hoy", color = Color.White, fontSize = 13.sp)
+            Text("$dailyXp / $dailyGoal XP hoy", color = Color.White, fontSize = 13.sp)
 
             Spacer(Modifier.height(30.dp))
 
