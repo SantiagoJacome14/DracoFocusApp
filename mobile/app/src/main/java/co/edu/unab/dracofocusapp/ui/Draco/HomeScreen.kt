@@ -8,19 +8,25 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.main.BottomNavItem
+import co.edu.unab.dracofocusapp.viewmodel.ProfileViewModel
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.DisposableEffect
@@ -33,6 +39,13 @@ import androidx.media3.ui.PlayerView
 
 @Composable
 fun HomeScreen(navController: NavController) {
+    val app = LocalContext.current.applicationContext as DracoFocusApplication
+    val profileVm: ProfileViewModel = viewModel(factory = ProfileViewModel.factory(app.apiService))
+    val profileState by profileVm.state.collectAsState()
+    val sessionXp by app.sessionXpToday.collectAsState()
+
+    val dailyGoal = profileState.dailyGoal.coerceAtLeast(1)
+    val dailyProgress = (sessionXp.toFloat() / dailyGoal.toFloat()).coerceIn(0f, 1f)
 
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
@@ -65,10 +78,8 @@ fun HomeScreen(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(20.dp)
                 ) {
-                    val progreso = 0.6f
-
-                    val selectedVideo = remember(progreso) {
-                        if (progreso > 0.5f) {
+                    val selectedVideo = remember(dailyProgress) {
+                        if (dailyProgress > 0.5f) {
                             listOf(R.raw.dracoidle, R.raw.dracochilltomandocafe).random()
                         } else {
                             listOf(R.raw.dracotriste, R.raw.dracotristongo).random()
@@ -104,7 +115,7 @@ fun HomeScreen(navController: NavController) {
             Text("Objetivo Diario", color = Color(0xFF22DDF2), fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
             LinearProgressIndicator(
-                progress = 0.8f,
+                progress = dailyProgress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(10.dp)
@@ -112,7 +123,7 @@ fun HomeScreen(navController: NavController) {
                 color = Color(0xFF22DDF2)
             )
             Spacer(Modifier.height(4.dp))
-            Text("80% completado", color = Color.White, fontSize = 13.sp)
+            Text("$sessionXp / $dailyGoal XP hoy", color = Color.White, fontSize = 13.sp)
 
             Spacer(Modifier.height(30.dp))
 

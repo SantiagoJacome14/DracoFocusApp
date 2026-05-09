@@ -51,6 +51,9 @@ fun MyProfileScreen(
     )
     val profileState by profileVm.state.collectAsState()
 
+    // Refresca XP cada vez que el usuario regresa a esta pantalla
+    LaunchedEffect(Unit) { profileVm.load() }
+
     var notificationsEnabled by remember { mutableStateOf(true) }
     var soundEnabled by remember { mutableStateOf(true) }
 

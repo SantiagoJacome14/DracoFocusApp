@@ -35,8 +35,15 @@ import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.api.IAFeedbackManager
 import co.edu.unab.dracofocusapp.cooperative.LessonCooperativeSync
 import co.edu.unab.dracofocusapp.viewmodel.LessonProgressViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.zIndex
 
 @OptIn(
     ExperimentalLayoutApi::class,
@@ -151,6 +158,20 @@ fun ExerciseSessionContent(
     var overlayFeedback by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    var xpBannerXp by remember { mutableStateOf(0) }
+    var showXpBanner by remember { mutableStateOf(false) }
+    val appCtx = LocalContext.current.applicationContext as DracoFocusApplication
+
+    LaunchedEffect(progressVm) {
+        progressVm.lastXpEarned.collect { xp ->
+            appCtx.sessionXpToday.value += xp
+            xpBannerXp = xp
+            showXpBanner = true
+            delay(2500)
+            showXpBanner = false
+        }
+    }
+
     val tipoReto = when (currentExercise.type) {
         "multiple_choice" -> RetoTipo.QUIZ_TECH
         "fill_blank" -> RetoTipo.FILL_LINE
@@ -229,6 +250,29 @@ fun ExerciseSessionContent(
     }
 
     Box(Modifier.fillMaxSize().background(fondo)) {
+        AnimatedVisibility(
+            visible = showXpBanner,
+            enter = fadeIn() + slideInVertically { -it },
+            exit = fadeOut() + slideOutVertically { -it },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 72.dp)
+                .zIndex(10f),
+        ) {
+            Surface(
+                color = Color(0xFF22DDF2),
+                shape = RoundedCornerShape(20.dp),
+            ) {
+                Text(
+                    "+$xpBannerXp XP",
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
+                )
+            }
+        }
+
         IconButton(
             onClick = onBack,
             modifier = Modifier

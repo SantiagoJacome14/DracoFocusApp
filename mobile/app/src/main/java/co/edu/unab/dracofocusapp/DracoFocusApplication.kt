@@ -9,11 +9,15 @@ import co.edu.unab.dracofocusapp.data.remote.RetrofitInstance
 import co.edu.unab.dracofocusapp.data.repo.LessonProgressRepository
 import co.edu.unab.dracofocusapp.data.repo.LessonRepository
 import co.edu.unab.dracofocusapp.domain.rewards.RewardManager
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * DracoFocusApplication: Punto único de configuración para la inyección manual de dependencias.
  */
 class DracoFocusApplication : Application() {
+
+    /** XP acumulado durante la sesión (solo en esta instancia de proceso). Se reinicia al matar la app. */
+    val sessionXpToday = MutableStateFlow(0)
 
     lateinit var database: DracoDatabase
         private set
