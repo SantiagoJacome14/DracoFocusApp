@@ -143,26 +143,51 @@ fun ExerciseSessionContent(
     }
 
     fun evalCorrecto(): Boolean {
-        return when (tipoReto) {
+        val userInput: String
+        val expectedAnswer: String
+        val isCorrect: Boolean
+
+        when (tipoReto) {
             RetoTipo.QUIZ_TECH -> {
-                if (indiceSeleccionQuiz == null) return false
+                userInput = indiceSeleccionQuiz?.toString() ?: "none"
                 val correctIdx = (currentExercise.data?.get("correct_index") as? Double)?.toInt()
-                if (correctIdx != null) {
-                    indiceSeleccionQuiz == correctIdx
-                } else {
+                expectedAnswer = correctIdx?.toString() ?: (currentExercise.correctAnswer ?: "")
+                isCorrect = if (indiceSeleccionQuiz == null) false
+                else if (correctIdx != null) indiceSeleccionQuiz == correctIdx
+                else {
                     val options = (currentExercise.data?.get("options") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
                     options.getOrNull(indiceSeleccionQuiz!!) == currentExercise.correctAnswer
                 }
             }
             RetoTipo.FILL_LINE -> {
-                normalize(textoRelleno) == normalize(currentExercise.correctAnswer ?: "")
+                userInput = textoRelleno
+                // Priority: data.answer → data.correct_answer → data.solution → correctAnswer field
+                expectedAnswer = (currentExercise.data?.get("answer") as? String)
+                    ?: (currentExercise.data?.get("correct_answer") as? String)
+                    ?: (currentExercise.data?.get("solution") as? String)
+                    ?: (currentExercise.correctAnswer ?: "")
+                val normalMatch = normalize(userInput) == normalize(expectedAnswer)
+                // Flexible code match: strip all whitespace (handles spacing differences in code)
+                val codeMatch = userInput.replace("\\s+".toRegex(), "").lowercase(Locale.getDefault()) ==
+                    expectedAnswer.replace("\\s+".toRegex(), "").lowercase(Locale.getDefault())
+                isCorrect = normalMatch || codeMatch
             }
             RetoTipo.PUZZLE_OR_CODE_BLOCKS -> {
                 val solution = (currentExercise.data?.get("solution") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                if (solution.isNotEmpty()) piezasSolucion == solution
+                userInput = piezasSolucion.joinToString(" ")
+                expectedAnswer = if (solution.isNotEmpty()) solution.joinToString(" ") else (currentExercise.correctAnswer ?: "")
+                isCorrect = if (solution.isNotEmpty()) piezasSolucion == solution
                 else piezasSolucion.joinToString(" ") == currentExercise.correctAnswer
             }
         }
+
+        Log.d("ANSWER_DEBUG", "type=${currentExercise.type}")
+        Log.d("ANSWER_DEBUG", "input=$userInput")
+        Log.d("ANSWER_DEBUG", "expected=$expectedAnswer")
+        Log.d("ANSWER_DEBUG", "isCorrect=$isCorrect")
+        Log.d("ANSWER_DEBUG", "data=${currentExercise.data}")
+
+        return isCorrect
     }
 
     Box(Modifier.fillMaxSize().background(fondo)) {
@@ -357,7 +382,8 @@ fun ExerciseSessionContent(
     }
 }
 
-private fun normalize(s: String) = s.trim().lowercase(Locale.getDefault())
+private fun normalize(s: String) =
+    s.trim().lowercase(Locale.getDefault()).replace("\\s+".toRegex(), " ")
 
 private fun describeTipoBadge(t: RetoTipo): String =
     when (t) {
