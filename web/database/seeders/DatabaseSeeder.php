@@ -44,5 +44,8 @@ class DatabaseSeeder extends Seeder
 
         // Seed all lessons from Android app
         $this->call(LessonSeeder::class);
+
+        // Migrate lessons.content Kotlin exercises into the exercises table
+        $this->call(ExerciseSeeder::class);
     }
 }

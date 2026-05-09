@@ -22,7 +22,6 @@ class LessonController extends Controller
     }
 
 
-
     public function show(Request $request, $slug = null)
     {
         $topic = $request->query('topic') ?? $slug;

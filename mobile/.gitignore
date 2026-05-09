@@ -30,3 +30,6 @@ output-metadata.json
 
 # Profiling
 *.hprof
+
+.opencode/
+.claude/
