@@ -75,19 +75,48 @@ class LessonController extends Controller
             $rawExercises = ExerciseBank::random($topic, 8);
         }
 
-        // 3. Transform exercises
+        // 3. Transform exercises for the web template
         $exercises = collect($rawExercises)->map(function ($ex) {
             $data = is_object($ex) ? $ex->toArray() : (array)$ex;
-            
-            // Flatten the 'data' JSON column if it exists (for code_before/after)
+
+            // Step 1: Flatten JSONB 'data' field into the top-level array
             if (isset($data['data']) && is_array($data['data'])) {
                 $data = array_merge($data, $data['data']);
             }
 
-            if (!isset($data['type'])) $data['type'] = 'fill';
-            if (!isset($data['correct_answer']) && isset($data['answer'])) {
-                $data['correct_answer'] = $data['answer'];
+            // Step 2: Ensure type exists with a default
+            if (!isset($data['type'])) {
+                $data['type'] = 'fill';
             }
+
+            // Step 3: Map DB exercise type names to web template type names
+            $typeMap = [
+                'fill_blank'      => 'fill',
+                'multiple_choice' => 'multiple',
+                'code_puzzle'     => 'order',
+            ];
+            $data['type'] = $typeMap[$data['type']] ?? $data['type'];
+
+            // Step 4: Normalize correct_answer per type so the JS template always has it
+            if ($data['type'] === 'fill') {
+                // fill_blank stores the answer in data.answer
+                if (!isset($data['correct_answer']) && isset($data['answer'])) {
+                    $data['correct_answer'] = $data['answer'];
+                }
+            } elseif ($data['type'] === 'multiple') {
+                // multiple_choice: derive correct_answer (option text) from correct_index if absent
+                if (empty($data['correct_answer']) && isset($data['options'], $data['correct_index'])) {
+                    $idx = (int) $data['correct_index'];
+                    $data['correct_answer'] = $data['options'][$idx] ?? '';
+                }
+            } elseif ($data['type'] === 'order') {
+                // code_puzzle: expose pieces as 'items' and solution as 'correct_answer' (array)
+                $data['items'] = array_values($data['pieces'] ?? []);
+                if (empty($data['correct_answer']) || !is_array($data['correct_answer'])) {
+                    $data['correct_answer'] = array_values($data['solution'] ?? []);
+                }
+            }
+
             return $data;
         })->toArray();
 

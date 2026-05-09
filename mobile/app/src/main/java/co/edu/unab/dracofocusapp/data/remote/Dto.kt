@@ -52,5 +52,31 @@ data class LessonDto(
     val id: Int,
     val slug: String,
     val title: String,
-    @SerializedName("xp_reward") val xpReward: Int
+    @SerializedName("xp_reward") val xpReward: Int,
+    val description: String? = null
 )
+
+data class LessonExercisesResponse(
+    val lesson: LessonDto,
+    val exercises: List<ExerciseDto>
+)
+
+data class ExerciseDto(
+    val id: Int,
+    val type: String,
+    val question: String,
+    val data: Map<String, Any>?,
+    val hint: String?,
+    @SerializedName("sort_order") val sortOrder: Int
+) {
+    /** Safe read from JSONB data field — returns null if key absent or wrong type. */
+    fun dataString(key: String): String? = data?.get(key) as? String
+
+    @Suppress("UNCHECKED_CAST")
+    fun dataStringList(key: String): List<String>? =
+        (data?.get(key) as? List<*>)?.filterIsInstance<String>()
+
+    /** JSON numbers come from Gson as Double; toInt() gives the real integer. */
+    fun dataInt(key: String): Int? =
+        (data?.get(key) as? Double)?.toInt() ?: (data?.get(key) as? Int)
+}
