@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -67,21 +68,15 @@ fun MuseoDracoArteScreen(onBack: () -> Unit) {
     DisposableEffect(activity) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                scope.launch {
-                    app.lessonProgressRepository.syncProgressFromServer(uid)
-                    grantPendingRewards(app, uid)
-                }
+                scope.launch { syncMuseum(app, uid) }
             }
         }
         activity?.lifecycle?.addObserver(observer)
         onDispose { activity?.lifecycle?.removeObserver(observer) }
     }
 
-    // Initial sync + pending reward grant on screen entry
-    LaunchedEffect(uid) {
-        app.lessonProgressRepository.syncProgressFromServer(uid)
-        grantPendingRewards(app, uid)
-    }
+    // Initial sync on screen entry
+    LaunchedEffect(uid) { syncMuseum(app, uid) }
 
     val piezas = MuseumCatalog.ALL_PIECES.map { piece ->
         PiezaMuseo(
@@ -102,10 +97,22 @@ fun MuseoDracoArteScreen(onBack: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF0B132B), Color(0xFF1C2541))))) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) {
-                    Icon(painterResource(id = R.drawable.ic_navegacion), contentDescription = "Volver", tint = Color.White)
+                OutlinedButton(
+                    onClick = onBack,
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Volver", color = Color.White, fontSize = 13.sp)
                 }
-                Text("EL GRAN MUSEO", color = dracoCyan, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.width(10.dp))
+                Text("EL GRAN MUSEO", color = dracoCyan, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -153,10 +160,17 @@ fun MuseoDracoArteScreen(onBack: () -> Unit) {
     }
 }
 
-/** Grants museum rewards for any completed lesson that hasn't been claimed yet (Web completions). */
-private suspend fun grantPendingRewards(app: DracoFocusApplication, userId: String) {
-    val unclaimed = app.lessonProgressRepository.getUnclaimedCompletedSlugs(userId)
-    unclaimed.forEach { slug ->
+/**
+ * Full museum sync sequence:
+ * 1. Sync lesson progress (so server knows what's completed).
+ * 2. Pull server museum rewards into Room (server is source of truth).
+ * 3. Claim any lessons completed but not yet in the museum (e.g. web completions, offline cases).
+ */
+private suspend fun syncMuseum(app: DracoFocusApplication, userId: String) {
+    app.lessonProgressRepository.syncProgressFromServer(userId)
+    app.lessonProgressRepository.syncMuseumRewardsFromServer(userId)
+    val pending = app.lessonProgressRepository.getUnclaimedCompletedSlugs(userId)
+    pending.forEach { slug ->
         app.rewardManager.grantLessonCompletionReward(userId, slug)
     }
 }

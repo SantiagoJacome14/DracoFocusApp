@@ -19,16 +19,20 @@ class RewardManager(
 
     /**
      * Called after completing a normal lesson (not review mode).
-     * Claims the reward slot for that lesson (once ever, per user).
-     * If newly claimed, picks and saves a random unlocked museum piece.
+     * Uses the backend as source of truth: the server picks and stores the piece permanently.
+     * Room is only a local cache — never the authoritative source for randomness.
+     *
+     * Returns PieceGranted only when the server assigns a brand-new piece.
+     * Returns NotEligible if already claimed, offline, or collection is complete.
      */
     suspend fun grantLessonCompletionReward(userId: String, lessonSlug: String): EnvelopeOutcome {
-        val newlyClaimed = repository.claimLessonForReward(userId, lessonSlug)
-        if (!newlyClaimed) return EnvelopeOutcome.NotEligible
+        // Short-circuit: if locally cached as already claimed, skip the network call.
+        val claimedSlugs = repository.snapshotClaimedSlugs(userId)
+        if (lessonSlug in claimedSlugs) return EnvelopeOutcome.NotEligible
 
-        val piece = repository.unlockRandomPiece(userId)
+        val piece = repository.claimMuseumRewardFromServer(userId, lessonSlug)
         return if (piece != null) EnvelopeOutcome.PieceGranted(piece)
-        else EnvelopeOutcome.NoPiecesLeftInCatalog
+        else EnvelopeOutcome.NotEligible
     }
 
     /**

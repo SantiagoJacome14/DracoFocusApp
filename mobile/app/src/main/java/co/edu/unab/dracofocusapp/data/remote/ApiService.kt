@@ -39,4 +39,10 @@ interface ApiService {
 
     @POST("api/evaluar")
     suspend fun evaluar(@Body request: EvaluacionRequest): EvaluacionResponse
+
+    @GET("api/museum/rewards")
+    suspend fun getMuseumRewards(): Response<MuseumRewardsResponse>
+
+    @POST("api/museum/rewards/claim")
+    suspend fun claimMuseumReward(@Body request: MuseumClaimRequest): Response<MuseumClaimResponse>
 }

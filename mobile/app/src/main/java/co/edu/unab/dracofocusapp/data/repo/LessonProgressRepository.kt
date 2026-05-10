@@ -7,6 +7,7 @@ import co.edu.unab.dracofocusapp.data.local.LessonRewardClaimEntity
 import co.edu.unab.dracofocusapp.data.local.MuseumUnlockEntity
 import co.edu.unab.dracofocusapp.data.local.RewardFlagsEntity
 import co.edu.unab.dracofocusapp.data.remote.ApiService
+import co.edu.unab.dracofocusapp.data.remote.MuseumClaimRequest
 import co.edu.unab.dracofocusapp.data.remote.SyncProgressRequest
 import co.edu.unab.dracofocusapp.museum.MuseumCatalog
 import kotlinx.coroutines.flow.Flow
@@ -153,6 +154,9 @@ class LessonProgressRepository(
     suspend fun snapshotUnlockedPieceIdsBlocking(userId: String): Set<String> =
         museumDao.snapshotUnlockedPieceIds(userId).toSet()
 
+    suspend fun snapshotClaimedSlugs(userId: String): Set<String> =
+        claimsDao.getClaimedSlugs(userId).toSet()
+
     /**
      * Claims a lesson reward slot. Returns true if newly claimed, false if already claimed.
      * Uses OnConflict IGNORE so a duplicate insert returns -1.
@@ -161,6 +165,74 @@ class LessonProgressRepository(
         claimsDao.insertClaim(
             LessonRewardClaimEntity(userId, lessonSlug, System.currentTimeMillis())
         ) != -1L
+
+    /**
+     * Syncs all museum rewards from the server into Room (server is source of truth).
+     * Also populates lesson_reward_claims so getUnclaimedCompletedSlugs stays accurate.
+     */
+    suspend fun syncMuseumRewardsFromServer(userId: String) {
+        try {
+            val response = apiService?.getMuseumRewards()
+            if (response != null && response.isSuccessful && response.body() != null) {
+                val rewards = response.body()!!.rewards
+                db.withTransaction {
+                    museumDao.clearForUser(userId)
+                    rewards.forEach { reward ->
+                        museumDao.upsert(
+                            MuseumUnlockEntity(
+                                userId = userId,
+                                pieceCatalogId = reward.pieceCatalogId,
+                                unlockedAtMillis = System.currentTimeMillis(),
+                            )
+                        )
+                        if (reward.lessonSlug != null) {
+                            claimsDao.insertClaim(
+                                LessonRewardClaimEntity(userId, reward.lessonSlug, System.currentTimeMillis())
+                            )
+                        }
+                    }
+                }
+                Log.d("MUSEUM", "syncMuseumRewardsFromServer: ${rewards.size} rewards loaded")
+            }
+        } catch (e: Exception) {
+            Log.e("MUSEUM", "syncMuseumRewardsFromServer failed", e)
+        }
+    }
+
+    /**
+     * Calls POST /api/museum/rewards/claim for a given lesson.
+     * Caches result in Room. Returns the Piece only for newly granted rewards ("new" status).
+     * Returns null for "existing" (silently cached), "collection_complete", or network failure.
+     */
+    suspend fun claimMuseumRewardFromServer(userId: String, lessonSlug: String): MuseumCatalog.Piece? {
+        return try {
+            val response = apiService?.claimMuseumReward(MuseumClaimRequest(lessonSlug))
+                ?: return null
+            if (!response.isSuccessful || response.body() == null) return null
+
+            val body = response.body()!!
+            val pieceId = body.pieceCatalogId
+
+            if (pieceId != null) {
+                insertMuseumPiece(userId, pieceId)
+                claimsDao.insertClaim(
+                    LessonRewardClaimEntity(userId, lessonSlug, System.currentTimeMillis())
+                )
+            }
+
+            if (body.status == "new" && pieceId != null) {
+                val piece = MuseumCatalog.ALL_PIECES.find { it.catalogId == pieceId }
+                Log.d("MUSEUM", "claimMuseumRewardFromServer: NEW piece=$pieceId for lesson=$lessonSlug")
+                piece
+            } else {
+                Log.d("MUSEUM", "claimMuseumRewardFromServer: status=${body.status} pieceId=$pieceId for lesson=$lessonSlug")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("MUSEUM", "claimMuseumRewardFromServer failed (offline?): ${e.message}")
+            null
+        }
+    }
 
     /**
      * Picks a random unlocked piece from the catalog and saves it to museum_unlocks.

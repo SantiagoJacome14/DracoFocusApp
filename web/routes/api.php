@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\MuseumRewardController;
 use App\Http\Controllers\Api\ProgressController;
 use App\Http\Controllers\LessonController;
 use Illuminate\Http\Request;
@@ -23,4 +24,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/progress/sync', [ProgressController::class, 'sync']);
     Route::post('/progress', [ProgressController::class, 'store']);
     Route::get('/user/stats', [ProgressController::class, 'stats']);
+
+    // Museum rewards (source of truth for collectible images)
+    Route::get('/museum/rewards', [MuseumRewardController::class, 'index']);
+    Route::post('/museum/rewards/claim', [MuseumRewardController::class, 'claim']);
 });

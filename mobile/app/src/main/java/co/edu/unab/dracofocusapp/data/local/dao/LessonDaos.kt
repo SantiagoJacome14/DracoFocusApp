@@ -55,6 +55,9 @@ interface MuseumUnlockDao {
 
     @Query("SELECT pieceCatalogId FROM museum_unlocks WHERE userId = :userId")
     suspend fun snapshotUnlockedPieceIds(userId: String): List<String>
+
+    @Query("DELETE FROM museum_unlocks WHERE userId = :userId")
+    suspend fun clearForUser(userId: String)
 }
 
 @Dao

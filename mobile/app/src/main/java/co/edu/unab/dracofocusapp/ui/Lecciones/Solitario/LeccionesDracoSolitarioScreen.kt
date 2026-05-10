@@ -64,7 +64,6 @@ fun LeccionesDracoSolitarioScreen(
         ),
     )
     
-    val syncState by lessonVm.syncState
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Refresca cuando la app vuelve a foreground (cubre el caso de completar en Web con Android abierto)
@@ -102,32 +101,9 @@ fun LeccionesDracoSolitarioScreen(
         Brush.verticalGradient(listOf(Color(0xFF0B132B), Color(0xFF1C2541)))
     val dracoCyan = Color(0xFF22DDF2)
 
-    LaunchedEffect(syncState) {
-        when (syncState) {
-            is SyncState.Synced -> snackbarHostState.showSnackbar(
-                message = "Progreso guardado ✓",
-                duration = SnackbarDuration.Short,
-            )
-            is SyncState.Error -> snackbarHostState.showSnackbar(
-                message = "Error al sincronizar",
-                duration = SnackbarDuration.Short,
-            )
-            else -> {}
-        }
-    }
-
 Scaffold(
     modifier = Modifier.statusBarsPadding(),
-    snackbarHost = {
-        SnackbarHost(snackbarHostState) { data ->
-            Snackbar(
-                snackbarData = data,
-                containerColor = Color(0xFF0D2A1A),
-                contentColor = Color(0xFF22DDF2),
-                shape = RoundedCornerShape(12.dp),
-            )
-        }
-    },
+    snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
         ModernTopBar(
             title = "Lecciones Draco Solitario",

@@ -97,6 +97,27 @@ data class LessonDto(
     val description: String? = null
 )
 
+// Museum reward DTOs
+data class MuseumRewardDto(
+    @SerializedName("lesson_slug") val lessonSlug: String?,
+    @SerializedName("piece_catalog_id") val pieceCatalogId: String,
+    @SerializedName("unlocked_at") val unlockedAt: String?,
+)
+
+data class MuseumRewardsResponse(
+    val rewards: List<MuseumRewardDto>,
+)
+
+data class MuseumClaimRequest(
+    @SerializedName("lesson_slug") val lessonSlug: String,
+)
+
+data class MuseumClaimResponse(
+    val status: String, // "new" | "existing" | "collection_complete"
+    @SerializedName("piece_catalog_id") val pieceCatalogId: String?,
+    @SerializedName("unlocked_at") val unlockedAt: String?,
+)
+
 data class LessonExercisesResponse(
     val lesson: LessonDto,
     val exercises: List<ExerciseDto>
