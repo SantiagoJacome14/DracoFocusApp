@@ -38,6 +38,17 @@ data class MuseumUnlockEntity(
     val unlockedAtMillis: Long,
 )
 
+/** Tracks which lessons have already granted a museum reward (one reward per lesson, ever). */
+@Entity(
+    tableName = "lesson_reward_claims",
+    primaryKeys = ["userId", "lessonSlug"]
+)
+data class LessonRewardClaimEntity(
+    val userId: String,
+    val lessonSlug: String,
+    val claimedAtMillis: Long,
+)
+
 /** Persists the last correctly-answered exercise index per lesson, per user. */
 @Entity(
     tableName = "lesson_exercise_progress",

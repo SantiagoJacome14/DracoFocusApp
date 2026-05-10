@@ -102,9 +102,32 @@ fun LeccionesDracoSolitarioScreen(
         Brush.verticalGradient(listOf(Color(0xFF0B132B), Color(0xFF1C2541)))
     val dracoCyan = Color(0xFF22DDF2)
 
+    LaunchedEffect(syncState) {
+        when (syncState) {
+            is SyncState.Synced -> snackbarHostState.showSnackbar(
+                message = "Progreso guardado ✓",
+                duration = SnackbarDuration.Short,
+            )
+            is SyncState.Error -> snackbarHostState.showSnackbar(
+                message = "Error al sincronizar",
+                duration = SnackbarDuration.Short,
+            )
+            else -> {}
+        }
+    }
+
 Scaffold(
     modifier = Modifier.statusBarsPadding(),
-    snackbarHost = { SnackbarHost(snackbarHostState) },
+    snackbarHost = {
+        SnackbarHost(snackbarHostState) { data ->
+            Snackbar(
+                snackbarData = data,
+                containerColor = Color(0xFF0D2A1A),
+                contentColor = Color(0xFF22DDF2),
+                shape = RoundedCornerShape(12.dp),
+            )
+        }
+    },
     topBar = {
         ModernTopBar(
             title = "Lecciones Draco Solitario",
@@ -216,39 +239,27 @@ Scaffold(
                     },
                 )
 
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, dracoCyan.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                        .background(Color(0xFF0A1628), RoundedCornerShape(14.dp))
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("📬", fontSize = 20.sp)
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            "Completa lecciones para recibir sobres con imágenes y completar tu Museo.",
+                            color = Color(0xFFB3C9E0),
+                            fontSize = 13.sp,
+                        )
+                    }
+                }
+
             }
         }
 
-        when (val state = syncState) {
-            is SyncState.Syncing -> {
-                Text(
-                    text = "Sincronizando...",
-                    color = Color.Cyan,
-                    fontSize = 12.sp,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
-            }
-
-            is SyncState.Synced -> {
-                Text(
-                    text = "Progreso guardado",
-                    color = Color.Green,
-                    fontSize = 12.sp,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
-            }
-
-            is SyncState.Error -> {
-                Text(
-                    text = "Error al sincronizar",
-                    color = Color.Red,
-                    fontSize = 12.sp,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
-            }
-
-            SyncState.Idle -> Unit
-        }
     }
 }
 }

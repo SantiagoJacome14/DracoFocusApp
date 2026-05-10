@@ -18,6 +18,20 @@ class RewardManager(
     }
 
     /**
+     * Called after completing a normal lesson (not review mode).
+     * Claims the reward slot for that lesson (once ever, per user).
+     * If newly claimed, picks and saves a random unlocked museum piece.
+     */
+    suspend fun grantLessonCompletionReward(userId: String, lessonSlug: String): EnvelopeOutcome {
+        val newlyClaimed = repository.claimLessonForReward(userId, lessonSlug)
+        if (!newlyClaimed) return EnvelopeOutcome.NotEligible
+
+        val piece = repository.unlockRandomPiece(userId)
+        return if (piece != null) EnvelopeOutcome.PieceGranted(piece)
+        else EnvelopeOutcome.NoPiecesLeftInCatalog
+    }
+
+    /**
      * Al tocar el sobre: valida prerequisitos, desbloquea una ficha y marca el sobre como abierto localmente.
      */
     suspend fun openSoloFundamentosEnvelope(userId: String): EnvelopeOutcome {

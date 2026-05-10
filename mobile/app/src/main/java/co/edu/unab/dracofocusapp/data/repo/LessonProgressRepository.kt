@@ -3,6 +3,7 @@ package co.edu.unab.dracofocusapp.data.repo
 import androidx.room.withTransaction
 import co.edu.unab.dracofocusapp.data.local.CompletedLessonEntity
 import co.edu.unab.dracofocusapp.data.local.DracoDatabase
+import co.edu.unab.dracofocusapp.data.local.LessonRewardClaimEntity
 import co.edu.unab.dracofocusapp.data.local.MuseumUnlockEntity
 import co.edu.unab.dracofocusapp.data.local.RewardFlagsEntity
 import co.edu.unab.dracofocusapp.data.remote.ApiService
@@ -30,6 +31,7 @@ class LessonProgressRepository(
     private val lessonDao get() = db.completedLessonDao()
     private val flagsDao get() = db.rewardFlagsDao()
     private val museumDao get() = db.museumUnlockDao()
+    private val claimsDao get() = db.lessonRewardClaimsDao()
 
     fun observeSoloFundamentosCompletedIds(userId: String): Flow<Set<String>> =
         lessonDao.observeCompletedIds(userId).map { ids ->
@@ -150,6 +152,39 @@ class LessonProgressRepository(
 
     suspend fun snapshotUnlockedPieceIdsBlocking(userId: String): Set<String> =
         museumDao.snapshotUnlockedPieceIds(userId).toSet()
+
+    /**
+     * Claims a lesson reward slot. Returns true if newly claimed, false if already claimed.
+     * Uses OnConflict IGNORE so a duplicate insert returns -1.
+     */
+    suspend fun claimLessonForReward(userId: String, lessonSlug: String): Boolean =
+        claimsDao.insertClaim(
+            LessonRewardClaimEntity(userId, lessonSlug, System.currentTimeMillis())
+        ) != -1L
+
+    /**
+     * Picks a random unlocked piece from the catalog and saves it to museum_unlocks.
+     * Returns the piece, or null if the collection is already complete.
+     */
+    suspend fun unlockRandomPiece(userId: String): MuseumCatalog.Piece? {
+        val alreadyUnlocked = museumDao.snapshotUnlockedPieceIds(userId).toSet()
+        val pending = MuseumCatalog.ALL_PIECES.filter { it.catalogId !in alreadyUnlocked }
+        if (pending.isEmpty()) return null
+        val piece = pending[kotlin.random.Random.nextInt(pending.size)]
+        insertMuseumPiece(userId, piece.catalogId)
+        Log.d("MUSEUM", "unlockRandomPiece: userId=$userId → ${piece.catalogId} (${piece.title})")
+        return piece
+    }
+
+    /**
+     * Returns completed lesson slugs that have not yet generated a museum reward claim.
+     * Used to grant pending rewards for lessons completed on Web.
+     */
+    suspend fun getUnclaimedCompletedSlugs(userId: String): List<String> {
+        val completed = lessonDao.snapshotLessonIds(userId)
+        val claimed = claimsDao.getClaimedSlugs(userId).toSet()
+        return completed.filter { it !in claimed }
+    }
 
     /**
      * Sincroniza el progreso desde el servidor hacia Room.

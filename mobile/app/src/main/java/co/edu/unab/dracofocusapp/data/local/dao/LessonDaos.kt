@@ -7,6 +7,7 @@ import androidx.room.Query
 import co.edu.unab.dracofocusapp.data.local.CompletedLessonEntity
 import co.edu.unab.dracofocusapp.data.local.LessonEntity
 import co.edu.unab.dracofocusapp.data.local.LessonExerciseProgressEntity
+import co.edu.unab.dracofocusapp.data.local.LessonRewardClaimEntity
 import co.edu.unab.dracofocusapp.data.local.MuseumUnlockEntity
 import co.edu.unab.dracofocusapp.data.local.RewardFlagsEntity
 import kotlinx.coroutines.flow.Flow
@@ -64,6 +65,17 @@ interface LessonExerciseProgressDao {
 
     @Query("SELECT currentIndex FROM lesson_exercise_progress WHERE userId = :userId AND lessonSlug = :lessonSlug LIMIT 1")
     suspend fun getIndex(userId: String, lessonSlug: String): Int?
+}
+
+@Dao
+interface LessonRewardClaimsDao {
+
+    /** Inserts a claim. Returns the rowId, or -1 if already claimed (IGNORE strategy). */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertClaim(entity: LessonRewardClaimEntity): Long
+
+    @Query("SELECT lessonSlug FROM lesson_reward_claims WHERE userId = :userId")
+    suspend fun getClaimedSlugs(userId: String): List<String>
 }
 
 @Dao

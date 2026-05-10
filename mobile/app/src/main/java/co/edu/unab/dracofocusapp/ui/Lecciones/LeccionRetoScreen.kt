@@ -43,7 +43,20 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.zIndex
+import co.edu.unab.dracofocusapp.domain.rewards.RewardManager
+import co.edu.unab.dracofocusapp.museum.MuseumCatalog
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 
 @OptIn(
     ExperimentalLayoutApi::class,
@@ -109,8 +122,14 @@ fun LeccionRetoScreen(
                 onSaveProgress = { index -> if (!reviewMode) exerciseVm.saveCurrentExercise(state.lesson.slug, index) },
                 onClearProgress = { exerciseVm.clearCurrentExercise(state.lesson.slug) },
                 onMarkCompleted = { slug ->
-                    // Upsert local ANTES de navegar — garantiza que el Flow emita y la card quede verde sin reiniciar
                     app.lessonProgressRepository.markLessonCompletedLocalOnly(currentUserId!!, slug)
+                },
+                onClaimReward = { slug ->
+                    if (reviewMode) null
+                    else when (val o = app.rewardManager.grantLessonCompletionReward(currentUserId!!, slug)) {
+                        is RewardManager.EnvelopeOutcome.PieceGranted -> o.piece
+                        else -> null
+                    }
                 },
             )
         }
@@ -131,6 +150,7 @@ fun ExerciseSessionContent(
     onSaveProgress: (Int) -> Unit = {},
     onClearProgress: () -> Unit = {},
     onMarkCompleted: suspend (String) -> Unit = {},
+    onClaimReward: suspend (String) -> MuseumCatalog.Piece? = { null },
     reviewMode: Boolean = false,
 ) {
     var currentIndex by remember { mutableIntStateOf(savedExerciseIndex.coerceIn(0, (exercises.size - 1).coerceAtLeast(0))) }
@@ -160,6 +180,7 @@ fun ExerciseSessionContent(
 
     var xpBannerXp by remember { mutableStateOf(0) }
     var showXpBanner by remember { mutableStateOf(false) }
+    var rewardPiece by remember { mutableStateOf<MuseumCatalog.Piece?>(null) }
     val appCtx = LocalContext.current.applicationContext as DracoFocusApplication
 
     val tipoReto = when (currentExercise.type) {
@@ -441,16 +462,14 @@ fun ExerciseSessionContent(
                             scope.launch {
                                 onClearProgress()
                                 if (!reviewMode) {
-                                    onMarkCompleted(lesson.slug)   // 1. upsert local inmediato
-                                    val xp = progressVm.completeLessonNow(lesson.slug)  // 2. sync backend (await)
-                                    if (xp > 0) {
-                                        appCtx.sessionXpToday.value += xp  // 3. actualizar Home
-                                        xpBannerXp = xp
-                                        showXpBanner = true
-                                        delay(1400)   // 4. mostrar banner antes de navegar
-                                    }
+                                    onMarkCompleted(lesson.slug)
+                                    val xp = progressVm.completeLessonNow(lesson.slug)
+                                    if (xp > 0) { appCtx.sessionXpToday.value += xp; xpBannerXp = xp; showXpBanner = true }
+                                    val piece = onClaimReward(lesson.slug)
+                                    if (piece != null) { rewardPiece = piece; return@launch }
+                                    if (xp > 0) delay(1400)
                                 }
-                                navController.popBackStack()  // 5. navegar después de confirmar
+                                navController.popBackStack()
                             }
                         }
                     }
@@ -473,21 +492,179 @@ fun ExerciseSessionContent(
                                 } else {
                                     onClearProgress()
                                     if (!reviewMode) {
-                                        onMarkCompleted(lesson.slug)   // 1. upsert local inmediato
-                                        val xp = progressVm.completeLessonNow(lesson.slug)  // 2. sync backend (await)
-                                        if (xp > 0) {
-                                            appCtx.sessionXpToday.value += xp  // 3. actualizar Home
-                                            xpBannerXp = xp
-                                            showXpBanner = true
-                                            delay(1400)   // 4. mostrar banner antes de navegar
-                                        }
+                                        onMarkCompleted(lesson.slug)
+                                        val xp = progressVm.completeLessonNow(lesson.slug)
+                                        if (xp > 0) { appCtx.sessionXpToday.value += xp; xpBannerXp = xp; showXpBanner = true }
+                                        val piece = onClaimReward(lesson.slug)
+                                        if (piece != null) { rewardPiece = piece; return@launch }
+                                        if (xp > 0) delay(1400)
                                     }
-                                    navController.popBackStack()  // 5. navegar después de confirmar
+                                    navController.popBackStack()
                                 }
                             }
                         }
                     }) { Text(if (reviewMode && currentIndex >= exercises.size - 1) "FINALIZAR REPASO" else "CONTINUAR") }
                     Spacer(Modifier.height(40.dp))
+                }
+            }
+        }
+
+        // Envelope reveal overlay — appears when a museum piece is earned
+        rewardPiece?.let { piece ->
+            EnvelopeRevealOverlay(
+                piece = piece,
+                onContinue = {
+                    rewardPiece = null
+                    navController.popBackStack()
+                },
+                onGoToMuseum = {
+                    rewardPiece = null
+                    navController.popBackStack()
+                    navController.navigate("museo_dracarte")
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun EnvelopeRevealOverlay(
+    piece: MuseumCatalog.Piece,
+    onContinue: () -> Unit,
+    onGoToMuseum: () -> Unit,
+) {
+    var isOpening by remember { mutableStateOf(false) }
+    var revealed by remember { mutableStateOf(false) }
+    var showPiece by remember { mutableStateOf(false) }
+    val dracoCyan = Color(0xFF22DDF2)
+
+    // 1. Bounce-in on first entry
+    var entryScale by remember { mutableStateOf(0.5f) }
+    LaunchedEffect(Unit) { entryScale = 1f }
+    val envelopeEntry by animateFloatAsState(
+        targetValue = entryScale,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "envEntry",
+    )
+
+    // 2. Continuous pulse while waiting for tap
+    var pulseTarget by remember { mutableStateOf(1f) }
+    LaunchedEffect(isOpening) {
+        if (!isOpening) {
+            while (true) {
+                delay(850)
+                pulseTarget = 1.07f
+                delay(850)
+                pulseTarget = 1f
+            }
+        }
+    }
+    val pulse by animateFloatAsState(
+        targetValue = pulseTarget,
+        animationSpec = tween(850),
+        label = "pulse",
+    )
+
+    // 3. Opening: envelope scales up + fades out, then reveals piece
+    val openAlpha by animateFloatAsState(
+        targetValue = if (isOpening) 0f else 1f,
+        animationSpec = tween(300),
+        label = "openAlpha",
+    )
+    val openScale by animateFloatAsState(
+        targetValue = if (isOpening) 1.35f else 1f,
+        animationSpec = tween(300),
+        label = "openScale",
+    )
+    LaunchedEffect(isOpening) {
+        if (isOpening) {
+            delay(340)
+            revealed = true
+            showPiece = true
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.88f))
+            .zIndex(20f),
+        contentAlignment = Alignment.Center,
+    ) {
+        // Envelope state
+        if (!revealed) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .graphicsLayer {
+                        val s = envelopeEntry * pulse * openScale
+                        scaleX = s; scaleY = s
+                        alpha = openAlpha
+                    }
+                    .clickable(enabled = !isOpening) { isOpening = true }
+                    .padding(24.dp),
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.draco_sobre),
+                    contentDescription = "Sobre recompensa",
+                    modifier = Modifier.size(200.dp),
+                )
+                Spacer(Modifier.height(20.dp))
+                Text("¡Toca para abrir!", color = dracoCyan, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Text("Nueva pieza del museo", color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp)
+            }
+        }
+
+        // Piece reveal state
+        AnimatedVisibility(
+            visible = showPiece,
+            enter = fadeIn(animationSpec = tween(400)) + scaleIn(
+                initialScale = 0.82f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow,
+                ),
+            ),
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                Text(
+                    "¡Nueva imagen desbloqueada!",
+                    color = dracoCyan,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                )
+                Spacer(Modifier.height(16.dp))
+                Image(
+                    painter = painterResource(id = piece.imageResId),
+                    contentDescription = piece.title,
+                    modifier = Modifier
+                        .fillMaxWidth(0.78f)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(20.dp))
+                        .border(2.dp, dracoCyan, RoundedCornerShape(20.dp)),
+                    contentScale = ContentScale.Crop,
+                )
+                Spacer(Modifier.height(14.dp))
+                Text(piece.title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Spacer(Modifier.height(28.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(
+                        onClick = onContinue,
+                        border = BorderStroke(1.dp, dracoCyan),
+                    ) {
+                        Text("Continuar", color = dracoCyan, fontWeight = FontWeight.SemiBold)
+                    }
+                    Button(
+                        onClick = onGoToMuseum,
+                        colors = ButtonDefaults.buttonColors(containerColor = dracoCyan, contentColor = Color.Black),
+                    ) {
+                        Text("Ir al Museo", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
