@@ -8,7 +8,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -32,14 +31,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.domain.rewards.RewardManager
 import co.edu.unab.dracofocusapp.museum.MuseumCatalog
+import kotlinx.coroutines.launch
 
 @Composable
 fun MuseoDracoArteScreen(onBack: () -> Unit) {
     val app = LocalContext.current.applicationContext as DracoFocusApplication
     val currentUserId by app.tokenManager.userId.collectAsState(initial = null)
+    val scope = rememberCoroutineScope()
 
     if (currentUserId == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -48,17 +52,49 @@ fun MuseoDracoArteScreen(onBack: () -> Unit) {
         return
     }
 
-    val unlockedIds by app.lessonProgressRepository.observeUnlockedPieceIds(currentUserId!!).collectAsState(emptySet())
-    val collectionPct by app.lessonProgressRepository.observeMuseumCollectionProgressFraction(currentUserId!!)
-        .collectAsState(initial = 0f)
+    val uid = currentUserId!!
+
+    // Source of truth: museum_unlocks table (updated by RewardManager)
+    val unlockedIds by app.lessonProgressRepository
+        .observeUnlockedPieceIds(uid)
+        .collectAsState(initial = emptySet())
+
+    val collectionPct = (unlockedIds.size.toFloat() /
+            MuseumCatalog.ALL_PIECES.size.coerceAtLeast(1)).coerceIn(0f, 1f)
+
+    // Refresh from backend + grant pending rewards when app returns from foreground
+    val activity = LocalContext.current as? androidx.activity.ComponentActivity
+    DisposableEffect(activity) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                scope.launch {
+                    app.lessonProgressRepository.syncProgressFromServer(uid)
+                    grantPendingRewards(app, uid)
+                }
+            }
+        }
+        activity?.lifecycle?.addObserver(observer)
+        onDispose { activity?.lifecycle?.removeObserver(observer) }
+    }
+
+    // Initial sync + pending reward grant on screen entry
+    LaunchedEffect(uid) {
+        app.lessonProgressRepository.syncProgressFromServer(uid)
+        grantPendingRewards(app, uid)
+    }
 
     val piezas = MuseumCatalog.ALL_PIECES.map { piece ->
-        piezaUi(piece, bloqueada = piece.catalogId !in unlockedIds)
+        PiezaMuseo(
+            id = piece.catalogId,
+            titulo = piece.title,
+            imagenRes = piece.imageResId,
+            bloqueada = piece.catalogId !in unlockedIds,
+        )
     }
 
     val dracoCyan = Color(0xFF22DDF2)
     val progressAnimated by animateFloatAsState(
-        targetValue = collectionPct.coerceIn(0f, 1f),
+        targetValue = collectionPct,
         animationSpec = tween(durationMillis = 900),
         label = "museogrow",
     )
@@ -76,7 +112,11 @@ fun MuseoDracoArteScreen(onBack: () -> Unit) {
 
             Column {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Colección", color = Color.White, fontSize = 12.sp)
+                    Text(
+                        "${unlockedIds.size} / ${MuseumCatalog.ALL_PIECES.size} piezas",
+                        color = Color.White,
+                        fontSize = 12.sp,
+                    )
                     Text(
                         "${(progressAnimated * 100).toInt()}%",
                         color = dracoCyan,
@@ -85,7 +125,6 @@ fun MuseoDracoArteScreen(onBack: () -> Unit) {
                     )
                 }
                 Spacer(modifier = Modifier.height(6.dp))
-
                 LinearProgressIndicator(
                     progress = { progressAnimated },
                     modifier = Modifier
@@ -114,6 +153,14 @@ fun MuseoDracoArteScreen(onBack: () -> Unit) {
     }
 }
 
+/** Grants museum rewards for any completed lesson that hasn't been claimed yet (Web completions). */
+private suspend fun grantPendingRewards(app: DracoFocusApplication, userId: String) {
+    val unclaimed = app.lessonProgressRepository.getUnclaimedCompletedSlugs(userId)
+    unclaimed.forEach { slug ->
+        app.rewardManager.grantLessonCompletionReward(userId, slug)
+    }
+}
+
 private data class PiezaMuseo(
     val id: String,
     val titulo: String,
@@ -121,13 +168,10 @@ private data class PiezaMuseo(
     val bloqueada: Boolean,
 )
 
-private fun piezaUi(piece: MuseumCatalog.Piece, bloqueada: Boolean) =
-    PiezaMuseo(piece.catalogId, piece.title, piece.imageResId, bloqueada)
-
 @Composable
 private fun PiezaCard(pieza: PiezaMuseo) {
     val borderColor by animateColorAsState(
-        if (pieza.bloqueada) Color.Gray else Color(0xFF22DDF2).copy(alpha = 0.85f),
+        if (pieza.bloqueada) Color(0xFF2A3A4A) else Color(0xFF22DDF2).copy(alpha = 0.85f),
         label = "bordePieza",
     )
     val scale by animateFloatAsState(
@@ -139,10 +183,7 @@ private fun PiezaCard(pieza: PiezaMuseo) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
+            .graphicsLayer { scaleX = scale; scaleY = scale },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0F1A2A)),
         border = BorderStroke(1.dp, borderColor),
@@ -155,29 +196,34 @@ private fun PiezaCard(pieza: PiezaMuseo) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(150.dp)
-                        .alpha(if (pieza.bloqueada) 0.35f else 1f),
+                        .alpha(if (pieza.bloqueada) 0.2f else 1f),
                     contentScale = ContentScale.Crop,
                 )
-
-                Text(
-                    pieza.titulo,
-                    color = if (pieza.bloqueada) Color.LightGray.copy(alpha = 0.7f) else Color.White,
-                    modifier = Modifier.padding(12.dp),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+                    Text(
+                        pieza.titulo,
+                        color = if (pieza.bloqueada) Color(0xFF3D4E60) else Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = if (pieza.bloqueada) "Completa lecciones para desbloquear" else "Desbloqueada ✓",
+                        color = if (pieza.bloqueada) Color(0xFF2D3E50) else Color(0xFF22DDF2).copy(alpha = 0.8f),
+                        fontSize = 10.sp,
+                    )
+                }
             }
 
             if (pieza.bloqueada) {
                 Surface(
-                    color = Color.Black.copy(alpha = 0.6f),
+                    color = Color.Black.copy(alpha = 0.55f),
                     shape = RoundedCornerShape(26.dp),
-                    modifier = Modifier.size(52.dp),
+                    modifier = Modifier.size(48.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = "Bloqueado",
-                        tint = Color.White,
+                        tint = Color(0xFF4A5A6A),
                         modifier = Modifier.padding(12.dp),
                     )
                 }

@@ -79,7 +79,6 @@ fun LeccionesDracoSolitarioScreen(
         onDispose { activity?.lifecycle?.removeObserver(observer) }
     }
     val completadas by lessonVm.soloFundamentosCompleted.collectAsState()
-    val envelopeVisible by lessonVm.showEnvelopeHint.collectAsState()
 
     val progressFraction by lessonVm.soloFundamentosProgress.collectAsState()
 
@@ -99,29 +98,9 @@ fun LeccionesDracoSolitarioScreen(
         lessonVm.refreshProgress()
     }
 
-    LaunchedEffect(Unit) {
-        lessonVm.envelopeUiEvents.collectLatest { outcome ->
-            val msg = when (outcome) {
-                is RewardManager.EnvelopeOutcome.PieceGranted ->
-                    "¡Sobre abierto! Nueva ficha del museo: \"${outcome.piece.title}\""
-                RewardManager.EnvelopeOutcome.NotEligible ->
-                    "Draco aún espera que completes las misiones para el sobre."
-                RewardManager.EnvelopeOutcome.NoPiecesLeftInCatalog ->
-                    "¡Colección completa! No quedan fichas nuevas por ahora."
-            }
-            snackbarHostState.showSnackbar(msg)
-        }
-    }
-
     val gradientBackground =
         Brush.verticalGradient(listOf(Color(0xFF0B132B), Color(0xFF1C2541)))
     val dracoCyan = Color(0xFF22DDF2)
-
-    val sobrePulse by animateFloatAsState(
-        targetValue = if (envelopeVisible) 1f else 0.93f,
-        animationSpec = tween(durationMillis = 950),
-        label = "sobrePulse",
-    )
 
 Scaffold(
     modifier = Modifier.statusBarsPadding(),
@@ -184,7 +163,7 @@ Scaffold(
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        if (faltantes == 0) "¡Set completado! Revisa el sobre 🎁" else "$faltantes lecciones restantes",
+                        if (faltantes == 0) "¡Set completado!" else "$faltantes lecciones restantes",
                         color = Color(0xFFB3B3B3),
                         fontSize = 13.sp,
                     )
@@ -237,41 +216,6 @@ Scaffold(
                     },
                 )
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF0F2B5D), RoundedCornerShape(15.dp))
-                        .border(3.dp, Color(0xFF57F5ED), RoundedCornerShape(15.dp))
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Image(
-                            painter = painterResource(R.drawable.img_sobre),
-                            contentDescription = "Sobre misterioso",
-                            modifier = Modifier
-                                .size(88.dp)
-                                .scale(sobrePulse)
-                                .clickable(enabled = envelopeVisible) {
-                                    lessonVm.openSoloFundamentosEnvelope()
-                                },
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = when {
-                                envelopeVisible -> "Toca el sobre para revelar tu ficha del museo"
-                                faltantes > 0 -> "Te faltan $faltantes lecciones para el sobre especial"
-                                else -> "Ya reclamaste el sobre de esta temporada: sigue coleccionando en el museo."
-                            },
-                            color = dracoCyan,
-                            textAlign = TextAlign.Center,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                }
             }
         }
 

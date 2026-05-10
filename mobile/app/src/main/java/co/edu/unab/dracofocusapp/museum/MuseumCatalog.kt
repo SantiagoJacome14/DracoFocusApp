@@ -3,7 +3,8 @@ package co.edu.unab.dracofocusapp.museum
 import co.edu.unab.dracofocusapp.R
 
 /**
- * Piezas coleccionables: visibles desde el museo incluso antes de obtenerlas (bloqueadas).
+ * Colección de piezas del museo. Se desbloquean aleatoriamente al completar lecciones.
+ * draco_sobre.png se usa solo como imagen del sobre, NO como pieza del catálogo.
  */
 object MuseumCatalog {
 
@@ -14,16 +15,14 @@ object MuseumCatalog {
     )
 
     val ALL_PIECES: List<Piece> = listOf(
-        Piece("m_draco_alba", "Alba Draco", R.drawable.dragon_dracofocus1),
-        Piece("m_fuego_codigo", "Fuego binario", R.drawable.dragon_dracofocus1),
-        Piece("m_bit_cueva", "Cueva de bits", R.drawable.dragon_dracofocus1),
-        Piece("m_loop_infinito", "Loop ascendente", R.drawable.dragon_dracofocus1),
-        Piece("m_escudo_logico", "Escudo booleano", R.drawable.dragon_dracofocus1),
-        Piece("m_tarea_completada", "Tareas en orden", R.drawable.dragon_dracofocus1),
-        Piece("m_draco_gloria", "Gloria del compilador", R.drawable.dragon_dracofocus1),
-        Piece("m_overclock", "Overclock cerebral", R.drawable.dragon_dracofocus1),
-        Piece("m_stack_ninja", "Ninja del Stack", R.drawable.dragon_dracofocus1),
-        Piece("m_final_boss_debug", "Jefe Final: Debug", R.drawable.dragon_dracofocus1),
+        Piece("m_dracoegipto",      "Draco en Egipto",       R.drawable.dracoegipto),
+        Piece("m_dracofiesta",      "Draco en Fiesta",       R.drawable.dracofiesta),
+        Piece("m_dracoluna",        "Draco y la Luna",       R.drawable.dracoluna),
+        Piece("m_dracomuseoverona", "Draco en Verona",       R.drawable.dracomuseoverona),
+        Piece("m_dracoskate",       "Draco Skate",           R.drawable.dracoskate),
+        Piece("m_dracoversalles",   "Draco en Versalles",    R.drawable.dracoversalles),
+        Piece("m_dracovistafrontal","Draco Vista Frontal",   R.drawable.dracovistafrontal),
+        Piece("m_dracovistalateral","Draco Vista Lateral",   R.drawable.dracovistalateral),
     )
 
     fun lockedStates(unlockedIds: Set<String>): List<Pair<Piece, Boolean>> =
