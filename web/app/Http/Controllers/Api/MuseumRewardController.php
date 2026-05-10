@@ -20,8 +20,6 @@ class MuseumRewardController extends Controller
         'm_dracomuseoverona',
         'm_dracoskate',
         'm_dracoversalles',
-        'm_dracovistafrontal',
-        'm_dracovistalateral',
     ];
 
     /**
