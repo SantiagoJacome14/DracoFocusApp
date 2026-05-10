@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\MuseumRewardController;
 use App\Http\Controllers\Api\ProgressController;
 use App\Http\Controllers\LessonController;
@@ -28,4 +29,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Museum rewards (source of truth for collectible images)
     Route::get('/museum/rewards', [MuseumRewardController::class, 'index']);
     Route::post('/museum/rewards/claim', [MuseumRewardController::class, 'claim']);
+
+    // Group sessions (modo en grupo)
+    Route::post('/groups', [GroupController::class, 'create']);
+    Route::post('/groups/join', [GroupController::class, 'join']);
+    Route::get('/groups/{code}', [GroupController::class, 'show']);
+    Route::get('/groups/{code}/members', [GroupController::class, 'members']);
+    Route::post('/groups/{code}/start', [GroupController::class, 'start']);
+    Route::post('/groups/{code}/progress', [GroupController::class, 'saveProgress']);
+    Route::post('/groups/{code}/complete', [GroupController::class, 'complete']);
 });
