@@ -16,12 +16,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import co.edu.unab.dracofocusapp.data.remote.ApiService
 
 @Composable
 fun LeccionesGrupalesScreen(
     navController: NavController,
-    apiService: ApiService,
     onBack: () -> Unit,
 ) {
     val dracoCyan = Color(0xFF22DDF2)
