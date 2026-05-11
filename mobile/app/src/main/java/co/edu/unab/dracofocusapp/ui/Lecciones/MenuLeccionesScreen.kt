@@ -3,7 +3,7 @@ package co.edu.unab.dracofocusapp.ui.Lecciones
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -15,6 +15,24 @@ import androidx.navigation.NavController
 
 @Composable
 fun MenuLeccionesScreen(navController: NavController) {
+
+    var showComingSoon by remember { mutableStateOf(false) }
+
+    if (showComingSoon) {
+        AlertDialog(
+            onDismissRequest = { showComingSoon = false },
+            title = { Text("Modo Grupal") },
+            text = { Text("Próximamente: juega con tus compañeros en salas Draco.") },
+            confirmButton = {
+                TextButton(onClick = { showComingSoon = false }) {
+                    Text("Entendido", color = Color(0xFF22DDF2))
+                }
+            },
+            containerColor = Color(0xFF1C2541),
+            titleContentColor = Color(0xFF22DDF2),
+            textContentColor = Color(0xFFB3B3B3),
+        )
+    }
 
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
@@ -43,7 +61,6 @@ fun MenuLeccionesScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- BOTÓN MODO SOLITARIO ---
             Button(
                 onClick = { navController.navigate("lecciones_solitario") },
                 modifier = Modifier
@@ -60,24 +77,24 @@ fun MenuLeccionesScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- BOTÓN MODO GRUPAL ---
             Button(
-                onClick = { navController.navigate("lecciones_grupales") },
+                onClick = { showComingSoon = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF22DDF2),
-                    contentColor = Color.Black
+                    containerColor = Color(0xFF22DDF2).copy(alpha = 0.35f),
+                    contentColor = Color.White.copy(alpha = 0.5f),
                 )
             ) {
                 Text("Modo en Grupo", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.width(8.dp))
+                Text("(Pronto)", fontSize = 13.sp, fontWeight = FontWeight.Normal)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- VOLVER al Home ---
             TextButton(
                 onClick = { navController.navigate("draco") {
                     popUpTo("draco") { inclusive = false }
