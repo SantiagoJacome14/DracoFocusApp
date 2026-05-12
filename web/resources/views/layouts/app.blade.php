@@ -27,11 +27,33 @@
             transition: transform 0.3s ease;
         }
         .draco-sidebar .sidebar-logo {
-            padding: 1.75rem 1.5rem;
-            border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+            padding: 1.25rem 1rem 1rem 1rem;
+            border-bottom: none;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .draco-sidebar .draco-video-frame {
+            width: 115px;
+            height: 115px;
+            overflow: hidden;
+            border-radius: 24px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.12), transparent 65%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .draco-sidebar .draco-video-frame video {
+            width: 118px;
+            height: 118px;
+            object-fit: contain;
+            border: none;
+            outline: none;
+            display: block;
+            background: transparent;
+            transform: scale(1.06) translateY(2px);
         }
         .draco-sidebar .sidebar-logo .logo-icon {
             width: 44px;
@@ -157,6 +179,26 @@
                 rgba(255,255,255,0.05) 12px
             );
         }
+
+        /* ── Gamified Sidebar Enhancements ── */
+        .level-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 0 15px rgba(139, 92, 246, 0.1);
+        }
+        
+        .nav-link:hover {
+            background: rgba(139, 92, 246, 0.08);
+            color: #c4b5fd;
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(139, 92, 246, 0.15));
+            color: #34d399;
+            box-shadow: inset 3px 0 0 #10b981;
+            border-right: 1px solid rgba(139, 92, 246, 0.2);
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-white antialiased min-h-screen">
@@ -164,8 +206,23 @@
     <!-- ── Sidebar Navigation ── -->
     <aside class="draco-sidebar">
         <div class="sidebar-logo">
-            <div class="logo-icon">🐉</div>
-            <h1>Draco</h1>
+            <div class="draco-video-frame">
+                <video autoplay loop muted playsinline>
+                    <source src="{{ asset('DracoInicial.mp4') }}" type="video/mp4">
+                </video>
+            </div>
+        </div>
+
+        <!-- Gamified Level & XP Card -->
+        <div class="level-card p-4 mx-3 my-4 rounded-xl text-center text-white glass-card">
+            <div class="text-xs font-bold uppercase text-slate-300 mb-1 tracking-wider">Nivel <span class="text-white text-lg ml-1">{{ auth()->user()->level ?? 1 }}</span></div>
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-300 mb-2">
+                <span>XP</span>
+                <span>{{ auth()->user()->xp ?? 0 }} / {{ auth()->user()->next_level_xp ?? 1000 }}</span>
+            </div>
+            <div class="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden border border-slate-600/50 relative">
+                <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 bg-stripe-pattern absolute left-0 top-0" style="width: {{ min((auth()->user()->xp ?? 0) / (auth()->user()->next_level_xp ?? 1000) * 100, 100) }}%"></div>
+            </div>
         </div>
 
         <nav>
@@ -176,9 +233,24 @@
                 Dashboard
             </a>
 
+            <a href="#" class="nav-link {{ request()->routeIs('lessons.*') ? 'active' : '' }}">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                Lecciones
+            </a>
+
+            <a href="#" class="nav-link {{ request()->routeIs('progress.*') ? 'active' : '' }}">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                Avances
+            </a>
+
             <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
                 <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                 Mi Perfil
+            </a>
+
+            <a href="#" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                Configuración
             </a>
 
             @if(auth()->user() && auth()->user()->isAdmin())
