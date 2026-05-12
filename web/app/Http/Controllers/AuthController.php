@@ -133,6 +133,7 @@ class AuthController extends Controller
                 'avatar'         => $googleUser->getAvatar(),
                 'password'       => Hash::make(uniqid() . time()),
                 'is_admin'       => false,
+                'role'           => 'estudiante',
                 'daily_goal'     => 50,
                 'current_streak' => 0,
                 'total_xp'       => 0,

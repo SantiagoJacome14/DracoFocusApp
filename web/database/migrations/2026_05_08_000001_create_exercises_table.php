@@ -22,14 +22,12 @@ return new class extends Migration
             $table->string('difficulty', 20)->default('beginner');
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
+            $table->json('tags')->nullable();
             $table->timestamps();
 
             $table->index(['lesson_id', 'language', 'is_active'], 'idx_exercises_lesson_lang_active');
             $table->index(['lesson_id', 'difficulty'], 'idx_exercises_lesson_difficulty');
         });
-
-        // text[] is a PostgreSQL-native type; Blueprint does not support array defaults directly
-        DB::statement("ALTER TABLE exercises ADD COLUMN tags text[] NOT NULL DEFAULT '{}'");
     }
 
     public function down(): void

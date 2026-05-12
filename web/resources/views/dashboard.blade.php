@@ -153,66 +153,84 @@
                 </button>
             </div>
 
-            <!-- Horizontal Scrollable Path -->
-            <div class="relative">
-                <!-- Horizontal connector line -->
-                <div class="absolute top-[60px] left-0 right-0 h-1 bg-slate-700/60 rounded-full z-0" style="margin: 0 60px;"></div>
+            
 
-                <div class="grid gap-6" style="grid-template-columns: repeat({{ count($lessonPath) }}, minmax(140px, 1fr));">
+            @if(count($lessonPath) > 0)
+            <!-- Contenedor Responsivo: Overflow horizontal en Desktop, Scroll nativo vertical en Móvil -->
+            <div class="overflow-x-hidden md:overflow-x-auto pb-12 custom-scrollbar mt-8 w-full">
+                <!-- En móvil usamos flex-col, en desktop usamos grid -->
+                <div class="relative flex flex-col md:grid gap-12 md:gap-6 py-8 md:py-0 w-full md:min-w-max mx-auto items-center md:items-start"
+                     style="grid-template-columns: repeat({{ count($lessonPath) }}, minmax(140px, 1fr));">
+                    
+                    <!-- Línea Conectora Desktop (Horizontal) -->
+                    <div class="hidden md:block absolute top-[60px] left-0 right-0 h-2 bg-slate-800 rounded-full z-0 shadow-inner border border-slate-700/50" style="margin: 0 60px;"></div>
+                    
+                    <!-- Línea Conectora Móvil (Vertical) -->
+                    <div class="md:hidden absolute top-0 bottom-0 left-1/2 w-2 -translate-x-1/2 bg-slate-800 rounded-full z-0 shadow-inner border border-slate-700/50"></div>
+
                     @foreach($lessonPath as $index => $node)
-                    <div class="relative z-10 flex flex-col items-center text-center group">
+                        <!-- Lógica de Zigzag para Móvil -->
+                        @php
+                            $offsets = ['translate-x-0', 'translate-x-8', 'translate-x-0', '-translate-x-8'];
+                            $mobileOffset = $offsets[$index % 4];
+                        @endphp
 
-                        {{-- Active node --}}
-                        <template x-if="lessonData[{{ $index }}]?.status === 'active'">
-                        <a href="{{ route('lesson.show', ['slug' => $node['slug']]) }}"
-                           class="block outline-none transform transition hover:scale-110 active:scale-95 duration-200">
-                            <div class="w-[120px] h-[120px] mx-auto bg-gradient-to-br from-draco-emerald to-emerald-700 rounded-3xl flex items-center justify-center relative shadow-[0_8px_0_0_#059669] group-active:shadow-[0_2px_0_0_#059669] group-active:translate-y-2 transition-all border-2 border-emerald-400/40 pulse-glow">
-                                <span class="text-4xl drop-shadow-md">{{ $node['emoji'] }}</span>
-                                <div class="absolute -top-2 -right-2 bg-draco-gold w-8 h-8 rounded-xl border-3 border-slate-900 flex items-center justify-center animate-pulse glow-gold">
-                                    <span class="text-sm">⭐</span>
+                        <div class="relative z-10 flex flex-col items-center text-center group {{ $mobileOffset }} md:translate-x-0">
+                            
+                            {{-- Active Node (Animado y Brillante) --}}
+                            <template x-if="lessonData[{{ $index }}]?.status === 'active'">
+                                <a href="{{ route('lesson.show', ['slug' => $node['slug']]) }}" class="block outline-none focus:ring-4 focus:ring-draco-emerald rounded-3xl transition-all duration-300 hover:-translate-y-2">
+                                    <div class="w-[120px] h-[120px] mx-auto bg-gradient-to-br from-draco-emerald to-emerald-700 rounded-3xl flex items-center justify-center relative shadow-[0_8px_0_0_#059669,0_15px_30px_rgba(16,185,129,0.3)] active:shadow-[0_2px_0_0_#059669] active:translate-y-2 transition-all border-2 border-emerald-400/40">
+                                        <span class="text-4xl drop-shadow-lg">{{ $node['emoji'] }}</span>
+                                        <!-- Glow halo -->
+                                        <div class="absolute inset-0 rounded-3xl bg-draco-emerald opacity-20 animate-ping"></div>
+                                    </div>
+                                    <div class="mt-4 bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700 backdrop-blur-sm">
+                                        <span class="text-xs font-black text-draco-emerald-light uppercase tracking-widest">▶ Estudiar</span>
+                                        <h3 class="text-sm font-extrabold text-white mt-1">{{ $node['name'] }}</h3>
+                                    </div>
+                                </a>
+                            </template>
+
+                            {{-- Completed Node --}}
+                            <template x-if="lessonData[{{ $index }}]?.status === 'completed'">
+                            <a href="{{ route('lesson.show', ['slug' => $node['slug']]) }}"
+                               class="block outline-none transform transition hover:scale-105 active:scale-95 duration-200">
+                                <div class="w-[100px] h-[100px] mx-auto bg-slate-700/80 rounded-3xl flex items-center justify-center relative shadow-[0_6px_0_0_#10b981] group-active:shadow-[0_2px_0_0_#10b981] group-active:translate-y-2 transition-all border-2 border-draco-emerald/40 mt-[10px]">
+                                    <span class="text-3xl">{{ $node['emoji'] }}</span>
+                                    <div class="absolute -top-2 -right-2 bg-draco-emerald w-7 h-7 rounded-xl border-3 border-slate-900 flex items-center justify-center font-black text-white text-xs">
+                                        ✓
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="mt-4">
-                                <span class="text-xs font-extrabold text-draco-emerald-light uppercase tracking-widest">▶ Estudiar</span>
-                                <h3 class="text-sm font-extrabold text-white mt-1 leading-tight">{{ $node['name'] }}</h3>
-                                <p class="text-slate-400 text-xs mt-0.5">{{ $node['xp'] }} XP</p>
-                            </div>
-                        </a>
-                        </template>
-
-                        {{-- Completed node --}}
-                        <template x-if="lessonData[{{ $index }}]?.status === 'completed'">
-                        <a href="{{ route('lesson.show', ['slug' => $node['slug']]) }}"
-                           class="block outline-none transform transition hover:scale-105 active:scale-95 duration-200">
-                            <div class="w-[100px] h-[100px] mx-auto bg-slate-700/80 rounded-3xl flex items-center justify-center relative shadow-[0_6px_0_0_#10b981] group-active:shadow-[0_2px_0_0_#10b981] group-active:translate-y-2 transition-all border-2 border-draco-emerald/40 mt-[10px]">
-                                <span class="text-3xl">{{ $node['emoji'] }}</span>
-                                <div class="absolute -top-2 -right-2 bg-draco-emerald w-7 h-7 rounded-xl border-3 border-slate-900 flex items-center justify-center font-black text-white text-xs">
-                                    ✓
+                                <div class="mt-4">
+                                    <span class="text-xs font-bold text-draco-emerald-light uppercase tracking-widest">↺ Repasar</span>
+                                    <h3 class="text-sm font-bold text-slate-300 mt-1 leading-tight">{{ $node['name'] }}</h3>
                                 </div>
-                            </div>
-                            <div class="mt-4">
-                                <span class="text-xs font-bold text-draco-emerald-light uppercase tracking-widest">↺ Repasar</span>
-                                <h3 class="text-sm font-bold text-slate-300 mt-1 leading-tight">{{ $node['name'] }}</h3>
-                            </div>
-                        </a>
-                        </template>
+                            </a>
+                            </template>
 
-                        {{-- Locked node --}}
-                        <template x-if="lessonData[{{ $index }}]?.status === 'locked'">
-                        <div class="opacity-40 cursor-not-allowed">
-                            <div class="w-[100px] h-[100px] mx-auto bg-slate-800/80 rounded-3xl flex items-center justify-center shadow-[0_6px_0_0_#1e293b] border-2 border-slate-700 mt-[10px]">
-                                <span class="text-3xl grayscale">🔒</span>
-                            </div>
-                            <div class="mt-4">
-                                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest leading-tight">{{ $node['name'] }}</h3>
-                                <p class="text-slate-600 text-xs mt-0.5">{{ $node['xp'] }} XP</p>
-                            </div>
+                            {{-- Locked Node (Opaco y Estático) --}}
+                            <template x-if="lessonData[{{ $index }}]?.status === 'locked'">
+                                <div class="opacity-50 grayscale transition-all duration-500 hover:grayscale-0 hover:opacity-80">
+                                    <div class="w-[100px] h-[100px] mx-auto bg-slate-800 rounded-3xl flex items-center justify-center shadow-[0_6px_0_0_#1e293b] border-2 border-slate-700 mt-[10px]">
+                                        <span class="text-3xl text-slate-500">🔒</span>
+                                    </div>
+                                    <div class="mt-4">
+                                        <h3 class="text-xs font-bold text-slate-500 uppercase">{{ $node['name'] }}</h3>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
-                        </template>
-                    </div>
                     @endforeach
                 </div>
             </div>
+            @else
+            <div class="flex flex-col items-center justify-center py-12 text-center opacity-80">
+                <span class="text-6xl mb-4 grayscale">🚧</span>
+                <h3 class="text-xl font-extrabold text-white mb-2">¡Nuevas lecciones en camino!</h3>
+                <p class="text-slate-400 max-w-md">Estamos preparando contenido increíble para ti. Vuelve pronto para continuar tu aventura de aprendizaje.</p>
+            </div>
+            @endif
         </div>
     </div>
 
