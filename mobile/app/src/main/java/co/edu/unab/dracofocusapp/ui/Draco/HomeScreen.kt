@@ -53,6 +53,10 @@ fun HomeScreen(navController: NavController) {
     val dailyGoal = profileState.dailyGoal.coerceAtLeast(1)
     val dailyProgress = (dailyXp.toFloat() / dailyGoal.toFloat()).coerceIn(0f, 1f)
 
+    val dracoPhrase = remember(dailyXp, dailyGoal) {
+        getDracoMotivationalPhrase(dailyXp, dailyGoal)
+    }
+
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
@@ -106,7 +110,7 @@ fun HomeScreen(navController: NavController) {
                     Spacer(Modifier.height(6.dp))
 
                     Text(
-                        text = "Draco está feliz de verte. Cada estudio te acerca a completar su museo mágico 🪄",
+                        text = dracoPhrase,
                         color = Color(0xFFBBD8F4),
                         fontSize = 14.sp,
                         lineHeight = 20.sp,
@@ -183,7 +187,61 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
+fun getDracoMotivationalPhrase(dailyXp: Int, dailyGoal: Int): String {
+    val safeGoal = dailyGoal.coerceAtLeast(1)
+    val progress = (dailyXp.toFloat() / safeGoal.toFloat()).coerceIn(0f, 1f)
 
+    val noXpPhrases = listOf(
+        "Draco está un poco triste… todavía no has hecho ninguna lección hoy. Haz una y ayúdalo a recuperar energía 🐉",
+        "Draco te está esperando con sus gafitas puestas. Una lección puede animarlo mucho 📚",
+        "Hoy Draco aún no ha recibido energía de estudio. ¿Lo ayudas completando una lección?",
+        "Draco está algo dormido porque todavía no has estudiado hoy. ¡Despiértalo con una lección!",
+        "Tu compañero Draco necesita un poco de XP para sonreír. Empieza con una lección corta.",
+        "Draco mira su museo mágico y nota que falta energía hoy. ¡Haz una lección y dale vida!",
+        "Aún no empieza la aventura de hoy. Draco confía en que puedes dar el primer paso.",
+        "Draco está esperando tu primera misión del día. Una lección es suficiente para comenzar."
+    )
+
+    val lowXpPhrases = listOf(
+        "¡Bien! Draco ya empezó a recuperar energía. Sigue con otra lección para hacerlo más fuerte ⚡",
+        "Draco ya se está animando. Cada XP cuenta en esta aventura.",
+        "Vas comenzando muy bien. Draco siente que hoy puede ser un gran día.",
+        "La energía de Draco está despertando. Continúa y verás cómo sube tu progreso.",
+        "Buen inicio. Una lección más y Draco estará todavía más motivado.",
+        "Draco ya notó tu esfuerzo. Sigue avanzando poco a poco.",
+        "¡Primeros pasos completados! Ahora sigue alimentando la energía de Draco.",
+        "La misión de hoy ya empezó. Draco camina contigo en este reto."
+    )
+
+    val halfXpPhrases = listOf(
+        "¡Muy bien! Draco ya tiene más de la mitad de su energía diaria. Sigue así 🐉✨",
+        "Draco está orgulloso de ti. Ya pasaste la mitad del camino.",
+        "Vas excelente. Estás muy cerca de completar la misión del día.",
+        "Draco está feliz: tu constancia está dando resultados.",
+        "¡Qué buen avance! Solo falta un poco más para que Draco complete su energía.",
+        "Draco ya está celebrando tu progreso. No te detengas ahora.",
+        "Estás en la mejor parte de la misión. Un último esfuerzo y lo logras.",
+        "Draco siente que hoy será un día exitoso. Sigue sumando XP."
+    )
+
+    val completedPhrases = listOf(
+        "¡Felicidades! Completaste tu meta diaria. Hoy Draco podrá dormir tranquilo 😴🐉",
+        "Misión cumplida. Draco está feliz y orgulloso de tu esfuerzo.",
+        "¡Excelente trabajo! Hoy le diste a Draco toda la energía que necesitaba.",
+        "Draco puede descansar feliz: cumpliste tu objetivo diario.",
+        "¡Meta alcanzada! Tu esfuerzo de hoy hizo sonreír a Draco.",
+        "Draco está celebrando contigo. Hoy completaste la aventura diaria.",
+        "¡Lo lograste! Draco cerrará el día con energía completa.",
+        "Hoy Draco duerme tranquilo porque tú cumpliste tu misión de aprendizaje."
+    )
+
+    return when {
+        dailyXp <= 0 -> noXpPhrases.random()
+        progress < 0.5f -> lowXpPhrases.random()
+        progress < 1f -> halfXpPhrases.random()
+        else -> completedPhrases.random()
+    }
+}
 @Composable
 fun MejorButton(text: String, icon: Int, color: Color, onClick: () -> Unit) {
     Button(
