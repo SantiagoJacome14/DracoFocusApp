@@ -218,13 +218,6 @@ fun MyProfileScreen(
                         isChecked = soundEnabled,
                         onCheckedChange = { soundEnabled = it }
                     )
-
-                    SettingCard(
-                        icon = Icons.Default.Brightness4,
-                        title = "Color del Tema",
-                        description = "Personaliza tu experiencia",
-                        showSwitch = false
-                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
