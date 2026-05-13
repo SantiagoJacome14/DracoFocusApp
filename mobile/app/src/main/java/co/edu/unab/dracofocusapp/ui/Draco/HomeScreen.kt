@@ -89,10 +89,12 @@ fun HomeScreen(navController: NavController) {
                     modifier = Modifier.padding(20.dp)
                 ) {
                     val selectedVideo = remember(dailyProgress) {
-                        if (dailyProgress > 0.5f) {
-                            listOf(R.raw.dracoidle, R.raw.dracochilltomandocafe).random()
+                        if (dailyProgress >= 0.9f) {
+                            R.raw.dracomuymuyfeliz
+                        } else if (dailyProgress >= 0.5f) {
+                            listOf(R.raw.dracoidleidle, R.raw.dracotomandocafe).random()
                         } else {
-                            listOf(R.raw.dracotriste, R.raw.dracotristongo).random()
+                            R.raw.dracomuitotriste
                         }
                     }
 
@@ -274,7 +276,7 @@ fun MejorButton(text: String, icon: Int, color: Color, onClick: () -> Unit) {
 }
 @Composable
 fun DracoVideo(videoRes: Int) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
 
     val exoPlayer = remember(videoRes) {
         ExoPlayer.Builder(context).build().apply {
@@ -286,7 +288,7 @@ fun DracoVideo(videoRes: Int) {
         }
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(exoPlayer) {
         onDispose {
             exoPlayer.release()
         }
@@ -295,9 +297,11 @@ fun DracoVideo(videoRes: Int) {
     AndroidView(
         factory = {
             PlayerView(it).apply {
-                player = exoPlayer
                 useController = false
             }
+        },
+        update = { playerView ->
+            playerView.player = exoPlayer
         },
         modifier = Modifier.size(180.dp)
     )
