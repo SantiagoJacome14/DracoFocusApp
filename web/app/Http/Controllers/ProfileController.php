@@ -246,6 +246,32 @@ class ProfileController extends Controller
         ));
     }
 
+    public function update(Request $request)
+    {
+        $validated = $request->validate([
+            'bio' => ['nullable', 'string', 'max:500'],
+            'daily_goal' => ['required', 'integer', 'in:50,100,200,500'],
+        ]);
+
+        auth()->user()->update($validated);
+
+        return back()->with('success', 'Configuración actualizada.');
+    }
+
+    public function updatePhoto(Request $request)
+    {
+        $request->validate([
+            'photo' => ['required', 'image', 'max:2048'],
+        ]);
+
+        if ($request->hasFile('photo')) {
+            $path = $request->file('photo')->store('profile-photos', 'public');
+            auth()->user()->update(['avatar' => '/storage/' . $path]);
+        }
+
+        return back()->with('success', 'Foto de perfil actualizada.');
+    }
+
     // ── Teacher-specific profile methods ─────────────────────────────────────
 
     public function editTeacherProfile()

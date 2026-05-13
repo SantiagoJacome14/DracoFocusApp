@@ -33,6 +33,11 @@ Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // New Views
+    Route::get('/lecciones', [DashboardController::class, 'lecciones'])->name('lecciones');
+    Route::get('/avances', [DashboardController::class, 'avances'])->name('avances');
+    Route::get('/configuracion', [DashboardController::class, 'configuracion'])->name('configuracion');
+
     // Leave Impersonation
     Route::post('/impersonate/leave', [AdminController::class, 'leaveImpersonation'])->name('impersonate.leave');
 
@@ -44,6 +49,8 @@ Route::middleware('auth')->group(function () {
 
     // User Profile
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.update-photo');
 
     // Logout
     Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');

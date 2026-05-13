@@ -218,10 +218,10 @@
             <div class="text-xs font-bold uppercase text-slate-300 mb-1 tracking-wider">Nivel <span class="text-white text-lg ml-1">{{ auth()->user()->level ?? 1 }}</span></div>
             <div class="flex items-center justify-between text-xs font-semibold text-slate-300 mb-2">
                 <span>XP</span>
-                <span>{{ auth()->user()->xp ?? 0 }} / {{ auth()->user()->next_level_xp ?? 1000 }}</span>
+                <span>{{ auth()->user()->xp }} / 1000</span>
             </div>
             <div class="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden border border-slate-600/50 relative">
-                <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 bg-stripe-pattern absolute left-0 top-0" style="width: {{ min((auth()->user()->xp ?? 0) / (auth()->user()->next_level_xp ?? 1000) * 100, 100) }}%"></div>
+                <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 bg-stripe-pattern absolute left-0 top-0" style="width: {{ ($auth_user = auth()->user())->xp / 10 }}%"></div>
             </div>
         </div>
 
@@ -233,12 +233,12 @@
                 Dashboard
             </a>
 
-            <a href="#" class="nav-link {{ request()->routeIs('lessons.*') ? 'active' : '' }}">
+            <a href="{{ route('lecciones') }}" class="nav-link {{ request()->routeIs('lecciones') ? 'active' : '' }}">
                 <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 Lecciones
             </a>
 
-            <a href="#" class="nav-link {{ request()->routeIs('progress.*') ? 'active' : '' }}">
+            <a href="{{ route('avances') }}" class="nav-link {{ request()->routeIs('avances') ? 'active' : '' }}">
                 <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
                 Avances
             </a>
@@ -248,7 +248,7 @@
                 Mi Perfil
             </a>
 
-            <a href="#" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
+            <a href="{{ route('configuracion') }}" class="nav-link {{ request()->routeIs('configuracion') ? 'active' : '' }}">
                 <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 Configuración
             </a>
@@ -270,19 +270,22 @@
             @endif
         </nav>
 
-        <div class="sidebar-footer">
+        <div class="sidebar-footer mt-auto pt-6 border-t border-slate-700/50">
             <!-- User Info -->
-            <div class="flex items-center gap-3 px-2 py-2 mb-3">
-                <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0">
-                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+            <div class="flex items-center gap-3 mb-6 px-2">
+                <div class="relative group">
+                    @if(auth()->user()->avatar)
+                        <img src="{{ auth()->user()->avatar }}" alt="{{ auth()->user()->name }}" class="w-10 h-10 rounded-full object-cover border border-slate-600">
+                    @else
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 border border-emerald-400/30 flex items-center justify-center text-white font-black text-sm">
+                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                        </div>
+                    @endif
+                    <div class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-900"></div>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-slate-200 truncate">{{ auth()->user()->name }}</p>
-                    <p class="text-xs text-slate-500 font-medium truncate">
-                        @if(auth()->user()->isAdmin()) Admin
-                        @elseif(auth()->user()->isTeacher()) Profesor
-                        @else Estudiante @endif
-                    </p>
+                    <p class="text-sm font-bold text-white truncate">{{ auth()->user()->name }}</p>
+                    <p class="text-[10px] font-black text-emerald-400 uppercase tracking-widest opacity-80">Nivel {{ auth()->user()->level ?? 1 }}</p>
                 </div>
             </div>
 

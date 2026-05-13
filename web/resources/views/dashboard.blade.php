@@ -82,11 +82,17 @@
                 </div>
 
                 <!-- Avatar / acceso al perfil -->
-                <a href="{{ route('profile') }}" class="group relative flex-shrink-0">
-                    <div class="w-14 h-14 bg-gradient-to-br from-draco-emerald to-emerald-700 rounded-2xl border-2 border-draco-gold/60 flex items-center justify-center shadow-lg relative group-hover:border-draco-gold transition-all duration-200 group-hover:scale-105">
-                        <span class="text-2xl">🐉</span>
+                <a href="{{ route('configuracion') }}" class="group relative flex-shrink-0">
+                    <div class="w-14 h-14 rounded-full border-2 border-draco-gold/60 flex items-center justify-center shadow-lg relative group-hover:border-draco-gold transition-all duration-200 group-hover:scale-105 overflow-hidden bg-slate-900">
+                        @if($user['avatar'])
+                            <img src="{{ $user['avatar'] }}" alt="{{ $user['name'] }}" class="w-full h-full object-cover">
+                        @else
+                            <div class="w-full h-full bg-gradient-to-br from-draco-emerald to-emerald-700 flex items-center justify-center text-white font-black text-xl">
+                                {{ strtoupper(substr($user['name'], 0, 1)) }}
+                            </div>
+                        @endif
 
-                        <div class="absolute -bottom-1.5 -right-1.5 bg-gradient-to-r from-orange-400 to-red-500 rounded-lg w-6 h-6 flex items-center justify-center border-2 border-slate-900 text-xs font-bold text-white shadow-sm">
+                        <div class="absolute -bottom-0.5 -right-0.5 bg-gradient-to-r from-orange-400 to-red-500 rounded-full w-6 h-6 flex items-center justify-center border-2 border-slate-900 text-[10px] font-black text-white shadow-sm z-20">
                             {{ $user['current_streak'] }}
                         </div>
                     </div>
@@ -100,7 +106,7 @@
 
         <!-- Quick Stats Row -->
         <div class="grid grid-cols-4 gap-5 mb-8">
-            <div class="glass-card rounded-2xl p-5 animate-fade-in-up group hover:border-draco-emerald/40 transition-all cursor-default">
+            <a href="{{ route('avances') }}" class="glass-card rounded-2xl p-5 animate-fade-in-up group hover:border-draco-emerald/40 transition-all cursor-pointer no-underline block">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">XP Total</p>
@@ -108,8 +114,8 @@
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-draco-gold/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">⭐</div>
                 </div>
-            </div>
-            <div class="glass-card rounded-2xl p-5 animate-fade-in-up animate-delay-1 group hover:border-orange-500/40 transition-all cursor-default">
+            </a>
+            <a href="{{ route('avances') }}" class="glass-card rounded-2xl p-5 animate-fade-in-up animate-delay-1 group hover:border-orange-500/40 transition-all cursor-pointer no-underline block">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Racha Actual</p>
@@ -117,7 +123,7 @@
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🔥</div>
                 </div>
-            </div>
+            </a>
             <div class="glass-card rounded-2xl p-5 animate-fade-in-up animate-delay-2 group hover:border-sky-500/40 transition-all cursor-default">
                 <div class="flex items-center justify-between">
                     <div>
@@ -127,7 +133,7 @@
                     <div class="w-12 h-12 rounded-xl bg-sky-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🎯</div>
                 </div>
             </div>
-            <div class="glass-card rounded-2xl p-5 animate-fade-in-up animate-delay-3 group hover:border-purple-500/40 transition-all cursor-default">
+            <a href="{{ route('lecciones') }}" class="glass-card rounded-2xl p-5 animate-fade-in-up animate-delay-3 group hover:border-purple-500/40 transition-all cursor-pointer no-underline block">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Lecciones</p>
@@ -135,12 +141,12 @@
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📚</div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- ── Learning Path Section ── -->
         <div class="glass-card rounded-3xl p-8 animate-fade-in-up animate-delay-3">
-            <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center justify-between mb-8 relative z-20 bg-slate-900/40 backdrop-blur-md p-4 rounded-2xl border border-slate-700/30">
                 <div>
                     <h2 class="text-xl font-extrabold text-white flex items-center gap-3">
                         <span class="text-2xl">🗺️</span> Tu Camino de Aprendizaje
@@ -177,19 +183,28 @@
 
                         <div class="relative z-10 flex flex-col items-center text-center group {{ $mobileOffset }} md:translate-x-0">
                             
-                            {{-- Active Node (Animado y Brillante) --}}
+                            {{-- Active Node (Simplificado y Estable) --}}
                             <template x-if="lessonData[{{ $index }}]?.status === 'active'">
-                                <a href="{{ route('lesson.show', ['slug' => $node['slug']]) }}" class="block outline-none focus:ring-4 focus:ring-draco-emerald rounded-3xl transition-all duration-300 hover:-translate-y-2">
-                                    <div class="w-[120px] h-[120px] mx-auto bg-gradient-to-br from-draco-emerald to-emerald-700 rounded-3xl flex items-center justify-center relative shadow-[0_8px_0_0_#059669,0_15px_30px_rgba(16,185,129,0.3)] active:shadow-[0_2px_0_0_#059669] active:translate-y-2 transition-all border-2 border-emerald-400/40">
-                                        <span class="text-4xl drop-shadow-lg">{{ $node['emoji'] }}</span>
-                                        <!-- Glow halo -->
-                                        <div class="absolute inset-0 rounded-3xl bg-draco-emerald opacity-20 animate-ping"></div>
-                                    </div>
-                                    <div class="mt-4 bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700 backdrop-blur-sm">
-                                        <span class="text-xs font-black text-draco-emerald-light uppercase tracking-widest">▶ Estudiar</span>
-                                        <h3 class="text-sm font-extrabold text-white mt-1">{{ $node['name'] }}</h3>
-                                    </div>
-                                </a>
+                                <div class="relative z-10">
+                                    <a href="{{ route('lesson.show', ['slug' => $node['slug']]) }}" class="block outline-none transition-transform active:scale-95 group/node">
+                                        <!-- Glow Glow (Discreto) -->
+                                        <div class="absolute inset-0 rounded-3xl bg-draco-emerald/20 animate-pulse blur-lg"></div>
+                                        
+                                        <!-- Main Card -->
+                                        <div class="w-[120px] h-[120px] mx-auto bg-gradient-to-br from-draco-emerald to-emerald-700 rounded-3xl flex items-center justify-center relative shadow-[0_8px_0_0_#059669,0_15px_30px_rgba(16,185,129,0.3)] border-2 border-emerald-400/40 z-10">
+                                            <span class="text-4xl drop-shadow-lg z-20">{{ $node['emoji'] }}</span>
+                                            
+                                            <!-- Ping discreto -->
+                                            <div class="absolute inset-0 rounded-3xl border-2 border-emerald-400/30 animate-ping"></div>
+                                        </div>
+
+                                        <!-- Label -->
+                                        <div class="mt-4 bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700 backdrop-blur-sm relative z-20">
+                                            <span class="text-[10px] font-black text-draco-emerald-light uppercase tracking-widest block mb-0.5">Estudiar ahora</span>
+                                            <h3 class="text-sm font-extrabold text-white leading-tight">{{ $node['name'] }}</h3>
+                                        </div>
+                                    </a>
+                                </div>
                             </template>
 
                             {{-- Completed Node --}}
@@ -280,4 +295,24 @@
         </div>
     </div>
 </div>
+<style>
+    .animate-fade-in-up {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+        height: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(15, 23, 42, 0.1);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(16, 185, 129, 0.3);
+        border-radius: 10px;
+    }
+</style>
 @endsection

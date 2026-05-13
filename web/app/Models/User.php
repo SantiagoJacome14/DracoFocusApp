@@ -96,4 +96,28 @@ class User extends Authenticatable
     {
         return $this->hasMany(Question::class, 'created_by');
     }
+
+    /**
+     * Get the user's current level based on total XP.
+     */
+    public function getLevelAttribute(): int
+    {
+        return floor(($this->total_xp ?? 0) / 1000) + 1;
+    }
+
+    /**
+     * Get the XP needed for the next level.
+     */
+    public function getNextLevelXpAttribute(): int
+    {
+        return $this->level * 1000;
+    }
+
+    /**
+     * Get the current XP progress within the current level.
+     */
+    public function getXpAttribute(): int
+    {
+        return ($this->total_xp ?? 0) % 1000;
+    }
 }
