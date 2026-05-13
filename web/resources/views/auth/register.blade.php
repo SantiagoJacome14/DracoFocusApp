@@ -135,7 +135,7 @@
         </div>
 
         <!-- Register Card -->
-        <div class="auth-card rounded-3xl p-8">
+        <div class="auth-card rounded-3xl p-5 sm:p-8">
             <div class="flex items-center justify-between mb-1">
                 <h2 class="text-xl font-extrabold text-white">Crear Cuenta</h2>
                 <div class="role-badge rounded-xl px-3 py-1.5 flex items-center gap-1.5">

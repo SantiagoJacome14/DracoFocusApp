@@ -98,11 +98,24 @@
             border-top: 1px solid rgba(51, 65, 85, 0.4);
         }
 
-        /* ── Main Content ── */
+        /* ── Main Content — desktop ── */
         .draco-main {
             margin-left: 260px;
             min-height: 100vh;
             background: #0f172a;
+        }
+
+        /* ── Mobile: hide sidebar, remove margin ── */
+        @media (max-width: 767px) {
+            .draco-sidebar {
+                transform: translateX(-100%);
+            }
+            .draco-sidebar.open {
+                transform: translateX(0);
+            }
+            .draco-main {
+                margin-left: 0;
+            }
         }
 
         /* ── Ambient glow effect ── */
@@ -159,13 +172,30 @@
         }
     </style>
 </head>
-<body class="bg-slate-900 text-white antialiased min-h-screen">
+<body class="bg-slate-900 text-white antialiased min-h-screen"
+      x-data="{ sidebarOpen: false }"
+      @keydown.escape.window="sidebarOpen = false">
+
+    <!-- ── Mobile overlay ── -->
+    <div x-show="sidebarOpen"
+         x-transition.opacity.duration.200ms
+         @click="sidebarOpen = false"
+         class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-30 md:hidden"
+         style="display: none;"></div>
 
     <!-- ── Sidebar Navigation ── -->
-    <aside class="draco-sidebar">
+    <aside class="draco-sidebar" :class="{ 'open': sidebarOpen }">
         <div class="sidebar-logo">
             <div class="logo-icon">🐉</div>
             <h1>Draco</h1>
+            <!-- Close button (mobile only) -->
+            <button @click="sidebarOpen = false"
+                    class="ml-auto text-slate-500 hover:text-white transition md:hidden"
+                    aria-label="Cerrar menú">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
         </div>
 
         <nav>
@@ -229,8 +259,24 @@
 
     <!-- ── Main Content ── -->
     <main class="draco-main relative">
+
+        <!-- Mobile top bar with hamburger -->
+        <div class="md:hidden flex items-center justify-between px-4 py-3 bg-slate-900/95 border-b border-slate-700/50 sticky top-0 z-20 backdrop-blur-md">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center text-sm">🐉</div>
+                <span class="text-base font-extrabold bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent">Draco</span>
+            </div>
+            <button @click="sidebarOpen = true"
+                    class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-700/60 transition"
+                    aria-label="Abrir menú">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+
         @if(session()->has('impersonated_by'))
-        <div class="bg-amber-500/20 border-b border-amber-500/40 px-6 py-2 flex items-center justify-between text-amber-200 text-sm font-semibold sticky top-0 z-50 backdrop-blur-md">
+        <div class="bg-amber-500/20 border-b border-amber-500/40 px-4 sm:px-6 py-2 flex items-center justify-between text-amber-200 text-sm font-semibold sticky top-0 z-50 backdrop-blur-md">
             <div class="flex items-center gap-2">
                 <span>🕵️‍♂️</span> Estás navegando como <strong>{{ auth()->user()->name }}</strong>.
             </div>
@@ -248,7 +294,7 @@
 
     <!-- Toast Notification using Alpine -->
     @if(session('success'))
-        <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show" 
+        <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show"
              x-transition.opacity.duration.500ms
              class="fixed bottom-6 right-6 bg-gradient-to-r from-draco-emerald to-draco-emerald-light text-slate-900 px-6 py-3 rounded-2xl font-bold shadow-2xl z-50 flex items-center gap-2">
             <span>✅</span> {{ session('success') }}

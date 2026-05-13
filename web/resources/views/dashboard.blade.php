@@ -22,58 +22,60 @@
     }
 }">
     <!-- ── Top Header Bar ── -->
-    <div class="px-8 py-6 border-b border-slate-700/50 bg-gradient-to-r from-slate-800/80 via-slate-900/50 to-slate-800/80" style="backdrop-filter: blur(20px);">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div>
-                @if(session('error'))
-                <div class="bg-red-500/15 border border-red-500/40 text-red-400 px-4 py-2.5 rounded-2xl mb-4 text-sm font-semibold flex items-center gap-2">
-                    <span>⚠️</span> {{ session('error') }}
-                </div>
-                @endif
-                @if(session('success'))
-                <div class="bg-draco-emerald/15 border border-draco-emerald/40 text-draco-emerald-light px-4 py-2.5 rounded-2xl mb-4 text-sm font-semibold flex items-center gap-2">
-                    <span>🎉</span> {{ session('success') }}
-                </div>
-                @endif
-
-                <h1 class="text-3xl font-extrabold text-white tracking-tight">¡Hola, {{ $user['name'] }}!</h1>
-                <p class="text-draco-emerald-light font-semibold opacity-90 mt-1">¡Bienvenido de nuevo! Continúa tu aventura de aprendizaje.</p>
+    <div class="px-4 sm:px-8 py-4 sm:py-6 border-b border-slate-700/50 bg-gradient-to-r from-slate-800/80 via-slate-900/50 to-slate-800/80" style="backdrop-filter: blur(20px);">
+        <div class="max-w-7xl mx-auto">
+            @if(session('error'))
+            <div class="bg-red-500/15 border border-red-500/40 text-red-400 px-4 py-2.5 rounded-2xl mb-4 text-sm font-semibold flex items-center gap-2">
+                <span>⚠️</span> {{ session('error') }}
             </div>
-            <div class="flex items-center gap-6">
-                <!-- Daily Goal Progress (inline in header) -->
-                <div class="glass-card rounded-2xl px-5 py-3 min-w-[280px] animate-fade-in-up">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">🎯 Objetivo Diario</span>
-                        <span class="text-sm font-bold text-draco-gold">{{ $user['goal_progress'] }} / {{ $user['daily_goal'] }} XP</span>
-                    </div>
-                    <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden relative border border-slate-700 p-0.5">
-                        @php $percentage = min(100, ($user['goal_progress'] / $user['daily_goal']) * 100); @endphp
-                        <div class="bg-gradient-to-r from-draco-emerald to-draco-emerald-light h-full rounded-full transition-all duration-1000 relative" style="width: {{ $percentage }}%">
-                            <div class="absolute top-0 left-0 right-0 bottom-0 overflow-hidden rounded-full">
-                                <div class="w-full h-full opacity-30 bg-stripe-pattern"></div>
+            @endif
+            @if(session('success'))
+            <div class="bg-draco-emerald/15 border border-draco-emerald/40 text-draco-emerald-light px-4 py-2.5 rounded-2xl mb-4 text-sm font-semibold flex items-center gap-2">
+                <span>🎉</span> {{ session('success') }}
+            </div>
+            @endif
+
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">¡Hola, {{ $user['name'] }}!</h1>
+                    <p class="text-draco-emerald-light font-semibold opacity-90 mt-1 text-sm sm:text-base">¡Bienvenido de nuevo! Continúa tu aventura de aprendizaje.</p>
+                </div>
+                <div class="flex items-center gap-3 sm:gap-6 w-full sm:w-auto">
+                    <!-- Daily Goal Progress -->
+                    <div class="glass-card rounded-2xl px-4 py-3 flex-1 sm:flex-none sm:min-w-[260px] animate-fade-in-up">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">🎯 Objetivo</span>
+                            <span class="text-xs sm:text-sm font-bold text-draco-gold">{{ $user['goal_progress'] }} / {{ $user['daily_goal'] }} XP</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden relative border border-slate-700 p-0.5">
+                            @php $percentage = min(100, ($user['goal_progress'] / $user['daily_goal']) * 100); @endphp
+                            <div class="bg-gradient-to-r from-draco-emerald to-draco-emerald-light h-full rounded-full transition-all duration-1000 relative" style="width: {{ $percentage }}%">
+                                <div class="absolute top-0 left-0 right-0 bottom-0 overflow-hidden rounded-full">
+                                    <div class="w-full h-full opacity-30 bg-stripe-pattern"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Avatar -->
-                <a href="{{ route('profile') }}" class="group relative flex-shrink-0">
-                    <div class="w-14 h-14 bg-gradient-to-br from-draco-emerald to-emerald-700 rounded-2xl border-2 border-draco-gold/60 flex items-center justify-center shadow-lg relative group-hover:border-draco-gold transition-all duration-200 group-hover:scale-105">
-                        <span class="text-2xl">🐉</span>
-                        <div class="absolute -bottom-1.5 -right-1.5 bg-gradient-to-r from-orange-400 to-red-500 rounded-lg w-6 h-6 flex items-center justify-center border-2 border-slate-900 text-xs font-bold text-white shadow-sm">
-                            {{ $user['current_streak'] }}
+                    <!-- Avatar -->
+                    <a href="{{ route('profile') }}" class="group relative flex-shrink-0">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-draco-emerald to-emerald-700 rounded-2xl border-2 border-draco-gold/60 flex items-center justify-center shadow-lg relative group-hover:border-draco-gold transition-all duration-200 group-hover:scale-105">
+                            <span class="text-xl sm:text-2xl">🐉</span>
+                            <div class="absolute -bottom-1.5 -right-1.5 bg-gradient-to-r from-orange-400 to-red-500 rounded-lg w-6 h-6 flex items-center justify-center border-2 border-slate-900 text-xs font-bold text-white shadow-sm">
+                                {{ $user['current_streak'] }}
+                            </div>
                         </div>
-                    </div>
-                </a>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- ── Main Content Area ── -->
-    <div class="max-w-7xl mx-auto px-8 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-8 py-5 sm:py-8">
 
         <!-- Quick Stats Row -->
-        <div class="grid grid-cols-4 gap-5 mb-8">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5 mb-6 sm:mb-8">
             <div class="glass-card rounded-2xl p-5 animate-fade-in-up group hover:border-draco-emerald/40 transition-all cursor-default">
                 <div class="flex items-center justify-between">
                     <div>
@@ -113,26 +115,26 @@
         </div>
 
         <!-- ── Learning Path Section ── -->
-        <div class="glass-card rounded-3xl p-8 animate-fade-in-up animate-delay-3">
-            <div class="flex items-center justify-between mb-8">
+        <div class="glass-card rounded-3xl p-4 sm:p-8 animate-fade-in-up animate-delay-3">
+            <div class="flex items-center justify-between mb-6 sm:mb-8">
                 <div>
-                    <h2 class="text-xl font-extrabold text-white flex items-center gap-3">
+                    <h2 class="text-lg sm:text-xl font-extrabold text-white flex items-center gap-3">
                         <span class="text-2xl">🗺️</span> Tu Camino de Aprendizaje
                     </h2>
-                    <p class="text-sm text-slate-400 mt-1">Completa cada módulo para desbloquear el siguiente</p>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">Completa cada módulo para desbloquear el siguiente</p>
                 </div>
-                <button @click="showProgressModal = true" class="flex items-center gap-2 bg-slate-700/50 hover:bg-slate-700 px-4 py-2 rounded-xl text-sm font-bold text-slate-300 hover:text-white transition-all border border-slate-600/50">
+                <button @click="showProgressModal = true" class="flex items-center gap-2 bg-slate-700/50 hover:bg-slate-700 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-300 hover:text-white transition-all border border-slate-600/50 flex-shrink-0">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13h-13L12 6.5z"/></svg>
-                    Ver Progreso
+                    <span class="hidden sm:inline">Ver </span>Progreso
                 </button>
             </div>
 
             <!-- Horizontal Scrollable Path -->
-            <div class="relative">
+            <div class="relative overflow-x-auto pb-2">
                 <!-- Horizontal connector line -->
                 <div class="absolute top-[60px] left-0 right-0 h-1 bg-slate-700/60 rounded-full z-0" style="margin: 0 60px;"></div>
 
-                <div class="grid gap-6" style="grid-template-columns: repeat({{ count($lessonPath) }}, minmax(140px, 1fr));">
+                <div class="grid gap-4 sm:gap-6" style="grid-template-columns: repeat({{ count($lessonPath) }}, minmax(120px, 1fr)); min-width: {{ count($lessonPath) * 130 }}px;">
                     @foreach($lessonPath as $index => $node)
                     <div class="relative z-10 flex flex-col items-center text-center group">
 
