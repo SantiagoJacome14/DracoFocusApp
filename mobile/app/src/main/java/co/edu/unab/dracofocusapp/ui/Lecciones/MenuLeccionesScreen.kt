@@ -16,23 +16,6 @@ import androidx.navigation.NavController
 @Composable
 fun MenuLeccionesScreen(navController: NavController) {
 
-    var showComingSoon by remember { mutableStateOf(false) }
-
-    if (showComingSoon) {
-        AlertDialog(
-            onDismissRequest = { showComingSoon = false },
-            title = { Text("Modo Grupal") },
-            text = { Text("Próximamente: juega con tus compañeros en salas Draco.") },
-            confirmButton = {
-                TextButton(onClick = { showComingSoon = false }) {
-                    Text("Entendido", color = Color(0xFF22DDF2))
-                }
-            },
-            containerColor = Color(0xFF1C2541),
-            titleContentColor = Color(0xFF22DDF2),
-            textContentColor = Color(0xFFB3B3B3),
-        )
-    }
 
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
@@ -84,13 +67,11 @@ fun MenuLeccionesScreen(navController: NavController) {
                     .height(50.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF22DDF2).copy(alpha = 0.35f),
-                    contentColor = Color.White.copy(alpha = 0.5f),
+                    containerColor = Color(0xFF1A3A5C),
+                    contentColor = Color.White,
                 )
             ) {
                 Text("Modo en Grupo", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.width(8.dp))
-                Text("(Pronto)", fontSize = 13.sp, fontWeight = FontWeight.Normal)
             }
 
             Spacer(modifier = Modifier.height(32.dp))

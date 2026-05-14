@@ -45,4 +45,17 @@ interface ApiService {
 
     @POST("api/museum/rewards/claim")
     suspend fun claimMuseumReward(@Body request: MuseumClaimRequest): Response<MuseumClaimResponse>
+
+    // ─── Group Mode endpoints ─────────────────────────────────────────────────
+    @POST("api/groups")
+    suspend fun createGroup(@Body request: CreateGroupRequest): Response<GroupSessionResponse>
+
+    @POST("api/groups/join")
+    suspend fun joinGroup(@Body request: JoinGroupRequest): Response<GroupSessionResponse>
+
+    @GET("api/groups/{code}")
+    suspend fun getGroup(@Path("code") code: String): Response<GroupSessionResponse>
+
+    @GET("api/groups/{code}/members")
+    suspend fun getGroupMembers(@Path("code") code: String): Response<List<GroupMemberDto>>
 }

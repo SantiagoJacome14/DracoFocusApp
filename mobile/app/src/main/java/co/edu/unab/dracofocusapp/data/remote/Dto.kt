@@ -142,3 +142,32 @@ data class ExerciseDto(
     fun dataInt(key: String): Int? =
         (data?.get(key) as? Double)?.toInt() ?: (data?.get(key) as? Int)
 }
+
+// ─── Group Mode DTOs ─────────────────────────────────────────────────────────
+
+data class CreateGroupRequest(
+    val title: String,
+    @SerializedName("lesson_slug") val lessonSlug: String? = null
+)
+
+data class JoinGroupRequest(
+    val code: String
+)
+
+data class GroupMemberDto(
+    val id: Int,
+    val name: String,
+    val email: String,
+    val role: String? = null,
+    @SerializedName("joined_at") val joinedAt: String? = null
+)
+
+data class GroupSessionResponse(
+    val id: Int,
+    val code: String,
+    val title: String,
+    val status: String,                          // "waiting" | "active" | "completed"
+    @SerializedName("lesson_slug") val lessonSlug: String? = null,
+    @SerializedName("created_at") val createdAt: String? = null,
+    val members: List<GroupMemberDto>? = null
+)
