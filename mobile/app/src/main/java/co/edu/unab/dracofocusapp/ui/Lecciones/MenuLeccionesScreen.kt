@@ -78,7 +78,7 @@ fun MenuLeccionesScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { showComingSoon = true },
+                onClick = { navController.navigate(co.edu.unab.dracofocusapp.navigation.AppRoutes.LECCIONES_GRUPALES) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
