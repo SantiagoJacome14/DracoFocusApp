@@ -119,13 +119,22 @@ fun LeccionesGrupalesScreen(
                         successMessage = null
                         isLoading      = true
                         scope.launch {
+                            isLoading = true
+                            errorMessage = null
+                            successMessage = null
+
+                            var codeToNavigate: String? = null
+
                             try {
                                 val response = apiService.createGroup(
                                     CreateGroupRequest(title = "Sala Draco")
                                 )
+
                                 if (response.isSuccessful && response.body() != null) {
-                                    groupSession   = response.body()
+                                    groupSession = response.body()
                                     successMessage = "¡Grupo creado! Comparte el código con tus compañeros."
+
+                                    codeToNavigate = response.body()!!.code
                                 } else {
                                     val errBody = response.errorBody()?.string()
                                     errorMessage = parseLaravelError(errBody)
@@ -135,6 +144,10 @@ fun LeccionesGrupalesScreen(
                                 errorMessage = "Sin conexión: ${e.message}"
                             } finally {
                                 isLoading = false
+                            }
+
+                            codeToNavigate?.let { code ->
+                                navController.navigate("seleccion_rol_grupo/$code")
                             }
                         }
                     },
@@ -209,6 +222,9 @@ fun LeccionesGrupalesScreen(
                                     groupSession   = response.body()
                                     successMessage = "Te uniste al grupo correctamente."
                                     joinCode       = ""
+                                    // Navegar a selección de rol
+                                    val code = response.body()!!.code
+                                    navController.navigate("seleccion_rol_grupo/$code")
                                 } else {
                                     val errBody = response.errorBody()?.string()
                                     errorMessage = parseLaravelError(errBody)

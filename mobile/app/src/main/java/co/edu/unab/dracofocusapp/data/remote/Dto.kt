@@ -169,5 +169,10 @@ data class GroupSessionResponse(
     val status: String,                          // "waiting" | "active" | "completed"
     @SerializedName("lesson_slug") val lessonSlug: String? = null,
     @SerializedName("created_at") val createdAt: String? = null,
+    @SerializedName("my_role") val myRole: String? = null,  // "analyst" | "programmer" | "leader" | null
     val members: List<GroupMemberDto>? = null
+)
+
+data class SetGroupRoleRequest(
+    val role: String   // "analyst" | "programmer"
 )

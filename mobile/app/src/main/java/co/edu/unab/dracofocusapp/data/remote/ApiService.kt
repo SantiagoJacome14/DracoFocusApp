@@ -58,4 +58,10 @@ interface ApiService {
 
     @GET("api/groups/{code}/members")
     suspend fun getGroupMembers(@Path("code") code: String): Response<List<GroupMemberDto>>
+
+    @POST("api/groups/{code}/role")
+    suspend fun setGroupRole(
+        @Path("code") code: String,
+        @Body request: SetGroupRoleRequest
+    ): Response<GroupSessionResponse>
 }
