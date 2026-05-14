@@ -176,3 +176,13 @@ data class GroupSessionResponse(
 data class SetGroupRoleRequest(
     val role: String   // "analyst" | "programmer"
 )
+
+data class SubmitGroupSubmissionRequest(
+    @SerializedName("submission_type") val submissionType: String,
+    @SerializedName("code_text") val codeText: String? = null
+)
+
+data class GroupSubmissionResponse(
+    val success: Boolean,
+    val message: String
+)

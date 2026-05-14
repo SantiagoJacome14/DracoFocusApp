@@ -31,7 +31,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.edu.unab.dracofocusapp.DracoFocusApplication
+import co.edu.unab.dracofocusapp.data.remote.ApiService
 import co.edu.unab.dracofocusapp.data.remote.GroupSessionResponse
+import co.edu.unab.dracofocusapp.data.remote.SubmitGroupSubmissionRequest
+import kotlinx.coroutines.launch
 
 // ─── Colores Draco ────────────────────────────────────────────────────────────
 private val DracoCyan     = Color(0xFF22DDF2)
@@ -127,7 +130,11 @@ fun GroupExerciseScreen(
 
                     when (myRole) {
                         "analyst" -> AnalystContent(onFinish = { showSuccess = true })
-                        "programmer" -> ProgrammerContent(onFinish = { showSuccess = true })
+                        "programmer" -> ProgrammerContent(
+                            apiService = apiService,
+                            groupCode = groupCode,
+                            onFinish = { showSuccess = true }
+                        )
                         else -> InvalidRoleState(onBack = onBack)
                     }
                 }
@@ -139,10 +146,10 @@ fun GroupExerciseScreen(
             AlertDialog(
                 onDismissRequest = { showSuccess = false },
                 containerColor = DracoCard,
-                title = { Text("¡Buen trabajo!", color = DracoCyan) },
+                title = { Text("¡Excelente trabajo en equipo!", color = DracoCyan) },
                 text = { 
                     Text(
-                        "Draco guardará esta entrega cuando activemos el envío al profesor.",
+                        "Draco está orgulloso de tu esfuerzo. Tu profesor revisará la actividad y les dará retroalimentación pronto.",
                         color = Color.White
                     ) 
                 },
@@ -202,8 +209,15 @@ private fun AnalystContent(onFinish: () -> Unit) {
 }
 
 @Composable
-private fun ProgrammerContent(onFinish: () -> Unit) {
+private fun ProgrammerContent(
+    apiService: ApiService,
+    groupCode: String,
+    onFinish: () -> Unit
+) {
+    val scope = rememberCoroutineScope()
     var code by remember { mutableStateOf("") }
+    var isSubmitting by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -251,21 +265,60 @@ private fun ProgrammerContent(onFinish: () -> Unit) {
                     unfocusedBorderColor = DracoCyan.copy(alpha = 0.3f),
                     cursorColor = DracoCyan
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                enabled = !isSubmitting
             )
+
+            errorMessage?.let { msg ->
+                Spacer(Modifier.height(8.dp))
+                Text(msg, color = DracoError, fontSize = 13.sp)
+            }
 
             Spacer(Modifier.height(24.dp))
             
             Button(
-                onClick = onFinish,
+                onClick = {
+                    if (code.isBlank()) {
+                        errorMessage = "El código no puede estar vacío."
+                        return@Button
+                    }
+                    errorMessage = null
+                    isSubmitting = true
+                    
+                    scope.launch {
+                        try {
+                            val request = SubmitGroupSubmissionRequest(
+                                submissionType = "python_code",
+                                codeText = code
+                            )
+                            val response = apiService.submitGroupSubmission(groupCode, request)
+                            if (response.isSuccessful) {
+                                onFinish()
+                            } else {
+                                errorMessage = "Error al guardar: ${response.code()}"
+                            }
+                        } catch (e: Exception) {
+                            errorMessage = "Sin conexión: ${e.message}"
+                        } finally {
+                            isSubmitting = false
+                        }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(12.dp),
+                enabled = !isSubmitting,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = DracoCyan,
-                    contentColor = Color.Black
+                    contentColor = Color.Black,
+                    disabledContainerColor = DracoCyan.copy(alpha = 0.3f),
+                    disabledContentColor = Color.Black.copy(alpha = 0.5f)
                 )
             ) {
-                Text("Finalizar borrador", fontWeight = FontWeight.Bold)
+                if (isSubmitting) {
+                    CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Finalizar entrega", fontWeight = FontWeight.Bold)
+                }
             }
         }
     }

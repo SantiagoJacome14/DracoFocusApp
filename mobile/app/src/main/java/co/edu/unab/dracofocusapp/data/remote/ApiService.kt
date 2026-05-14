@@ -64,4 +64,10 @@ interface ApiService {
         @Path("code") code: String,
         @Body request: SetGroupRoleRequest
     ): Response<GroupSessionResponse>
+
+    @POST("api/groups/{code}/submissions")
+    suspend fun submitGroupSubmission(
+        @Path("code") code: String,
+        @Body request: SubmitGroupSubmissionRequest
+    ): Response<GroupSubmissionResponse>
 }
