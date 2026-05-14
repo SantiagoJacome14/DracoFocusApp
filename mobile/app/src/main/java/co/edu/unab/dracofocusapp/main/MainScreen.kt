@@ -136,6 +136,19 @@ fun BottomNavGraph(
                 onBack = { navController.popBackStack() }
             )
         }
+
+        composable(
+            route = AppRoutes.SELECCION_ROL_GRUPO,
+            arguments = listOf(navArgument("code") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val code = backStackEntry.arguments?.getString("code") ?: return@composable
+
+            SeleccionRolGrupoScreen(
+                groupCode = code,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(AppRoutes.LECCIONES_GRUPALES) {
             LeccionesGrupalesScreen(
                 navController = navController,
