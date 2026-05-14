@@ -219,6 +219,65 @@ class GroupController extends Controller
         return response()->json(['status' => 'completed']);
     }
 
+    /**
+     * POST /api/groups/{code}/role
+     * Allows the authenticated user to choose their role (analyst | programmer).
+     *
+     * Rules:
+     * - Group must exist.
+     * - User must be a member.
+     * - Group must not be completed.
+     * - Role must be "analyst" or "programmer".
+     * - No other member in the group may already hold that role.
+     */
+    public function setRole(Request $request, string $code)
+    {
+        $request->validate([
+            'role' => ['required', 'string', 'in:analyst,programmer'],
+        ]);
+
+        $session = GroupSession::where('code', strtoupper($code))->first();
+
+        if (! $session) {
+            return response()->json(['error' => 'Grupo no encontrado.'], 404);
+        }
+
+        if ($session->status === 'completed') {
+            return response()->json(['error' => 'Este grupo ya terminó su actividad.'], 422);
+        }
+
+        $userId = Auth::id();
+
+        // User must already be a member
+        $myMember = GroupMember::where('group_session_id', $session->id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (! $myMember) {
+            return response()->json(['error' => 'No eres miembro de este grupo.'], 403);
+        }
+
+        $desiredRole = $request->role; // "analyst" or "programmer"
+
+        // Check if another member (not me) already holds this role
+        $roleTaken = GroupMember::where('group_session_id', $session->id)
+            ->where('user_id', '!=', $userId)
+            ->where('role', $desiredRole)
+            ->exists();
+
+        if ($roleTaken) {
+            $label = $desiredRole === 'analyst' ? 'Analista' : 'Programador';
+            return response()->json([
+                'error' => "El rol de {$label} ya fue tomado por otro estudiante.",
+            ], 422);
+        }
+
+        // Save the role
+        $myMember->update(['role' => $desiredRole]);
+
+        return response()->json($this->sessionPayload($session->fresh(), $userId));
+    }
+
     // ─── helpers ───────────────────────────────────────────────────────────────
 
     private function sessionPayload(GroupSession $session, int $userId): array
@@ -238,12 +297,24 @@ class GroupController extends Controller
 
     private function formatMembers($members): array
     {
-        return $members->map(fn ($m) => [
-            'user_id'   => $m->user_id,
-            'name'      => $m->user?->name,
-            'role'      => $m->role,
-            'joined_at' => $m->joined_at?->toIso8601String() ?? now()->toIso8601String(),
-        ])->values()->toArray();
+        return $members->map(function ($m) {
+            $joinedAt = null;
+
+            if ($m->joined_at) {
+                try {
+                    $joinedAt = \Carbon\Carbon::parse($m->joined_at)->toIso8601String();
+                } catch (\Throwable $e) {
+                    $joinedAt = null;
+                }
+            }
+
+            return [
+                'user_id'   => $m->user_id,
+                'name'      => $m->user?->name ?? 'Usuario',
+                'role'      => $m->role,
+                'joined_at' => $joinedAt ?? now()->toIso8601String(),
+            ];
+        })->values()->toArray();
     }
 
     private function generateUniqueCode(): string

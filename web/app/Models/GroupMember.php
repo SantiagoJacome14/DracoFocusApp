@@ -8,6 +8,10 @@ class GroupMember extends Model
 {
     protected $fillable = ['group_session_id', 'user_id', 'role', 'joined_at'];
 
+    protected $casts = [
+        'joined_at' => 'datetime',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
