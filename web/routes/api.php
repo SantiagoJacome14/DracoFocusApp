@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/groups/{code}', [GroupController::class, 'show']);
     Route::get('/groups/{code}/members', [GroupController::class, 'members']);
     Route::post('/groups/{code}/start', [GroupController::class, 'start']);
+    Route::post('/groups/{code}/role', [GroupController::class, 'setRole']);
     Route::post('/groups/{code}/progress', [GroupController::class, 'saveProgress']);
     Route::post('/groups/{code}/complete', [GroupController::class, 'complete']);
 });
