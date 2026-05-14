@@ -19,6 +19,7 @@ import co.edu.unab.dracofocusapp.ui.Lecciones.FeedbackScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.IngresarCodigoGrupoScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.LeccionesGrupalesScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.SeleccionRolGrupoScreen
+import co.edu.unab.dracofocusapp.ui.Lecciones.Grupales.GroupExerciseScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.MenuLeccionesScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.RespuestaLeccionesScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.LeccionRetoScreen
@@ -50,6 +51,8 @@ object AppRoutes {
     const val FEEDBACK_SCREEN = "feedback_screen"
     const val INGRESAR_CODIGO_GRUPO = "ingresar_codigo_grupo/{leccionId}"
     const val SELECCION_ROL_GRUPO = "seleccion_rol_grupo/{code}"
+    const val EJERCICIO_GRUPAL = "ejercicio_grupal/{code}"
+    fun ejercicioGrupal(code: String): String = "ejercicio_grupal/$code"
     const val LECCION_RETO = "leccion_reto/{lessonId}?review={review}"
     const val LECCION_RETO_COOP = "leccion_reto_coop/{lessonId}/{roomId}"
 }
@@ -212,6 +215,18 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val code = backStackEntry.arguments?.getString("code") ?: return@composable
             SeleccionRolGrupoScreen(
+                groupCode = code,
+                onBack = { navController.popBackStack() },
+                onContinueToMission = { navController.navigate(AppRoutes.ejercicioGrupal(code)) }
+            )
+        }
+
+        composable(
+            route = AppRoutes.EJERCICIO_GRUPAL,
+            arguments = listOf(navArgument("code") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val code = backStackEntry.arguments?.getString("code") ?: return@composable
+            GroupExerciseScreen(
                 groupCode = code,
                 onBack = { navController.popBackStack() }
             )

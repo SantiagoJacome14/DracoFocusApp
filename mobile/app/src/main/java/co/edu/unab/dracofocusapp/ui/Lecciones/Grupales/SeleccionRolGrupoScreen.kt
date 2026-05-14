@@ -70,6 +70,7 @@ private val ROLES = listOf(
 fun SeleccionRolGrupoScreen(
     groupCode: String,
     onBack: () -> Unit,
+    onContinueToMission: () -> Unit = {},
 ) {
     val context    = LocalContext.current
     val app        = context.applicationContext as DracoFocusApplication
@@ -238,6 +239,21 @@ fun SeleccionRolGrupoScreen(
                         text    = "✓ Tu rol \"$myLabel\" ha sido guardado. Espera a que el grupo esté listo.",
                         isError = false,
                     )
+
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = onContinueToMission,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = DracoCyan,
+                            contentColor   = Color.Black
+                        )
+                    ) {
+                        Text("Continuar a la misión", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
                 }
 
                 // Lista de miembros con sus roles actuales
