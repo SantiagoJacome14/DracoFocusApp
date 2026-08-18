@@ -62,9 +62,4 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 EXPOSE 80
 
-CMD php artisan optimize:clear && \
-    php artisan config:clear && \
-    php artisan view:clear && \
-    php artisan route:clear && \
-    php artisan migrate --force && \
-    apache2-foreground
+CMD ["apache2-foreground"]
