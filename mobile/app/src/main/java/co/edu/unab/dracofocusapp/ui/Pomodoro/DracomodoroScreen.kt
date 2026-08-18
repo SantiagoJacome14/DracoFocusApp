@@ -15,63 +15,40 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import co.edu.unab.dracofocusapp.R
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.delay
+import co.edu.unab.dracofocusapp.viewmodel.DracomodoroViewModel
+import co.edu.unab.dracofocusapp.viewmodel.PomodoroMode
+import co.edu.unab.dracofocusapp.viewmodel.PomodoroStatus
 
 @Composable
 fun DracomodoroScreen(
-    onBack: () -> Unit = {},
-    navController: NavController? = null
+    viewModel: DracomodoroViewModel,
+    onBack: () -> Unit = {}
 ) {
-    var workMinutes by remember { mutableStateOf(25) }
-    var restMinutes by remember { mutableStateOf(5) }
-    var secondsLeft by remember { mutableStateOf(workMinutes * 60) }
-    var isRunning by remember { mutableStateOf(false) }
-    var isWorkMode by remember { mutableStateOf(true) }
+    val uiState = viewModel.uiState
+    
+    // Evitar parpadeos de carga inicial
+    if (!uiState.isInitialized) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Color(0xFF22DDF2))
+        }
+        return
+    }
+
+    val isWorkMode = uiState.mode == PomodoroMode.WORK
+    val isRunning = uiState.status == PomodoroStatus.RUNNING
 
     val circleSize by animateDpAsState(
         targetValue = if (isWorkMode) 220.dp else 250.dp,
-        animationSpec = tween(durationMillis = 800)
+        animationSpec = tween(durationMillis = 800),
+        label = "circleSize"
     )
 
-    fun registrarEstudioEnFirebase() {
-        val db = FirebaseFirestore.getInstance()
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val usuarioRef = db.collection("usuarios_estadisticas").document(userId)
-        usuarioRef.update(
-            mapOf(
-                "cantidad_estudio" to FieldValue.increment(1),
-                "minutos_estudiados_semanal" to FieldValue.increment(workMinutes.toDouble()),
-                "horas_estudio" to FieldValue.increment(workMinutes / 60.0),
-                "dia" to FieldValue.serverTimestamp()
-            )
-        )
-    }
-
-    LaunchedEffect(isRunning, secondsLeft) {
-        if (isRunning && secondsLeft > 0) {
-            delay(1000L)
-            secondsLeft--
-        } else if (isRunning && secondsLeft == 0) {
-            if (!isWorkMode) {
-                registrarEstudioEnFirebase()
-                navController?.navigate("ciclo_completado")
-            }
-            isWorkMode = !isWorkMode
-            secondsLeft = if (isWorkMode) workMinutes * 60 else restMinutes * 60
-        }
-    }
-
-    val timeDisplay = String.format("%02d:%02d", secondsLeft / 60, secondsLeft % 60)
+    val timeDisplay = String.format("%02d:%02d", uiState.secondsLeft / 60, uiState.secondsLeft % 60)
     val dracoCyan = Color(0xFF22DDF2)
 
     Box(
@@ -108,7 +85,7 @@ fun DracomodoroScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // UI PULIDA: Botones unificados sin espacios (Sólidos)
+            // UI PULIDA: Botones unificados
             Surface(
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(28.dp),
@@ -116,31 +93,31 @@ fun DracomodoroScreen(
                 border = BorderStroke(1.dp, dracoCyan)
             ) {
                 Row(modifier = Modifier.fillMaxSize()) {
-                    Button(
-                        onClick = { isRunning = true },
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        shape = RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp),
-                        contentPadding = PaddingValues(0.dp)
-                    ) { Text("INICIAR", color = Color.White, fontWeight = FontWeight.Bold) }
-                    
-                    VerticalDivider(color = dracoCyan.copy(alpha = 0.5f), thickness = 1.dp)
-                    
-                    Button(
-                        onClick = { isRunning = false },
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        shape = RoundedCornerShape(0.dp),
-                        contentPadding = PaddingValues(0.dp)
-                    ) { Text("PAUSAR", color = Color.White, fontWeight = FontWeight.Bold) }
+                    if (!isRunning) {
+                        Button(
+                            onClick = { 
+                                if (uiState.status == PomodoroStatus.PAUSED) viewModel.onResume() 
+                                else viewModel.onStart() 
+                            },
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                            shape = RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) { Text("INICIAR", color = Color.White, fontWeight = FontWeight.Bold) }
+                    } else {
+                        Button(
+                            onClick = { viewModel.onPause() },
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                            shape = RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) { Text("PAUSAR", color = Color.White, fontWeight = FontWeight.Bold) }
+                    }
                     
                     VerticalDivider(color = dracoCyan.copy(alpha = 0.5f), thickness = 1.dp)
 
                     Button(
-                        onClick = {
-                            isRunning = false
-                            secondsLeft = if (isWorkMode) workMinutes * 60 else restMinutes * 60
-                        },
+                        onClick = { viewModel.onReset() },
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                         shape = RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp),
@@ -151,32 +128,49 @@ fun DracomodoroScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Configuración modular
+            // Configuración modular (solo permitida si no está corriendo)
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                TimeAdjuster("TRABAJO", workMinutes, dracoCyan) { workMinutes = it; if(isWorkMode) secondsLeft = it * 60 }
-                TimeAdjuster("DESCANSO", restMinutes, Color(0xFF58FF99)) { restMinutes = it; if(!isWorkMode) secondsLeft = it * 60 }
+                TimeAdjuster(
+                    label = "TRABAJO", 
+                    value = uiState.workMinutes, 
+                    color = dracoCyan,
+                    enabled = uiState.status == PomodoroStatus.IDLE
+                ) { viewModel.adjustWorkMinutes(it) }
+                
+                TimeAdjuster(
+                    label = "DESCANSO", 
+                    value = uiState.restMinutes, 
+                    color = Color(0xFF58FF99),
+                    enabled = uiState.status == PomodoroStatus.IDLE
+                ) { viewModel.adjustRestMinutes(it) }
             }
         }
     }
 }
 
 @Composable
-fun TimeAdjuster(label: String, value: Int, color: Color, onValueChange: (Int) -> Unit) {
+fun TimeAdjuster(
+    label: String, 
+    value: Int, 
+    color: Color, 
+    enabled: Boolean,
+    onDelta: (Int) -> Unit
+) {
     Column(
         modifier = Modifier
             .background(Color(0xFF1C2541), RoundedCornerShape(16.dp))
-            .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+            .border(1.dp, color.copy(alpha = if (enabled) 0.3f else 0.1f), RoundedCornerShape(16.dp))
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(label, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = if (enabled) Color.Gray else Color.DarkGray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { if (value > 1) onValueChange(value - 1) }) {
-                Icon(Icons.Default.Remove, "Menos", tint = Color.White)
+            IconButton(onClick = { onDelta(-1) }, enabled = enabled) {
+                Icon(Icons.Default.Remove, "Menos", tint = if (enabled) Color.White else Color.Gray)
             }
-            Text("$value", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            IconButton(onClick = { if (value < 60) onValueChange(value + 1) }) {
-                Icon(Icons.Default.Add, "Más", tint = Color.White)
+            Text("$value", color = if (enabled) Color.White else Color.Gray, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            IconButton(onClick = { onDelta(1) }, enabled = enabled) {
+                Icon(Icons.Default.Add, "Más", tint = if (enabled) Color.White else Color.Gray)
             }
         }
     }

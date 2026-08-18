@@ -11,6 +11,9 @@ import co.edu.unab.dracofocusapp.data.repo.LessonRepository
 import co.edu.unab.dracofocusapp.domain.rewards.RewardManager
 import kotlinx.coroutines.flow.MutableStateFlow
 
+import co.edu.unab.dracofocusapp.data.local.datastore.PomodoroDataStore
+import co.edu.unab.dracofocusapp.domain.util.SystemClock
+
 /**
  * DracoFocusApplication: Punto único de configuración para la inyección manual de dependencias.
  */
@@ -37,9 +40,17 @@ class DracoFocusApplication : Application() {
     lateinit var apiService: ApiService
         private set
 
+    lateinit var pomodoroDataStore: PomodoroDataStore
+        private set
+
+    val clock = SystemClock()
+
     override fun onCreate() {
         super.onCreate()
         
+        // Inicializar DataStore
+        pomodoroDataStore = PomodoroDataStore(applicationContext)
+
         // Inicializar base de datos
         database = Room.databaseBuilder(
             applicationContext,

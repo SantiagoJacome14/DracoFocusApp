@@ -26,6 +26,8 @@ import co.edu.unab.dracofocusapp.ui.MuseoDracoArteScreen
 import co.edu.unab.dracofocusapp.ui.Perfil.MyProfileScreen
 import co.edu.unab.dracofocusapp.ui.Pomodoro.CicloCompletadoScreen
 import co.edu.unab.dracofocusapp.ui.Pomodoro.DracomodoroScreen
+import co.edu.unab.dracofocusapp.viewmodel.DracomodoroViewModel
+import co.edu.unab.dracofocusapp.viewmodel.DracomodoroViewModelFactory
 import co.edu.unab.dracofocusapp.ui.SplashScreen
 import co.edu.unab.dracofocusapp.viewmodel.FeedbackViewModel
 
@@ -60,6 +62,8 @@ fun AppNavigation() {
     val tokenManager = app.tokenManager
     val repository = app.lessonProgressRepository
     val apiService = app.apiService
+    val pomodoroDataStore = app.pomodoroDataStore
+    val clock = app.clock
 
     NavHost(
         navController = navController,
@@ -112,8 +116,11 @@ fun AppNavigation() {
         }
 
         composable(AppRoutes.DRACOMODORO) {
+            val pomodoroViewModel: DracomodoroViewModel = viewModel(
+                factory = DracomodoroViewModelFactory(pomodoroDataStore, clock)
+            )
             DracomodoroScreen(
-                navController = navController,
+                viewModel = pomodoroViewModel,
                 onBack = { navController.popBackStack() }
             )
         }

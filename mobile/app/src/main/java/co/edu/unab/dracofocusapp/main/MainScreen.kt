@@ -29,10 +29,14 @@ import co.edu.unab.dracofocusapp.ui.Lecciones.MenuLeccionesScreen
 import co.edu.unab.dracofocusapp.ui.Pomodoro.DracomodoroScreen
 import co.edu.unab.dracofocusapp.ui.Pomodoro.CicloCompletadoScreen
 import co.edu.unab.dracofocusapp.ui.MuseoDracoArteScreen
+import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.navigation.AppRoutes
 import co.edu.unab.dracofocusapp.ui.Lecciones.FeedbackScreen
 import co.edu.unab.dracofocusapp.ui.Lecciones.LeccionRetoScreen
 import co.edu.unab.dracofocusapp.viewmodel.FeedbackViewModel
+import co.edu.unab.dracofocusapp.viewmodel.DracomodoroViewModel
+import co.edu.unab.dracofocusapp.viewmodel.DracomodoroViewModelFactory
+import androidx.compose.ui.platform.LocalContext
 
 sealed class BottomNavItem(val route: String, val icon: Int, val label: String) {
     object Lecciones : BottomNavItem("lecciones", R.drawable.ic_book, "Lecciones")
@@ -118,6 +122,10 @@ fun BottomNavGraph(
     onNavigateToProfile: () -> Unit,
     authViewModel: AuthViewModel
 ) {
+    val app = LocalContext.current.applicationContext as DracoFocusApplication
+    val pomodoroDataStore = app.pomodoroDataStore
+    val clock = app.clock
+
     NavHost(navController, startDestination = BottomNavItem.Draco.route) {
         composable(BottomNavItem.Draco.route) { HomeScreen(navController) }
         composable(BottomNavItem.Avances.route) { ProgressScreen(navController = navController) }
@@ -125,7 +133,10 @@ fun BottomNavGraph(
             MyProfileScreen(onBack = { navController.popBackStack() }, onLogout = onNavigateToAuth) 
         }
         composable(BottomNavItem.Pomodoro.route) { 
-            DracomodoroScreen(navController = navController, onBack = { navController.popBackStack() }) 
+            val pomodoroViewModel: DracomodoroViewModel = viewModel(
+                factory = DracomodoroViewModelFactory(pomodoroDataStore, clock)
+            )
+            DracomodoroScreen(viewModel = pomodoroViewModel, onBack = { navController.popBackStack() }) 
         }
         composable(BottomNavItem.Lecciones.route) { MenuLeccionesScreen(navController = navController) }
         
