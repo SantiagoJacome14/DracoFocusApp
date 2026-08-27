@@ -139,15 +139,8 @@ class AuthViewModel : ViewModel() {
                         null
                     }
 
-                    // FALLBACK: Si Firebase entró pero Laravel dio error (ej: 500 por migraciones)
-                    if (firebaseSuccess) {
-                        Log.w("LOGIN", "Laravel falló pero Firebase está OK. Entrando como invitado.")
-                        tokenManager.saveAuthData("guest_token", "0")
-                        uiState = uiState.copy(isSuccessLogin = true, isLoading = false)
-                        onSuccess()
-                    } else {
-                        onError(serverMessage ?: "Credenciales incorrectas")
-                    }
+                    Log.e("LOGIN", "Laravel devolvió error ${response.code()}: $serverMessage")
+                    onError(serverMessage ?: "Error del servidor (código ${response.code()})")
                 }
             } catch (e: Exception) {
                 Log.e("LOGIN", "Error en login", e)
@@ -344,27 +337,12 @@ class AuthViewModel : ViewModel() {
                                     null
                                 }
 
-                                // Si Firebase funcionó pero Laravel falló (Error 500),
-                                // permitimos el éxito para que el usuario pueda grabar su video con las lecciones
-                                if (firebaseUid != null) {
-                                    Log.w("REGISTRO", "Laravel falló (500) pero Firebase está OK. Permitiendo acceso limitado.")
-                                    tokenManager.saveAuthData("guest_token", "0")
-                                    uiState = uiState.copy(isSuccessLogin = true, isLoading = false)
-                                    onSuccess()
-                                } else {
-                                    onError(serverMessage ?: "Error en el servidor: ${response.code()}")
-                                }
+                                Log.e("REGISTRO", "Laravel devolvió error ${response.code()}: $serverMessage")
+                                onError(serverMessage ?: "Error en el servidor: ${response.code()}")
                             }
                         } catch (e: Exception) {
                             Log.e("REGISTRO", "Fallo de conexión Laravel", e)
-                            if (firebaseUid != null) {
-                                Log.w("REGISTRO", "Laravel offline pero Firebase OK. Entrando.")
-                                tokenManager.saveAuthData("guest_token", "0")
-                                uiState = uiState.copy(isSuccessLogin = true, isLoading = false)
-                                onSuccess()
-                            } else {
-                                onError("Fallo de conexión: ${e.message}")
-                            }
+                            onError("Fallo de conexión: ${e.message}")
                         }
                     } catch (e: Exception) {
                         Log.e("REGISTRO", "Error general crítico", e)

@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
 }
 
@@ -38,9 +39,6 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
 }
 
 dependencies {
@@ -75,7 +73,7 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.4.1")
 
     // Room (progreso local + museo)
-    val roomVer = "2.6.1"
+    val roomVer = "2.7.1"
     implementation("androidx.room:room-runtime:$roomVer")
     implementation("androidx.room:room-ktx:$roomVer")
     kapt("androidx.room:room-compiler:$roomVer")

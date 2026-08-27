@@ -98,7 +98,9 @@ fun RegisterScreen(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.verticalScroll(rememberScrollState())
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .imePadding()
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.dragon_dracofocus1),
