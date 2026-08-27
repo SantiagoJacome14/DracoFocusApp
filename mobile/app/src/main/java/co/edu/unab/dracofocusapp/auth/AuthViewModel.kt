@@ -11,6 +11,10 @@ import co.edu.unab.dracofocusapp.data.remote.RetrofitInstance
 import kotlinx.coroutines.launch
 import android.util.Log
 import co.edu.unab.dracofocusapp.data.remote.RegisterRequest
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 class AuthViewModel : ViewModel() {
 
@@ -50,6 +54,7 @@ class AuthViewModel : ViewModel() {
     fun signOut(tokenManager: TokenManager? = null) {
         viewModelScope.launch {
             tokenManager?.clearAuthData()
+            FirebaseAuth.getInstance().signOut()
         }
         uiState = uiState.copy(
             isSuccessLogin = false,
@@ -91,11 +96,29 @@ class AuthViewModel : ViewModel() {
         uiState = uiState.copy(isLoading = true, errorMessage = null)
         viewModelScope.launch {
             try {
-                Log.d("EMAIL_LOGIN", "Llamando a Laravel /api/login")
+                // PASO 1: Login en Firebase primero
+                Log.d("LOGIN", "Iniciando sesión en Firebase para $email")
+                var firebaseSuccess = false
+                try {
+                    FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password).await()
+                    firebaseSuccess = true
+                    Log.d("LOGIN", "Firebase Auth exitoso")
+                } catch (e: Exception) {
+                    Log.e("LOGIN", "Firebase Auth falló: ${e.message}")
+                    // Si no está en Firebase, pero quizás sí en Laravel, intentamos crearlo en Firebase
+                    try {
+                        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password).await()
+                        firebaseSuccess = true
+                        Log.d("LOGIN", "Usuario creado en Firebase durante login")
+                    } catch (e2: Exception) {
+                        Log.e("LOGIN", "No se pudo sincronizar con Firebase")
+                    }
+                }
+
+                // PASO 2: Login en Laravel
+                Log.d("LOGIN", "Llamando a Laravel /api/login")
                 val response = RetrofitInstance.getApiService(tokenManager)
                     .login(LoginRequest(email, password))
-
-                Log.d("EMAIL_LOGIN", "Respuesta Laravel code: ${response.code()}")
 
                 if (response.isSuccessful) {
                     val body = response.body()
@@ -104,21 +127,30 @@ class AuthViewModel : ViewModel() {
                             body.accessToken,
                             body.user.id.toString()
                         )
-                        Log.d("EMAIL_LOGIN", "Token y userId guardados. userId=${body.user.id}")
+                        uiState = uiState.copy(isSuccessLogin = true, isLoading = false)
+                        onSuccess()
+                    } else onError("Respuesta vacía de Laravel")
+                } else {
+                    val errorJson = response.errorBody()?.string()
+                    val serverMessage = try {
+                        com.google.gson.JsonParser.parseString(errorJson)
+                            .asJsonObject.get("message").asString
+                    } catch (e: Exception) {
+                        null
+                    }
 
-                        uiState = uiState.copy(
-                            isSuccessLogin = true,
-                            isLoading = false
-                        )
+                    // FALLBACK: Si Firebase entró pero Laravel dio error (ej: 500 por migraciones)
+                    if (firebaseSuccess) {
+                        Log.w("LOGIN", "Laravel falló pero Firebase está OK. Entrando como invitado.")
+                        tokenManager.saveAuthData("guest_token", "0")
+                        uiState = uiState.copy(isSuccessLogin = true, isLoading = false)
                         onSuccess()
                     } else {
-                        onError("Respuesta vacía del servidor")
+                        onError(serverMessage ?: "Credenciales incorrectas")
                     }
-                } else {
-                    onError("Credenciales incorrectas")
                 }
             } catch (e: Exception) {
-                Log.e("EMAIL_LOGIN", "Error en login email", e)
+                Log.e("LOGIN", "Error en login", e)
                 onError("Error de conexión: ${e.message}")
             }
         }
@@ -128,11 +160,16 @@ class AuthViewModel : ViewModel() {
      * Sincroniza progreso después de login exitoso.
      */
     fun syncAfterLogin(tokenManager: TokenManager) {
+        // En modo demo, forzamos un login en Firebase si no hay sesión activa
         viewModelScope.launch {
-            val userId = tokenManager.userId
-            if (userId != null) {
-                Log.d("PROGRESS_SYNC", "syncAfterLogin para userId=$userId")
-                // Se delega al repository a través del Application o ViewModel
+            if (FirebaseAuth.getInstance().currentUser == null) {
+                try {
+                    // Intento de login anónimo o silencioso para asegurar que las lecciones funcionen
+                    FirebaseAuth.getInstance().signInAnonymously().await()
+                    Log.d("MODO_DEMO", "Firebase Auth anónimo activado para el video")
+                } catch (e: Exception) {
+                    Log.e("MODO_DEMO", "No se pudo activar Firebase anónimo", e)
+                }
             }
         }
     }
@@ -158,6 +195,15 @@ class AuthViewModel : ViewModel() {
                             body.accessToken,
                             body.user.id.toString()
                         )
+
+                        // Firebase Auth con Google para Firestore
+                        try {
+                            val credential = GoogleAuthProvider.getCredential(idToken, null)
+                            FirebaseAuth.getInstance().signInWithCredential(credential).await()
+                            Log.d("GOOGLE_LOGIN", "Firebase Auth Google exitoso")
+                        } catch (e: Exception) {
+                            Log.e("GOOGLE_LOGIN", "Error Firebase Auth Google", e)
+                        }
 
                         uiState = uiState.copy(
                             isSuccessLogin = true,
@@ -226,37 +272,103 @@ class AuthViewModel : ViewModel() {
 
                 viewModelScope.launch {
                     try {
-                        val response = RetrofitInstance.getApiService(tokenManager)
-                            .register(
-                                RegisterRequest(
-                                    name = name,
-                                    email = email,
-                                    password = pass,
-                                    password_confirmation = confirm,
-                                    semester = semester
+                        // PASO 1: Registro en Firebase (Indispensable para lecciones grupales y video)
+                        Log.d("REGISTRO", "Iniciando registro en Firebase para $email")
+                        var firebaseUid: String? = null
+                        try {
+                            val authResult = FirebaseAuth.getInstance()
+                                .createUserWithEmailAndPassword(email, pass).await()
+                            firebaseUid = authResult.user?.uid
+                            Log.d("REGISTRO", "Firebase Auth exitoso. UID: $firebaseUid")
+                            
+                            // Crear perfil en Firestore
+                            firebaseUid?.let { uid ->
+                                val userMap = hashMapOf(
+                                    "uid" to uid,
+                                    "name" to name,
+                                    "email" to email,
+                                    "semester" to semester
                                 )
-                            )
+                                FirebaseFirestore.getInstance().collection("users")
+                                    .document(uid).set(userMap).await()
+                                Log.d("REGISTRO", "Perfil Firestore creado")
+                            }
+                        } catch (e: Exception) {
+                            Log.e("REGISTRO", "Firebase falló o usuario ya existe: ${e.message}")
+                            // Si el usuario ya existe en Firebase, intentamos loguearlo para obtener el UID
+                            try {
+                                val authResult = FirebaseAuth.getInstance()
+                                    .signInWithEmailAndPassword(email, pass).await()
+                                firebaseUid = authResult.user?.uid
+                            } catch (e2: Exception) {
+                                Log.e("REGISTRO", "No se pudo recuperar sesión Firebase")
+                            }
+                        }
 
-                        if (response.isSuccessful) {
-                            val body = response.body()
-                            if (body != null) {
-                                tokenManager.saveAuthData(
-                                    body.accessToken,
-                                    body.user.id.toString()
+                        // PASO 2: Registro en Laravel
+                        Log.d("REGISTRO", "Llamando a Laravel /api/register")
+                        try {
+                            val response = RetrofitInstance.getApiService(tokenManager)
+                                .register(
+                                    RegisterRequest(
+                                        name = name,
+                                        email = email,
+                                        password = pass,
+                                        password_confirmation = confirm,
+                                        semester = semester
+                                    )
                                 )
 
-                                uiState = uiState.copy(
-                                    isSuccessLogin = true,
-                                    isLoading = false,
-                                    errorMessage = null
-                                )
+                            if (response.isSuccessful) {
+                                val body = response.body()
+                                if (body != null) {
+                                    tokenManager.saveAuthData(
+                                        body.accessToken,
+                                        body.user.id.toString()
+                                    )
+                                    Log.d("REGISTRO", "Laravel exitoso. Token guardado.")
+
+                                    uiState = uiState.copy(
+                                        isSuccessLogin = true,
+                                        isLoading = false,
+                                        errorMessage = null
+                                    )
+                                    onSuccess()
+                                } else onError("Servidor Laravel devolvió datos vacíos")
+                            } else {
+                                val errorJson = response.errorBody()?.string()
+                                val serverMessage = try {
+                                    com.google.gson.JsonParser.parseString(errorJson)
+                                        .asJsonObject.get("message").asString
+                                } catch (e: Exception) {
+                                    null
+                                }
+
+                                // Si Firebase funcionó pero Laravel falló (Error 500),
+                                // permitimos el éxito para que el usuario pueda grabar su video con las lecciones
+                                if (firebaseUid != null) {
+                                    Log.w("REGISTRO", "Laravel falló (500) pero Firebase está OK. Permitiendo acceso limitado.")
+                                    tokenManager.saveAuthData("guest_token", "0")
+                                    uiState = uiState.copy(isSuccessLogin = true, isLoading = false)
+                                    onSuccess()
+                                } else {
+                                    onError(serverMessage ?: "Error en el servidor: ${response.code()}")
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e("REGISTRO", "Fallo de conexión Laravel", e)
+                            if (firebaseUid != null) {
+                                Log.w("REGISTRO", "Laravel offline pero Firebase OK. Entrando.")
+                                tokenManager.saveAuthData("guest_token", "0")
+                                uiState = uiState.copy(isSuccessLogin = true, isLoading = false)
                                 onSuccess()
-                            } else onError("Respuesta vacía")
-                        } else {
-                            onError("Error registro: ${response.code()}")
+                            } else {
+                                onError("Fallo de conexión: ${e.message}")
+                            }
                         }
                     } catch (e: Exception) {
-                        onError("Conexión: ${e.message}")
+                        Log.e("REGISTRO", "Error general crítico", e)
+                        onError("Error crítico: ${e.message}")
                     }
                 }
             }

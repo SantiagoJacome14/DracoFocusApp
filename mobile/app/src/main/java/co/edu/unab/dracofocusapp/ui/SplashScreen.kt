@@ -31,27 +31,23 @@ fun SplashScreen(navController: NavController, tokenManager: TokenManager) {
     val alpha = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
-        // Animación de entrada del logo (1 segundo)
         alpha.animateTo(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 1000)
         )
         
-        // Espera un momento pequeño para que no sea tan abrupto
         delay(500)
 
-        // Verificación de token en DataStore
-        val token = tokenManager.token.first()
-        val isAuthenticated = !token.isNullOrBlank()
-
-        if (isAuthenticated) {
-            navController.navigate(AppRoutes.MAIN) {
-                popUpTo(AppRoutes.SPLASH) { inclusive = true }
-            }
+        // Verificamos si hay una sesión activa (token que no sea guest)
+        val currentToken = tokenManager.token.first()
+        val destination = if (currentToken != null && currentToken != "guest_token") {
+            AppRoutes.MAIN
         } else {
-            navController.navigate(AppRoutes.AUTH) {
-                popUpTo(AppRoutes.SPLASH) { inclusive = true }
-            }
+            AppRoutes.AUTH
+        }
+
+        navController.navigate(destination) {
+            popUpTo(AppRoutes.SPLASH) { inclusive = true }
         }
     }
 

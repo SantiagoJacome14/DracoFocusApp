@@ -56,6 +56,18 @@ fun AuthScreen(
     val credentialManager = CredentialManager.create(context)
     val tokenManager = TokenManager(context)
 
+    // REDIRECCIÓN AUTOMÁTICA DESACTIVADA (Para permitir Login/Registro manual)
+    /*
+    LaunchedEffect(Unit) {
+        // Aseguramos un token de invitado para que las llamadas a la API no fallen por falta de headers
+        if (tokenManager.getToken() == null) {
+            tokenManager.saveAuthData("guest_token", "0")
+        }
+        // Navegamos al main inmediatamente
+        onNavigateToMain()
+    }
+    */
+
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
     )
@@ -186,7 +198,7 @@ fun AuthScreen(
                     OutlinedButton(
                         onClick = {
                             val googleIdOption = GetGoogleIdOption.Builder()
-                                .setServerClientId("461716187115-vtbahb3hngqj7kfeun641oqmjvq4mhgo.apps.googleusercontent.com")
+                                .setServerClientId("659167749865-pel0vcdrlroe2ohv80e33akfrrac794u.apps.googleusercontent.com")
                                 .setFilterByAuthorizedAccounts(false)
                                 .build()
 
