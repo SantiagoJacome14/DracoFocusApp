@@ -134,7 +134,7 @@ fun BottomNavGraph(
         }
         composable(BottomNavItem.Pomodoro.route) { 
             val pomodoroViewModel: DracomodoroViewModel = viewModel(
-                factory = DracomodoroViewModelFactory(pomodoroDataStore, clock)
+                factory = DracomodoroViewModelFactory(pomodoroDataStore, clock, app.applicationContext)
             )
             DracomodoroScreen(viewModel = pomodoroViewModel, onBack = { navController.popBackStack() }) 
         }

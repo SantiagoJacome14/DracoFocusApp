@@ -1,5 +1,6 @@
 package co.edu.unab.dracofocusapp.viewmodel
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import co.edu.unab.dracofocusapp.data.local.datastore.PomodoroDataStore
 import co.edu.unab.dracofocusapp.data.local.datastore.PomodoroStatePrefs
 import co.edu.unab.dracofocusapp.domain.util.Clock
+import co.edu.unab.dracofocusapp.util.PomodoroNotifier
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -31,7 +33,8 @@ data class DracomodoroUiState(
 
 class DracomodoroViewModel(
     private val dataStore: PomodoroDataStore,
-    private val clock: Clock
+    private val clock: Clock,
+    private val appContext: Context
 ) : ViewModel() {
 
     var uiState by mutableStateOf(DracomodoroUiState())
@@ -65,7 +68,7 @@ class DracomodoroViewModel(
                     } else {
                         val remaining = ((saved.expectedEndTime - now) / 1000).toInt()
                         uiState = uiState.copy(secondsLeft = remaining)
-                        startTicking()
+                        startTicking(saved.expectedEndTime)
                     }
                 }
                 PomodoroStatus.PAUSED -> {
@@ -86,7 +89,7 @@ class DracomodoroViewModel(
         
         uiState = uiState.copy(status = PomodoroStatus.RUNNING)
         saveToDataStore(expectedEndTime = expectedEndTime)
-        startTicking()
+        startTicking(expectedEndTime)
     }
 
     fun onPause() {
@@ -110,6 +113,27 @@ class DracomodoroViewModel(
         saveToDataStore(expectedEndTime = 0, remainingTimeAtPause = 0)
     }
 
+    /**
+     * Salta la fase actual (trabajo o descanso) y arranca directo la otra.
+     * Es silencioso (sin notificación ni crédito de estudio): el usuario ya sabe que lo saltó,
+     * y se puede usar en cualquier modo, las veces que haga falta.
+     */
+    fun onSkipPhase() {
+        timerJob?.cancel()
+
+        val nextMode = if (uiState.mode == PomodoroMode.WORK) PomodoroMode.BREAK else PomodoroMode.WORK
+        val nextSeconds = if (nextMode == PomodoroMode.WORK) uiState.workMinutes * 60 else uiState.restMinutes * 60
+        val nextExpectedEndTime = clock.currentTimeMillis() + nextSeconds * 1000L
+
+        uiState = uiState.copy(
+            mode = nextMode,
+            status = PomodoroStatus.RUNNING,
+            secondsLeft = nextSeconds
+        )
+        saveToDataStore(expectedEndTime = nextExpectedEndTime, remainingTimeAtPause = 0)
+        startTicking(nextExpectedEndTime)
+    }
+
     fun adjustWorkMinutes(delta: Int) {
         if (uiState.status != PomodoroStatus.IDLE) return
         val newValue = (uiState.workMinutes + delta).coerceIn(1, 60)
@@ -130,12 +154,9 @@ class DracomodoroViewModel(
         saveToDataStore()
     }
 
-    private fun startTicking() {
+    private fun startTicking(targetTime: Long) {
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
-            val saved = dataStore.pomodoroState.first()
-            val targetTime = saved.expectedEndTime
-            
             while (true) {
                 val now = clock.currentTimeMillis()
                 val remaining = ((targetTime - now) / 1000).toInt().coerceAtLeast(0)
@@ -152,25 +173,31 @@ class DracomodoroViewModel(
 
     private fun handleTimerFinished(mode: PomodoroMode) {
         timerJob?.cancel()
-        uiState = uiState.copy(status = PomodoroStatus.COMPLETED)
-        
+
         viewModelScope.launch {
             if (mode == PomodoroMode.WORK) {
                 registrarEstudioEnFirebase()
             }
-            
-            // Cambio automático de modo
+
+            // Cambio automático de modo: el ciclo sigue solo, como un Pomodoro real
             val nextMode = if (mode == PomodoroMode.WORK) PomodoroMode.BREAK else PomodoroMode.WORK
             val nextSeconds = if (nextMode == PomodoroMode.WORK) uiState.workMinutes * 60 else uiState.restMinutes * 60
-            
+            val nextExpectedEndTime = clock.currentTimeMillis() + nextSeconds * 1000L
+
+            val (title, message) = if (mode == PomodoroMode.WORK) {
+                "¡Sesión de trabajo completada! 🎉" to "Hora de descansar ${uiState.restMinutes} min."
+            } else {
+                "¡Descanso terminado! 💪" to "Volvamos a estudiar ${uiState.workMinutes} min."
+            }
+            PomodoroNotifier.notifyPhaseFinished(appContext, title, message)
+
             uiState = uiState.copy(
                 mode = nextMode,
-                status = PomodoroStatus.IDLE,
+                status = PomodoroStatus.RUNNING,
                 secondsLeft = nextSeconds
             )
-            saveToDataStore(expectedEndTime = 0, remainingTimeAtPause = 0)
-            
-            // Navegación se manejará en la UI mediante observación de un evento (opcional) o cambio de estado
+            saveToDataStore(expectedEndTime = nextExpectedEndTime, remainingTimeAtPause = 0)
+            startTicking(nextExpectedEndTime)
         }
     }
 
