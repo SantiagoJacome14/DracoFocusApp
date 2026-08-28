@@ -158,6 +158,11 @@ fun ExerciseSessionContent(
     var currentIndex by remember { mutableIntStateOf(savedExerciseIndex.coerceIn(0, (exercises.size - 1).coerceAtLeast(0))) }
     val currentExercise = exercises.getOrNull(currentIndex) ?: return
 
+    // Momento inicial del capítulo: solo si arrancamos desde el ejercicio 1 y hay
+    // texto narrativo (lesson.description) que mostrar. Si el usuario ya venía
+    // avanzando (savedExerciseIndex > 0), no lo repetimos.
+    var showChapterIntro by remember { mutableStateOf(currentIndex == 0 && !lesson.description.isNullOrBlank()) }
+
     LaunchedEffect(currentIndex) {
         Log.d("EXERCISE_RENDER", "type=${currentExercise.type} data=${currentExercise.data}")
     }
@@ -263,6 +268,17 @@ fun ExerciseSessionContent(
     }
 
     Box(Modifier.fillMaxSize().background(fondo)) {
+        if (showChapterIntro) {
+            ChapterIntroOverlay(
+                title = lesson.title,
+                story = lesson.description.orEmpty(),
+                onStart = {
+                    SoundManager.play(appCtx, SoundEffect.CLICK)
+                    showChapterIntro = false
+                },
+            )
+        }
+
         AnimatedVisibility(
             visible = showXpBanner,
             enter = fadeIn() + slideInVertically { -it },
@@ -308,8 +324,10 @@ fun ExerciseSessionContent(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val sessionPrefix = if (reviewMode) "REPASO: " else ""
-            Text("$sessionPrefix${lesson.title.uppercase()} (${currentIndex + 1}/${exercises.size})", color = dracoCyan, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(12.dp))
+            Text("$sessionPrefix${lesson.title.uppercase()}", color = dracoCyan, fontSize = 20.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Spacer(modifier = Modifier.height(10.dp))
+            ChapterProgressDots(total = exercises.size, current = currentIndex)
+            Spacer(modifier = Modifier.height(4.dp))
 
             AssistChip(onClick = {}, enabled = false, label = { Text(describeTipoBadge(tipoReto)) })
             Text(currentExercise.question, color = Color.White.copy(alpha = 0.9f), fontSize = 16.sp, textAlign = TextAlign.Center)
@@ -437,7 +455,10 @@ fun ExerciseSessionContent(
                             else -> ""
                         }
 
-                        val feedback = ia.generarFeedbackReto(leccionLegacy, tipoReto, entrada, result)
+                        // Prioriza el texto narrativo del capítulo (story_success/story_fail)
+                        // sobre el feedback genérico de IAFeedbackManager, si existe.
+                        val narrativeFeedback = currentExercise.dataString(if (result) "story_success" else "story_fail")
+                        val feedback = narrativeFeedback ?: ia.generarFeedbackReto(leccionLegacy, tipoReto, entrada, result)
                         overlayFeedback = feedback to result
                         SoundManager.play(appCtx, if (result) SoundEffect.SUCCESS else SoundEffect.ERROR)
                         isSending = false
@@ -482,7 +503,18 @@ fun ExerciseSessionContent(
             ) {
                 Column(Modifier.padding(20.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Image(painter = painterResource(id = R.drawable.dragon_dracofocus1), contentDescription = null, modifier = Modifier.size(120.dp))
-                    Text(if (isOk) "¡Excelente!" else "❌ Incorrecto", color = if (isOk) dracoCyan else Color(0xFFFF5252), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    val esUltimoYCorrecto = isOk && currentIndex == exercises.size - 1
+                    Text(
+                        when {
+                            esUltimoYCorrecto -> "✨ ¡CAPÍTULO COMPLETADO! ✨"
+                            isOk -> "¡Excelente!"
+                            else -> "❌ Casi..."
+                        },
+                        color = if (isOk) dracoCyan else Color(0xFFFF5252),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                    )
                     Text(msg, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.padding(vertical = 12.dp))
                     Button(onClick = {
                         scope.launch {
@@ -675,6 +707,82 @@ private fun EnvelopeRevealOverlay(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Momento inicial de un capítulo: título + texto narrativo (lesson.description) +
+ * botón para empezar. Se muestra una sola vez, antes del primer ejercicio.
+ */
+@Composable
+private fun ChapterIntroOverlay(title: String, story: String, onStart: () -> Unit) {
+    val dracoCyan = Color(0xFF22DDF2)
+    var scale by remember { mutableStateOf(0.9f) }
+    LaunchedEffect(Unit) { scale = 1f }
+    val animatedScale by animateFloatAsState(
+        targetValue = scale,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "chapterIntroScale",
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.85f))
+            .zIndex(15f),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .padding(28.dp)
+                .graphicsLayer { scaleX = animatedScale; scaleY = animatedScale },
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.dragon_dracofocus1),
+                contentDescription = "Draco",
+                modifier = Modifier.size(130.dp),
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(title.uppercase(), color = dracoCyan, fontSize = 20.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(14.dp))
+            Surface(
+                color = Color(0xFF0F1A2A),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, dracoCyan.copy(alpha = 0.4f)),
+            ) {
+                Text(
+                    "🐉 Draco:\n\n\"$story\"",
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(20.dp),
+                )
+            }
+            Spacer(Modifier.height(24.dp))
+            Button(
+                onClick = onStart,
+                colors = ButtonDefaults.buttonColors(containerColor = dracoCyan, contentColor = Color.Black),
+                shape = RoundedCornerShape(24.dp),
+            ) {
+                Text("COMENZAR", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+/** Puntos de progreso: ● por ejercicio ya pasado/actual, ○ por los que faltan. */
+@Composable
+private fun ChapterProgressDots(total: Int, current: Int) {
+    val dracoCyan = Color(0xFF22DDF2)
+    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        repeat(total) { index ->
+            Text(
+                text = if (index <= current) "●" else "○",
+                color = if (index <= current) dracoCyan else Color.White.copy(alpha = 0.25f),
+                fontSize = 12.sp,
+            )
         }
     }
 }
