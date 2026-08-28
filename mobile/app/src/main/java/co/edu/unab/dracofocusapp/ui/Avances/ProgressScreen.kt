@@ -107,6 +107,10 @@ fun ProgressScreen(navController: NavController) {
             }
 
             is AvancesViewModel.UiState.Success -> {
+                if (state.isRefreshing) {
+                    Text("Actualizando...", color = Color(0xFF22DDF2), fontSize = 11.sp)
+                    Spacer(Modifier.height(8.dp))
+                }
                 AvancesContent(stats = state.stats)
             }
         }

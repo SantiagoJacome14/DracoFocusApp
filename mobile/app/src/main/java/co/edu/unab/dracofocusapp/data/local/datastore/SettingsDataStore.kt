@@ -17,6 +17,7 @@ class SettingsDataStore(private val context: Context) {
 
     companion object {
         private val NOTIFICATION_SOUND_ENABLED = booleanPreferencesKey("notification_sound_enabled")
+        private val SOUND_EFFECTS_ENABLED = booleanPreferencesKey("sound_effects_enabled")
     }
 
     /**
@@ -28,5 +29,13 @@ class SettingsDataStore(private val context: Context) {
 
     suspend fun setNotificationSoundEnabled(enabled: Boolean) {
         context.settingsDataStore.edit { it[NOTIFICATION_SOUND_ENABLED] = enabled }
+    }
+
+    /** Controla los efectos de sonido de interacción (respuestas, lección completada, etc). */
+    val soundEffectsEnabled: Flow<Boolean> =
+        context.settingsDataStore.data.map { it[SOUND_EFFECTS_ENABLED] ?: true }
+
+    suspend fun setSoundEffectsEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { it[SOUND_EFFECTS_ENABLED] = enabled }
     }
 }

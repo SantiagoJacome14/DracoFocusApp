@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import co.edu.unab.dracofocusapp.data.remote.ApiService
 import co.edu.unab.dracofocusapp.data.remote.UpdateProfileRequest
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -45,13 +47,13 @@ class ProfileViewModel(private val apiService: ApiService) : ViewModel() {
     val state: StateFlow<UiState> = _state
 
     init {
-        // Mostrar cache inmediatamente si existe, luego refrescar en background
+        // Mostrar cache inmediatamente si existe; el load() real lo dispara la
+        // pantalla (LaunchedEffect), así evitamos pedirlo dos veces al crear el VM.
         val cached = memoryCache
         if (cached != null) {
             _state.value = cached.copy(isLoading = false, isRefreshing = true, error = null)
             Log.d("PROFILE_DEBUG", "Cache encontrado → mostrando datos previos mientras refresca")
         }
-        load()
     }
 
     fun load() {
@@ -63,13 +65,16 @@ class ProfileViewModel(private val apiService: ApiService) : ViewModel() {
             }
             Log.d("PROFILE_DEBUG", "load() iniciado (hasCached=$hasCached)")
             try {
-                val userResp = apiService.getCurrentUser()
+                // /api/me y /api/progress son independientes: se piden en paralelo
+                // en vez de una detrás de otra (mitad del tiempo de espera).
+                val (userResp, progressResp) = coroutineScope {
+                    val userDeferred = async { apiService.getCurrentUser() }
+                    val progressDeferred = async { apiService.getProgress() }
+                    userDeferred.await() to progressDeferred.await()
+                }
                 val elapsed1 = System.currentTimeMillis() - startTime
                 Log.d("PROFILE_DEBUG", "/api/me → code=${userResp.code()} elapsed=${elapsed1}ms")
-
-                val progressResp = apiService.getProgress()
-                val elapsed2 = System.currentTimeMillis() - startTime
-                Log.d("PROFILE_DEBUG", "/api/progress → code=${progressResp.code()} elapsed=${elapsed2}ms")
+                Log.d("PROFILE_DEBUG", "/api/progress → code=${progressResp.code()} elapsed=${elapsed1}ms")
 
                 val user = if (userResp.isSuccessful) userResp.body() else null
                 val progress = if (progressResp.isSuccessful) progressResp.body() else null

@@ -23,7 +23,6 @@ import co.edu.unab.dracofocusapp.navigation.AppRoutes
 import co.edu.unab.dracofocusapp.theme.DarkBlueBg
 import co.edu.unab.dracofocusapp.auth.TokenManager
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavController, tokenManager: TokenManager) {
@@ -33,10 +32,8 @@ fun SplashScreen(navController: NavController, tokenManager: TokenManager) {
     LaunchedEffect(Unit) {
         alpha.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 1000)
+            animationSpec = tween(durationMillis = 500)
         )
-        
-        delay(500)
 
         // Verificamos si hay una sesión activa (token que no sea guest)
         val currentToken = tokenManager.token.first()

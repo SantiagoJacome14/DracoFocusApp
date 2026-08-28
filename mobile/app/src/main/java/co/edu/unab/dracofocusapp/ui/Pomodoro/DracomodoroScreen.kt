@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.util.SoundEffect
+import co.edu.unab.dracofocusapp.util.SoundManager
 import co.edu.unab.dracofocusapp.viewmodel.DracomodoroViewModel
 import co.edu.unab.dracofocusapp.viewmodel.PomodoroMode
 import co.edu.unab.dracofocusapp.viewmodel.PomodoroStatus
@@ -181,9 +183,10 @@ fun DracomodoroScreen(
                 Row(modifier = Modifier.fillMaxSize()) {
                     if (!isRunning) {
                         Button(
-                            onClick = { 
-                                if (uiState.status == PomodoroStatus.PAUSED) viewModel.onResume() 
-                                else viewModel.onStart() 
+                            onClick = {
+                                SoundManager.play(context, SoundEffect.TIMER_START)
+                                if (uiState.status == PomodoroStatus.PAUSED) viewModel.onResume()
+                                else viewModel.onStart()
                             },
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),

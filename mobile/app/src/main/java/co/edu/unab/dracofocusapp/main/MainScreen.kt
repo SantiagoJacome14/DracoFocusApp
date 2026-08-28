@@ -1,5 +1,10 @@
 package co.edu.unab.dracofocusapp.main
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -126,7 +131,14 @@ fun BottomNavGraph(
     val pomodoroDataStore = app.pomodoroDataStore
     val clock = app.clock
 
-    NavHost(navController, startDestination = BottomNavItem.Draco.route) {
+    NavHost(
+        navController,
+        startDestination = BottomNavItem.Draco.route,
+        enterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(220)) { it / 8 } },
+        exitTransition = { fadeOut(tween(150)) },
+        popEnterTransition = { fadeIn(tween(200)) },
+        popExitTransition = { fadeOut(tween(150)) + slideOutHorizontally(tween(220)) { it / 8 } },
+    ) {
         composable(BottomNavItem.Draco.route) { HomeScreen(navController) }
         composable(BottomNavItem.Avances.route) { ProgressScreen(navController = navController) }
         composable(BottomNavItem.Perfil.route) { 

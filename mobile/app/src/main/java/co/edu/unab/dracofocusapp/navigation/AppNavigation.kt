@@ -1,5 +1,10 @@
 package co.edu.unab.dracofocusapp.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -67,7 +72,11 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = AppRoutes.SPLASH
+        startDestination = AppRoutes.SPLASH,
+        enterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(220)) { it / 8 } },
+        exitTransition = { fadeOut(tween(150)) },
+        popEnterTransition = { fadeIn(tween(200)) },
+        popExitTransition = { fadeOut(tween(150)) + slideOutHorizontally(tween(220)) { it / 8 } },
     ) {
         composable(AppRoutes.SPLASH) {
             SplashScreen(navController = navController, tokenManager = tokenManager)

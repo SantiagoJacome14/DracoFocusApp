@@ -74,7 +74,7 @@ fun MyProfileScreen(
 
     val settingsDataStore = remember { SettingsDataStore(context) }
     val notificationSoundEnabled by settingsDataStore.notificationSoundEnabled.collectAsState(initial = true)
-    var soundEnabled by remember { mutableStateOf(true) }
+    val soundEffectsEnabled by settingsDataStore.soundEffectsEnabled.collectAsState(initial = true)
     var showEditProfileDialog by remember { mutableStateOf(false) }
 
     val avatarPickerLauncher = rememberLauncherForActivityResult(
@@ -361,9 +361,11 @@ fun MyProfileScreen(
                     SettingCard(
                         icon = Icons.Default.VolumeUp,
                         title = "Efectos de sonido",
-                        description = "Sonidos de las interacciones",
-                        isChecked = soundEnabled,
-                        onCheckedChange = { soundEnabled = it }
+                        description = "Sonidos al responder ejercicios y completar lecciones",
+                        isChecked = soundEffectsEnabled,
+                        onCheckedChange = { enabled ->
+                            scope.launch { settingsDataStore.setSoundEffectsEnabled(enabled) }
+                        }
                     )
                 }
 

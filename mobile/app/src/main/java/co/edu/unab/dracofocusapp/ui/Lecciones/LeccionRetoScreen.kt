@@ -34,6 +34,8 @@ import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.api.IAFeedbackManager
 import co.edu.unab.dracofocusapp.cooperative.LessonCooperativeSync
+import co.edu.unab.dracofocusapp.util.SoundEffect
+import co.edu.unab.dracofocusapp.util.SoundManager
 import co.edu.unab.dracofocusapp.viewmodel.LessonProgressViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -437,6 +439,7 @@ fun ExerciseSessionContent(
 
                         val feedback = ia.generarFeedbackReto(leccionLegacy, tipoReto, entrada, result)
                         overlayFeedback = feedback to result
+                        SoundManager.play(appCtx, if (result) SoundEffect.SUCCESS else SoundEffect.ERROR)
                         isSending = false
                     }
                 },
@@ -494,7 +497,12 @@ fun ExerciseSessionContent(
                                     if (!reviewMode) {
                                         onMarkCompleted(lesson.slug)
                                         val xp = progressVm.completeLessonNow(lesson.slug)
-                                        if (xp > 0) { appCtx.sessionXpToday.value += xp; xpBannerXp = xp; showXpBanner = true }
+                                        if (xp > 0) {
+                                            appCtx.sessionXpToday.value += xp
+                                            xpBannerXp = xp
+                                            showXpBanner = true
+                                            SoundManager.play(appCtx, SoundEffect.LESSON_COMPLETED)
+                                        }
                                         val piece = onClaimReward(lesson.slug)
                                         if (piece != null) { rewardPiece = piece; return@launch }
                                         if (xp > 0) delay(1400)
