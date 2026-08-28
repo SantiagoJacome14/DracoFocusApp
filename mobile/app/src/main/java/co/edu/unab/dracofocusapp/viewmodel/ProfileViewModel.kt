@@ -9,6 +9,9 @@ import co.edu.unab.dracofocusapp.data.remote.UpdateProfileRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class ProfileViewModel(private val apiService: ApiService) : ViewModel() {
 
@@ -20,6 +23,8 @@ class ProfileViewModel(private val apiService: ApiService) : ViewModel() {
         val dailyGoal: Int = 50,
         val dailyProgressXp: Int = 0,
         val completedLessonsCount: Int = 0,
+        val avatarUrl: String? = null,
+        val isUploadingAvatar: Boolean = false,
         val bio: String? = null,
         val specialty: String? = null,
         val location: String? = null,
@@ -85,6 +90,7 @@ class ProfileViewModel(private val apiService: ApiService) : ViewModel() {
                         dailyGoal = user.dailyGoal,
                         dailyProgressXp = user.dailyProgressXp,
                         completedLessonsCount = progress?.completedLessons?.size ?: 0,
+                        avatarUrl = user.avatar,
                         bio = user.bio,
                         specialty = user.specialty,
                         location = user.location,
@@ -173,6 +179,34 @@ class ProfileViewModel(private val apiService: ApiService) : ViewModel() {
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(isSavingProfile = false)
+                onResult(false, "Sin conexión: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Sube una foto nueva de perfil (bytes ya leídos del Uri elegido) y
+     * actualiza el avatar con la URL que devuelve el backend (Cloudinary).
+     */
+    fun uploadAvatar(bytes: ByteArray, fileName: String, mimeType: String, onResult: (success: Boolean, errorMessage: String?) -> Unit) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isUploadingAvatar = true)
+            try {
+                val requestBody = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
+                val part = MultipartBody.Part.createFormData("photo", fileName, requestBody)
+                val response = apiService.uploadAvatar(part)
+                if (response.isSuccessful) {
+                    val newAvatarUrl = response.body()?.avatar
+                    val newState = _state.value.copy(avatarUrl = newAvatarUrl, isUploadingAvatar = false)
+                    _state.value = newState
+                    memoryCache = newState
+                    onResult(true, null)
+                } else {
+                    _state.value = _state.value.copy(isUploadingAvatar = false)
+                    onResult(false, "Error del servidor (${response.code()})")
+                }
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(isUploadingAvatar = false)
                 onResult(false, "Sin conexión: ${e.message}")
             }
         }

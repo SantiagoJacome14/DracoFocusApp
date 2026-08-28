@@ -24,6 +24,7 @@ Route::get('/lessons/{slug}/exercises', [LessonController::class, 'getExercisesA
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::patch('/me', [AuthController::class, 'updateProfile']);
+    Route::post('/me/avatar', [AuthController::class, 'uploadAvatar']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Progress routes

@@ -2,12 +2,15 @@ package co.edu.unab.dracofocusapp.ui.Perfil
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
@@ -26,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -33,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.data.local.datastore.SettingsDataStore
@@ -67,6 +72,30 @@ fun MyProfileScreen(
     val notificationSoundEnabled by settingsDataStore.notificationSoundEnabled.collectAsState(initial = true)
     var soundEnabled by remember { mutableStateOf(true) }
     var showEditProfileDialog by remember { mutableStateOf(false) }
+
+    val avatarPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            try {
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
+                if (bytes != null) {
+                    profileVm.uploadAvatar(bytes, "avatar.jpg", mimeType) { success, errorMessage ->
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                if (success) "Foto de perfil actualizada" else (errorMessage ?: "No se pudo subir la foto")
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("PROFILE", "Error leyendo la imagen elegida", e)
+                snackbarHostState.showSnackbar("No se pudo leer la imagen")
+            }
+        }
+    }
 
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
@@ -106,13 +135,56 @@ fun MyProfileScreen(
                         .padding(24.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_avatar),
-                            contentDescription = "Avatar",
+                        Box(
                             modifier = Modifier
                                 .size(90.dp)
                                 .padding(bottom = 8.dp)
-                        )
+                        ) {
+                            if (profileState.avatarUrl.isNullOrBlank()) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.ic_avatar),
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape)
+                                        .clickable { avatarPickerLauncher.launch("image/*") },
+                                )
+                            } else {
+                                AsyncImage(
+                                    model = profileState.avatarUrl,
+                                    contentDescription = "Avatar",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape)
+                                        .clickable { avatarPickerLauncher.launch("image/*") },
+                                )
+                            }
+
+                            if (profileState.isUploadingAvatar) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape)
+                                        .background(Color.Black.copy(alpha = 0.5f)),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator(modifier = Modifier.size(28.dp), color = Color(0xFF22DDF2), strokeWidth = 3.dp)
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .size(26.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF22DDF2))
+                                        .clickable { avatarPickerLauncher.launch("image/*") },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(Icons.Default.CameraAlt, contentDescription = "Cambiar foto", tint = Color.Black, modifier = Modifier.size(14.dp))
+                                }
+                            }
+                        }
 
                         Text(
                             text = profileState.name.ifBlank { "Cargando..." },

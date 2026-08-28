@@ -2,11 +2,14 @@ package co.edu.unab.dracofocusapp.data.remote
 
 import co.edu.unab.dracofocusapp.api.EvaluacionRequest
 import co.edu.unab.dracofocusapp.api.EvaluacionResponse
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface ApiService {
@@ -25,6 +28,10 @@ interface ApiService {
 
     @PATCH("api/me")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<UserDto>
+
+    @Multipart
+    @POST("api/me/avatar")
+    suspend fun uploadAvatar(@Part photo: MultipartBody.Part): Response<UserDto>
 
     @GET("api/progress")
     suspend fun getProgress(): Response<ProgressResponse>
