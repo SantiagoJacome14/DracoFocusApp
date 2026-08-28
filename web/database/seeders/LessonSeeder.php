@@ -47,8 +47,8 @@ class LessonSeeder extends Seeder
         $lessons = [
             [
                 'slug' => 'decisiones_de_fuego',
-                'title' => 'Decisiones de Fuego',
-                'description' => 'Draco entra a una cueva de lava y debe usar variables, tipos y decisiones correctas para sobrevivir.',
+                'title' => '🐍 Capítulo 1: El Portal de Python',
+                'description' => 'Draco encontró un portal antiguo sellado con runas de Python. Solo se abrirá si aprendes a hablar su idioma. ¿Me ayudas?',
                 'content' => [
                     'puzzle_pieces' => ['val', 'antorcha', '=', '"Fuego Eterno"', ': String', 'var'],
                     'solution' => ['val', 'antorcha', ': String', '=', '"Fuego Eterno"'],
@@ -65,8 +65,8 @@ class LessonSeeder extends Seeder
             ],
             [
                 'slug' => 'vuelo_infinito',
-                'title' => 'Vuelo Infinito',
-                'description' => 'Draco aprende a controlar su vuelo usando repeticiones, bucles y energía para no caer en un ciclo infinito.',
+                'title' => '☕ Capítulo 2: La Máquina de Java',
+                'description' => 'Draco halló una máquina de vuelo antigua que solo entiende Java. Sus alas necesitan un bucle de energía para funcionar. ¿La ayudamos a despegar?',
                 'content' => [
                     'puzzle_pieces' => ['repeat(5)', '{', '}', 'while', 'energia > 20'],
                     'solution' => ['repeat(5)', '{', '}'],
@@ -84,8 +84,8 @@ class LessonSeeder extends Seeder
             ],
             [
                 'slug' => 'el_libro_de_tareas',
-                'title' => 'El Libro de las Tareas',
-                'description' => 'Draco usa un libro mágico para ordenar misiones, crear listas y activar su escudo cuando su vida baja.',
+                'title' => '🟣 Capítulo 3: El Núcleo de Kotlin',
+                'description' => 'En el corazón de Draco hay un núcleo escrito en Kotlin, dañado tras el viaje. Para repararlo, hay que dominar listas y decisiones. ¿Listo para el reto final?',
                 'content' => [
                     'puzzle_pieces' => ['if', '(vida < 20)', 'activarEscudo()', '{', '}', 'listOf'],
                     'solution' => ['if', '(vida < 20)', '{', 'activarEscudo()', '}'],

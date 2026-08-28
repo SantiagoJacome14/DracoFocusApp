@@ -33,8 +33,9 @@ class LessonController extends Controller
             return response()->json(['message' => 'Lesson not found'], 404);
         }
 
+        // Cada lección tiene ejercicios de un solo idioma (python/java/kotlin según el
+        // capítulo); no filtramos por idioma fijo para no descartar Python/Java.
         $exercises = $lesson->exercises()
-            ->where('language', 'kotlin')
             ->where('is_active', true)
             ->orderBy('sort_order', 'asc')
             ->get();
@@ -61,9 +62,8 @@ class LessonController extends Controller
             return redirect()->route('dashboard')->with('error', 'Lección no encontrada.');
         }
 
-        // 1. Fetch exercises ONLY from the dedicated table
+        // 1. Fetch exercises ONLY from the dedicated table (un solo idioma por lección)
         $exercisesTable = $lesson->exercises()
-            ->where('language', 'kotlin')
             ->where('is_active', true)
             ->orderBy('sort_order', 'asc')
             ->get();
