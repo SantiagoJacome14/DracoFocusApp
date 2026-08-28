@@ -12,10 +12,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
@@ -63,7 +64,7 @@ fun MyProfileScreen(
     LaunchedEffect(Unit) { profileVm.load() }
 
     val settingsDataStore = remember { SettingsDataStore(context) }
-    val notificationsEnabled by settingsDataStore.notificationsEnabled.collectAsState(initial = true)
+    val notificationSoundEnabled by settingsDataStore.notificationSoundEnabled.collectAsState(initial = true)
     var soundEnabled by remember { mutableStateOf(true) }
     var showEditProfileDialog by remember { mutableStateOf(false) }
 
@@ -160,19 +161,15 @@ fun MyProfileScreen(
                         }
 
                         val hasSocialLinks = !profileState.githubUrl.isNullOrBlank() ||
-                            !profileState.linkedinUrl.isNullOrBlank() ||
                             !profileState.websiteUrl.isNullOrBlank()
                         if (hasSocialLinks) {
                             Spacer(modifier = Modifier.height(10.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                                profileState.githubUrl?.takeIf { it.isNotBlank() }?.let { url ->
-                                    SocialLinkIcon(url = url, contentDescription = "GitHub")
-                                }
-                                profileState.linkedinUrl?.takeIf { it.isNotBlank() }?.let { url ->
-                                    SocialLinkIcon(url = url, contentDescription = "LinkedIn")
-                                }
                                 profileState.websiteUrl?.takeIf { it.isNotBlank() }?.let { url ->
-                                    SocialLinkIcon(url = url, contentDescription = "Sitio web")
+                                    SocialLinkIcon(url = url, icon = Icons.Default.CameraAlt, contentDescription = "Instagram")
+                                }
+                                profileState.githubUrl?.takeIf { it.isNotBlank() }?.let { url ->
+                                    SocialLinkIcon(url = url, icon = Icons.Default.Code, contentDescription = "GitHub")
                                 }
                             }
                         }
@@ -274,11 +271,11 @@ fun MyProfileScreen(
 
                     SettingCard(
                         icon = Icons.Default.Notifications,
-                        title = "Notificaciones",
-                        description = "Avisos de cambio de fase del Dracomodoro",
-                        isChecked = notificationsEnabled,
+                        title = "Sonido de notificaciones",
+                        description = "Los avisos de cambio de fase siempre se muestran; esto solo controla si suenan",
+                        isChecked = notificationSoundEnabled,
                         onCheckedChange = { enabled ->
-                            scope.launch { settingsDataStore.setNotificationsEnabled(enabled) }
+                            scope.launch { settingsDataStore.setNotificationSoundEnabled(enabled) }
                         }
                     )
 
@@ -357,10 +354,10 @@ fun StatItem(value: String, label: String) {
 }
 
 @Composable
-fun SocialLinkIcon(url: String, contentDescription: String) {
+fun SocialLinkIcon(url: String, icon: ImageVector, contentDescription: String) {
     val context = LocalContext.current
     Icon(
-        imageVector = Icons.Default.Public,
+        imageVector = icon,
         contentDescription = contentDescription,
         tint = Color(0xFF22DDF2),
         modifier = Modifier
@@ -426,7 +423,8 @@ fun EditProfileDialog(
                 OutlinedTextField(
                     value = specialty,
                     onValueChange = { specialty = it },
-                    label = { Text("Especialidad") },
+                    label = { Text("Carrera / Especialidad") },
+                    placeholder = { Text("Ej: Ingeniería de Sistemas") },
                     singleLine = true,
                     colors = fieldColors,
                     modifier = Modifier.fillMaxWidth(),
@@ -440,25 +438,19 @@ fun EditProfileDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
-                    value = github,
-                    onValueChange = { github = it },
-                    label = { Text("GitHub (URL)") },
-                    singleLine = true,
-                    colors = fieldColors,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = linkedin,
-                    onValueChange = { linkedin = it },
-                    label = { Text("LinkedIn (URL)") },
-                    singleLine = true,
-                    colors = fieldColors,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
                     value = website,
                     onValueChange = { website = it },
-                    label = { Text("Sitio web (URL)") },
+                    label = { Text("Instagram (usuario o link)") },
+                    placeholder = { Text("Ej: instagram.com/tu_usuario") },
+                    singleLine = true,
+                    colors = fieldColors,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = github,
+                    onValueChange = { github = it },
+                    label = { Text("Conectar con GitHub") },
+                    placeholder = { Text("Ej: github.com/tu_usuario") },
                     singleLine = true,
                     colors = fieldColors,
                     modifier = Modifier.fillMaxWidth(),

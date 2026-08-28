@@ -10,19 +10,23 @@ import kotlinx.coroutines.flow.map
 private val Context.settingsDataStore by preferencesDataStore(name = "app_settings")
 
 /**
- * Preferencias generales de la app (notificaciones, sonido, etc.), persistidas
- * con DataStore para que sobrevivan a cerrar la app.
+ * Preferencias generales de la app, persistidas con DataStore para que
+ * sobrevivan a cerrar la app.
  */
 class SettingsDataStore(private val context: Context) {
 
     companion object {
-        private val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
+        private val NOTIFICATION_SOUND_ENABLED = booleanPreferencesKey("notification_sound_enabled")
     }
 
-    val notificationsEnabled: Flow<Boolean> =
-        context.settingsDataStore.data.map { it[NOTIFICATIONS_ENABLED] ?: true }
+    /**
+     * Controla solo el sonido/vibración de las notificaciones del Dracomodoro.
+     * La notificación siempre se muestra; esto solo decide si suena o no.
+     */
+    val notificationSoundEnabled: Flow<Boolean> =
+        context.settingsDataStore.data.map { it[NOTIFICATION_SOUND_ENABLED] ?: true }
 
-    suspend fun setNotificationsEnabled(enabled: Boolean) {
-        context.settingsDataStore.edit { it[NOTIFICATIONS_ENABLED] = enabled }
+    suspend fun setNotificationSoundEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { it[NOTIFICATION_SOUND_ENABLED] = enabled }
     }
 }
