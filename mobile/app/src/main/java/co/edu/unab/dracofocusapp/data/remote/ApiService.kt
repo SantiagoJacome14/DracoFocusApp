@@ -5,6 +5,7 @@ import co.edu.unab.dracofocusapp.api.EvaluacionResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 
@@ -21,6 +22,9 @@ interface ApiService {
 
     @GET("api/me")
     suspend fun getCurrentUser(): Response<UserDto>
+
+    @PATCH("api/me")
+    suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<UserDto>
 
     @GET("api/progress")
     suspend fun getProgress(): Response<ProgressResponse>

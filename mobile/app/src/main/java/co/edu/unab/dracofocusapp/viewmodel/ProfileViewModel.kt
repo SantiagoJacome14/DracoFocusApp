@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import co.edu.unab.dracofocusapp.data.remote.ApiService
+import co.edu.unab.dracofocusapp.data.remote.UpdateProfileRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,8 +20,15 @@ class ProfileViewModel(private val apiService: ApiService) : ViewModel() {
         val dailyGoal: Int = 50,
         val dailyProgressXp: Int = 0,
         val completedLessonsCount: Int = 0,
+        val bio: String? = null,
+        val specialty: String? = null,
+        val location: String? = null,
+        val githubUrl: String? = null,
+        val linkedinUrl: String? = null,
+        val websiteUrl: String? = null,
         val isLoading: Boolean = true,
         val isRefreshing: Boolean = false,
+        val isSavingProfile: Boolean = false,
         val error: String? = null,
     ) {
         val level: Int get() = (totalXp / 200) + 1
@@ -77,6 +85,12 @@ class ProfileViewModel(private val apiService: ApiService) : ViewModel() {
                         dailyGoal = user.dailyGoal,
                         dailyProgressXp = user.dailyProgressXp,
                         completedLessonsCount = progress?.completedLessons?.size ?: 0,
+                        bio = user.bio,
+                        specialty = user.specialty,
+                        location = user.location,
+                        githubUrl = user.githubUrl,
+                        linkedinUrl = user.linkedinUrl,
+                        websiteUrl = user.websiteUrl,
                         isLoading = false,
                         isRefreshing = false,
                     )
@@ -109,6 +123,57 @@ class ProfileViewModel(private val apiService: ApiService) : ViewModel() {
                         error = "Sin conexión. Toca reintentar.",
                     )
                 }
+            }
+        }
+    }
+
+    /**
+     * Guarda los campos editables del perfil (bio, especialidad, ubicación, redes)
+     * en Laravel. onResult informa éxito/error para que la UI cierre el diálogo o
+     * muestre el mensaje correspondiente.
+     */
+    fun updateProfile(
+        bio: String,
+        specialty: String,
+        location: String,
+        githubUrl: String,
+        linkedinUrl: String,
+        websiteUrl: String,
+        onResult: (success: Boolean, errorMessage: String?) -> Unit,
+    ) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isSavingProfile = true)
+            try {
+                val response = apiService.updateProfile(
+                    UpdateProfileRequest(
+                        bio = bio.ifBlank { null },
+                        specialty = specialty.ifBlank { null },
+                        location = location.ifBlank { null },
+                        githubUrl = githubUrl.ifBlank { null },
+                        linkedinUrl = linkedinUrl.ifBlank { null },
+                        websiteUrl = websiteUrl.ifBlank { null },
+                    )
+                )
+                if (response.isSuccessful) {
+                    val newState = _state.value.copy(
+                        bio = bio.ifBlank { null },
+                        specialty = specialty.ifBlank { null },
+                        location = location.ifBlank { null },
+                        githubUrl = githubUrl.ifBlank { null },
+                        linkedinUrl = linkedinUrl.ifBlank { null },
+                        websiteUrl = websiteUrl.ifBlank { null },
+                        isSavingProfile = false,
+                    )
+                    _state.value = newState
+                    memoryCache = newState
+                    onResult(true, null)
+                } else {
+                    _state.value = _state.value.copy(isSavingProfile = false)
+                    onResult(false, "Error del servidor (${response.code()})")
+                }
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(isSavingProfile = false)
+                onResult(false, "Sin conexión: ${e.message}")
             }
         }
     }

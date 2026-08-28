@@ -171,4 +171,26 @@ class AuthController extends Controller
 
         return response()->json(array_merge($user->toArray(), ['daily_progress_xp' => $dailyXp]));
     }
+
+    /**
+     * Update the authenticated user's editable profile fields.
+     */
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'bio' => ['nullable', 'string', 'max:280'],
+            'specialty' => ['nullable', 'string', 'max:100'],
+            'location' => ['nullable', 'string', 'max:100'],
+            'github_url' => ['nullable', 'string', 'max:255'],
+            'linkedin_url' => ['nullable', 'string', 'max:255'],
+            'website_url' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $user = $request->user();
+        $user->update($request->only([
+            'bio', 'specialty', 'location', 'github_url', 'linkedin_url', 'website_url',
+        ]));
+
+        return response()->json($user->fresh());
+    }
 }

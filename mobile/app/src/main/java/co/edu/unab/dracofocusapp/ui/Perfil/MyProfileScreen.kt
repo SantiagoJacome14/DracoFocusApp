@@ -1,16 +1,22 @@
 package co.edu.unab.dracofocusapp.ui.Perfil
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Brightness4
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
@@ -58,6 +65,7 @@ fun MyProfileScreen(
     val settingsDataStore = remember { SettingsDataStore(context) }
     val notificationsEnabled by settingsDataStore.notificationsEnabled.collectAsState(initial = true)
     var soundEnabled by remember { mutableStateOf(true) }
+    var showEditProfileDialog by remember { mutableStateOf(false) }
 
     val gradientBackground = Brush.verticalGradient(
         listOf(Color(0xFF0B132B), Color(0xFF1C2541))
@@ -119,6 +127,65 @@ fun MyProfileScreen(
                             color = Color(0xFFB0BEC5),
                             fontSize = 14.sp
                         )
+
+                        if (!profileState.specialty.isNullOrBlank() || !profileState.location.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                if (!profileState.specialty.isNullOrBlank()) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Icon(Icons.Default.School, contentDescription = null, tint = Color(0xFF22DDF2), modifier = Modifier.size(14.dp))
+                                        Text(profileState.specialty!!, color = Color(0xFFB0BEC5), fontSize = 12.sp)
+                                    }
+                                }
+                                if (!profileState.location.isNullOrBlank()) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color(0xFF22DDF2), modifier = Modifier.size(14.dp))
+                                        Text(profileState.location!!, color = Color(0xFFB0BEC5), fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!profileState.bio.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = profileState.bio!!,
+                                color = Color(0xFFDCE4EE),
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+
+                        val hasSocialLinks = !profileState.githubUrl.isNullOrBlank() ||
+                            !profileState.linkedinUrl.isNullOrBlank() ||
+                            !profileState.websiteUrl.isNullOrBlank()
+                        if (hasSocialLinks) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                                profileState.githubUrl?.takeIf { it.isNotBlank() }?.let { url ->
+                                    SocialLinkIcon(url = url, contentDescription = "GitHub")
+                                }
+                                profileState.linkedinUrl?.takeIf { it.isNotBlank() }?.let { url ->
+                                    SocialLinkIcon(url = url, contentDescription = "LinkedIn")
+                                }
+                                profileState.websiteUrl?.takeIf { it.isNotBlank() }?.let { url ->
+                                    SocialLinkIcon(url = url, contentDescription = "Sitio web")
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.clickable { showEditProfileDialog = true },
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null, tint = Color(0xFF22DDF2), modifier = Modifier.size(14.dp))
+                            Text("Editar perfil", color = Color(0xFF22DDF2), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -256,6 +323,29 @@ fun MyProfileScreen(
             }
         }
     }
+
+    if (showEditProfileDialog) {
+        EditProfileDialog(
+            initialBio = profileState.bio ?: "",
+            initialSpecialty = profileState.specialty ?: "",
+            initialLocation = profileState.location ?: "",
+            initialGithub = profileState.githubUrl ?: "",
+            initialLinkedin = profileState.linkedinUrl ?: "",
+            initialWebsite = profileState.websiteUrl ?: "",
+            isSaving = profileState.isSavingProfile,
+            onDismiss = { showEditProfileDialog = false },
+            onSave = { bio, specialty, location, github, linkedin, website ->
+                profileVm.updateProfile(bio, specialty, location, github, linkedin, website) { success, errorMessage ->
+                    if (success) {
+                        showEditProfileDialog = false
+                        scope.launch { snackbarHostState.showSnackbar("Perfil actualizado") }
+                    } else {
+                        scope.launch { snackbarHostState.showSnackbar(errorMessage ?: "No se pudo guardar") }
+                    }
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -264,6 +354,136 @@ fun StatItem(value: String, label: String) {
         Text(value, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Text(label, color = Color(0xFFB0BEC5), fontSize = 13.sp)
     }
+}
+
+@Composable
+fun SocialLinkIcon(url: String, contentDescription: String) {
+    val context = LocalContext.current
+    Icon(
+        imageVector = Icons.Default.Public,
+        contentDescription = contentDescription,
+        tint = Color(0xFF22DDF2),
+        modifier = Modifier
+            .size(22.dp)
+            .clickable {
+                val normalizedUrl = if (url.startsWith("http://") || url.startsWith("https://")) url else "https://$url"
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(normalizedUrl)))
+                } catch (e: Exception) {
+                    Log.e("PROFILE", "No se pudo abrir el enlace: $url", e)
+                }
+            },
+    )
+}
+
+@Composable
+fun EditProfileDialog(
+    initialBio: String,
+    initialSpecialty: String,
+    initialLocation: String,
+    initialGithub: String,
+    initialLinkedin: String,
+    initialWebsite: String,
+    isSaving: Boolean,
+    onDismiss: () -> Unit,
+    onSave: (bio: String, specialty: String, location: String, github: String, linkedin: String, website: String) -> Unit,
+) {
+    var bio by remember { mutableStateOf(initialBio) }
+    var specialty by remember { mutableStateOf(initialSpecialty) }
+    var location by remember { mutableStateOf(initialLocation) }
+    var github by remember { mutableStateOf(initialGithub) }
+    var linkedin by remember { mutableStateOf(initialLinkedin) }
+    var website by remember { mutableStateOf(initialWebsite) }
+
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = Color(0xFF22DDF2),
+        unfocusedBorderColor = Color(0xFF1C2541),
+        focusedTextColor = Color.White,
+        unfocusedTextColor = Color.White,
+        cursorColor = Color(0xFF22DDF2),
+        focusedLabelColor = Color(0xFF22DDF2),
+        unfocusedLabelColor = Color(0xFFB0BEC5),
+    )
+
+    AlertDialog(
+        onDismissRequest = { if (!isSaving) onDismiss() },
+        containerColor = Color(0xFF0F1A2A),
+        title = { Text("Editar perfil", color = Color.White, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                OutlinedTextField(
+                    value = bio,
+                    onValueChange = { if (it.length <= 280) bio = it },
+                    label = { Text("Bio") },
+                    minLines = 2,
+                    maxLines = 4,
+                    colors = fieldColors,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = specialty,
+                    onValueChange = { specialty = it },
+                    label = { Text("Especialidad") },
+                    singleLine = true,
+                    colors = fieldColors,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = location,
+                    onValueChange = { location = it },
+                    label = { Text("Ubicación") },
+                    singleLine = true,
+                    colors = fieldColors,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = github,
+                    onValueChange = { github = it },
+                    label = { Text("GitHub (URL)") },
+                    singleLine = true,
+                    colors = fieldColors,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = linkedin,
+                    onValueChange = { linkedin = it },
+                    label = { Text("LinkedIn (URL)") },
+                    singleLine = true,
+                    colors = fieldColors,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = website,
+                    onValueChange = { website = it },
+                    label = { Text("Sitio web (URL)") },
+                    singleLine = true,
+                    colors = fieldColors,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSave(bio, specialty, location, github, linkedin, website) },
+                enabled = !isSaving,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22DDF2), contentColor = Color.Black),
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.Black, strokeWidth = 2.dp)
+                } else {
+                    Text("Guardar", fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isSaving) {
+                Text("Cancelar", color = Color(0xFFB0BEC5))
+            }
+        },
+    )
 }
 
 @Composable

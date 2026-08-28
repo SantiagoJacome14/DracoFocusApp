@@ -23,6 +23,7 @@ Route::get('/lessons/{slug}/exercises', [LessonController::class, 'getExercisesA
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
+    Route::patch('/me', [AuthController::class, 'updateProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Progress routes

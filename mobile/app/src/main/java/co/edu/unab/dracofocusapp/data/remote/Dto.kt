@@ -34,6 +34,21 @@ data class UserDto(
     @SerializedName("current_streak") val currentStreak: Int = 0,
     @SerializedName("daily_goal") val dailyGoal: Int = 50,
     @SerializedName("daily_progress_xp") val dailyProgressXp: Int = 0,
+    val bio: String? = null,
+    val specialty: String? = null,
+    val location: String? = null,
+    @SerializedName("github_url") val githubUrl: String? = null,
+    @SerializedName("linkedin_url") val linkedinUrl: String? = null,
+    @SerializedName("website_url") val websiteUrl: String? = null,
+)
+
+data class UpdateProfileRequest(
+    val bio: String?,
+    val specialty: String?,
+    val location: String?,
+    @SerializedName("github_url") val githubUrl: String?,
+    @SerializedName("linkedin_url") val linkedinUrl: String?,
+    @SerializedName("website_url") val websiteUrl: String?,
 )
 
 // Progress DTOs
