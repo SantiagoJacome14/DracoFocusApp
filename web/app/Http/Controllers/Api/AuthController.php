@@ -201,7 +201,7 @@ class AuthController extends Controller
     public function uploadAvatar(Request $request)
     {
         $request->validate([
-            'photo' => ['required', 'image', 'max:5120'],
+            'photo' => ['required', 'image', 'max:8192'],
         ]);
 
         $cloudName = env('CLOUDINARY_CLOUD_NAME');

@@ -104,7 +104,7 @@ fun HomeScreen(navController: NavController) {
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (profileState.name.isNotBlank()) "¡Hola, ${profileState.name.substringBefore(" ")}! 🎉" else "¡Bienvenido de nuevo! 🎉",
+                        text = if (profileState.name.isNotBlank()) "¡Hola, ${profileState.name.substringBefore(" ")}!" else "¡Bienvenido de nuevo!",
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.ExtraBold,

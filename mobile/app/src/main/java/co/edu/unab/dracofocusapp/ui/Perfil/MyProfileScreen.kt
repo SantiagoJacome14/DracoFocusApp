@@ -1,6 +1,9 @@
 package co.edu.unab.dracofocusapp.ui.Perfil
 
+import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -48,6 +51,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 import android.util.Log
+import java.io.ByteArrayOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,20 +83,23 @@ fun MyProfileScreen(
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
             try {
-                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
+                // Las fotos de cámara pueden pesar varios MB; las comprimimos antes
+                // de subirlas (más rápido y evita el 413/422 por tamaño en el server).
+                val bytes = compressImageForUpload(context, uri)
                 if (bytes != null) {
-                    profileVm.uploadAvatar(bytes, "avatar.jpg", mimeType) { success, errorMessage ->
+                    profileVm.uploadAvatar(bytes, "avatar.jpg", "image/jpeg") { success, errorMessage ->
                         scope.launch {
                             snackbarHostState.showSnackbar(
                                 if (success) "Foto de perfil actualizada" else (errorMessage ?: "No se pudo subir la foto")
                             )
                         }
                     }
+                } else {
+                    snackbarHostState.showSnackbar("No se pudo leer la imagen")
                 }
             } catch (e: Exception) {
-                Log.e("PROFILE", "Error leyendo la imagen elegida", e)
-                snackbarHostState.showSnackbar("No se pudo leer la imagen")
+                Log.e("PROFILE", "Error procesando la imagen elegida", e)
+                snackbarHostState.showSnackbar("No se pudo procesar la imagen")
             }
         }
     }
@@ -423,6 +430,28 @@ fun StatItem(value: String, label: String) {
         Text(value, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Text(label, color = Color(0xFFB0BEC5), fontSize = 13.sp)
     }
+}
+
+/**
+ * Redimensiona y comprime la imagen elegida antes de subirla: las fotos de
+ * cámara suelen pesar varios MB, más de lo necesario para un avatar.
+ */
+private fun compressImageForUpload(context: Context, uri: Uri, maxDimension: Int = 800, quality: Int = 85): ByteArray? {
+    val original = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } ?: return null
+
+    val scale = minOf(maxDimension.toFloat() / original.width, maxDimension.toFloat() / original.height, 1f)
+    val scaled = if (scale < 1f) {
+        Bitmap.createScaledBitmap(original, (original.width * scale).toInt(), (original.height * scale).toInt(), true)
+    } else {
+        original
+    }
+
+    val outputStream = ByteArrayOutputStream()
+    scaled.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+    if (scaled !== original) original.recycle()
+    scaled.recycle()
+
+    return outputStream.toByteArray()
 }
 
 @Composable
