@@ -46,7 +46,45 @@ class DracomodoroViewModel(
     private var timerJob: Job? = null
 
     init {
-        restoreState()
+        viewModelScope.launch {
+            if (!hasRunInThisProcess) {
+                // Primera vez que se crea este ViewModel desde que el proceso de la app
+                // arrancó: es una apertura nueva de DracoFocus. El ciclo/tiempo guardado
+                // es de una sesión anterior (o de antes de matar la app) y no debe
+                // continuar — se reinicia a trabajo desde cero, respetando duraciones
+                // configuradas por el usuario.
+                hasRunInThisProcess = true
+                resetToFreshWorkSession()
+            } else {
+                // El ViewModel se está recreando dentro del mismo proceso (p. ej. se
+                // destruyó y recreó el NavBackStackEntry). El proceso sigue vivo, así
+                // que sí restauramos el ciclo en curso.
+                restoreState()
+            }
+        }
+    }
+
+    /** Nueva apertura de la app: WORK / IDLE / secondsLeft = duración configurada. Sin sonido. */
+    private suspend fun resetToFreshWorkSession() {
+        val saved = dataStore.pomodoroState.first()
+        uiState = uiState.copy(
+            status = PomodoroStatus.IDLE,
+            mode = PomodoroMode.WORK,
+            secondsLeft = saved.workDurationMins * 60,
+            workMinutes = saved.workDurationMins,
+            restMinutes = saved.restDurationMins,
+            isInitialized = true,
+        )
+        dataStore.saveState(
+            PomodoroStatePrefs(
+                status = PomodoroStatus.IDLE.name,
+                mode = PomodoroMode.WORK.name,
+                expectedEndTime = 0,
+                remainingTimeAtPause = 0,
+                workDurationMins = saved.workDurationMins,
+                restDurationMins = saved.restDurationMins,
+            )
+        )
     }
 
     private fun restoreState() {
@@ -266,5 +304,16 @@ class DracomodoroViewModel(
         } catch (e: Exception) {
             Log.e("POMODORO_SYNC", "Fallo de conexión al registrar sesión en Laravel", e)
         }
+    }
+
+    companion object {
+        /**
+         * Estático (vive mientras el proceso viva). true en cuanto se crea el primer
+         * DracomodoroViewModel de esta ejecución de la app. Distingue "nueva apertura de
+         * la app" (false -> reset a 25:00 WORK) de "el ViewModel se recreó pero el proceso
+         * sigue vivo" (true -> restaura el ciclo desde DataStore), sin depender de
+         * onDestroy() (Android no siempre lo llama en un cierre real).
+         */
+        @Volatile private var hasRunInThisProcess = false
     }
 }

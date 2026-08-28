@@ -377,17 +377,17 @@ fun MyProfileScreen(
                         // Navegar inmediatamente — cleanup en background
                         onLogout()
                         Firebase.auth.signOut()
-                        // Caches en memoria (estáticos, sobreviven a recrear el ViewModel):
-                        // si no se limpian aquí, el próximo usuario que inicie sesión en esta
-                        // misma app (sin cerrarla) vería por un instante datos del usuario anterior.
+                        // Caches (memoria + disco): si no se limpian aquí, el próximo usuario
+                        // que inicie sesión (en esta misma app, o en una apertura nueva) podría
+                        // ver por un instante datos del usuario anterior.
                         ProfileViewModel.clearCache()
-                        AvancesViewModel.clearCache()
                         scope.launch {
                             try {
+                                AvancesViewModel.clearCache(app.avancesCacheDataStore)
                                 TokenManager(context).clearAuthData()
-                                Log.d("LOGOUT", "TokenManager limpiado")
+                                Log.d("LOGOUT", "TokenManager y caches limpiados")
                             } catch (e: Exception) {
-                                Log.e("LOGOUT", "Error limpiando token: ${e.message}")
+                                Log.e("LOGOUT", "Error limpiando token/caches: ${e.message}")
                             }
                         }
                     },

@@ -11,6 +11,7 @@ import co.edu.unab.dracofocusapp.data.repo.LessonRepository
 import co.edu.unab.dracofocusapp.domain.rewards.RewardManager
 import kotlinx.coroutines.flow.MutableStateFlow
 
+import co.edu.unab.dracofocusapp.data.local.datastore.AvancesCacheDataStore
 import co.edu.unab.dracofocusapp.data.local.datastore.PomodoroDataStore
 import co.edu.unab.dracofocusapp.domain.util.SystemClock
 
@@ -43,6 +44,9 @@ class DracoFocusApplication : Application() {
     lateinit var pomodoroDataStore: PomodoroDataStore
         private set
 
+    lateinit var avancesCacheDataStore: AvancesCacheDataStore
+        private set
+
     val clock = SystemClock()
 
     override fun onCreate() {
@@ -50,6 +54,7 @@ class DracoFocusApplication : Application() {
         
         // Inicializar DataStore
         pomodoroDataStore = PomodoroDataStore(applicationContext)
+        avancesCacheDataStore = AvancesCacheDataStore(applicationContext)
 
         // Inicializar base de datos
         database = Room.databaseBuilder(
@@ -57,6 +62,9 @@ class DracoFocusApplication : Application() {
             DracoDatabase::class.java,
             "draco_focus.db"
         )
+            .addMigrations(DracoDatabase.MIGRATION_5_6)
+            // Red de seguridad SOLO para saltos de versión sin migración registrada
+            // (instalaciones muy antiguas). El camino real v5->v6 ya no es destructivo.
             .fallbackToDestructiveMigration()
             .build()
 

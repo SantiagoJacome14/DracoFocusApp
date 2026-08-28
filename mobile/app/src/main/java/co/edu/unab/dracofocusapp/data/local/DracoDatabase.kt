@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import co.edu.unab.dracofocusapp.data.local.dao.CompletedLessonDao
 import co.edu.unab.dracofocusapp.data.local.dao.LessonDao
 import co.edu.unab.dracofocusapp.data.local.dao.LessonExerciseCacheDao
@@ -36,6 +38,30 @@ abstract class DracoDatabase : RoomDatabase() {
     abstract fun lessonExerciseCacheDao(): LessonExerciseCacheDao
 
     companion object {
+        /**
+         * v5 -> v6: agrega SOLO la tabla lesson_exercises_cache (cache local de ejercicios).
+         * No toca ninguna tabla existente: progreso, lecciones completadas, recompensas y
+         * museo se conservan intactos al actualizar.
+         */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `lesson_exercises_cache` (
+                        `lessonSlug` TEXT NOT NULL,
+                        `exerciseId` INTEGER NOT NULL,
+                        `type` TEXT NOT NULL,
+                        `question` TEXT NOT NULL,
+                        `dataJson` TEXT,
+                        `hint` TEXT,
+                        `sortOrder` INTEGER NOT NULL,
+                        PRIMARY KEY(`lessonSlug`, `exerciseId`)
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         @Volatile
         private var INSTANCE: DracoDatabase? = null
 
@@ -46,6 +72,7 @@ abstract class DracoDatabase : RoomDatabase() {
                     DracoDatabase::class.java,
                     "draco.db"
                 )
+                    .addMigrations(MIGRATION_5_6)
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }

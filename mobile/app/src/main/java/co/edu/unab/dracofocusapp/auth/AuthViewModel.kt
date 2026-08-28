@@ -51,12 +51,15 @@ class AuthViewModel : ViewModel() {
         )
     }
 
-    fun signOut(tokenManager: TokenManager? = null) {
+    fun signOut(
+        tokenManager: TokenManager? = null,
+        avancesCacheDataStore: co.edu.unab.dracofocusapp.data.local.datastore.AvancesCacheDataStore? = null,
+    ) {
         viewModelScope.launch {
             tokenManager?.clearAuthData()
             FirebaseAuth.getInstance().signOut()
             co.edu.unab.dracofocusapp.viewmodel.ProfileViewModel.clearCache()
-            co.edu.unab.dracofocusapp.viewmodel.AvancesViewModel.clearCache()
+            avancesCacheDataStore?.let { co.edu.unab.dracofocusapp.viewmodel.AvancesViewModel.clearCache(it) }
         }
         uiState = uiState.copy(
             isSuccessLogin = false,

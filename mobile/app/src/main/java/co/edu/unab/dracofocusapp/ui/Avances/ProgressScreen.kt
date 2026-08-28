@@ -52,7 +52,7 @@ import kotlin.math.roundToInt
 @Composable
 fun ProgressScreen(navController: NavController) {
     val app = LocalContext.current.applicationContext as DracoFocusApplication
-    val vm: AvancesViewModel = viewModel(factory = AvancesViewModel.factory(app.apiService))
+    val vm: AvancesViewModel = viewModel(factory = AvancesViewModel.factory(app.apiService, app.avancesCacheDataStore))
     val uiState by vm.state.collectAsState()
 
     // Refresca cada vez que el usuario vuelve a esta pantalla
