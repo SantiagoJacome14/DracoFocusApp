@@ -387,11 +387,18 @@ class ExerciseSeeder extends Seeder
             $language = $chapter['language'];
             $lessonExercises = $chapter['items'];
 
-            // Limpia ejercicios de un idioma/estructura anterior (p. ej. estas lecciones
-            // eran solo Kotlin antes de convertirse en capítulos Python/Java/Kotlin).
-            Exercise::where('lesson_id', $lesson->id)->where('language', '!=', $language)->delete();
-            Exercise::where('lesson_id', $lesson->id)->where('language', $language)
-                ->where('sort_order', '>', count($lessonExercises))->delete();
+            // Limpia cualquier ejercicio de esta lección que NO vaya a quedar reemplazado
+            // por el contenido nuevo: idioma distinto, o mismo idioma pero con un tipo
+            // distinto en esa posición (p. ej. el_libro_de_tareas siguió en 'kotlin' pero
+            // cambió qué tipo de ejercicio va en cada sort_order, así que updateOrCreate
+            // por sí solo dejaba las filas viejas huérfanas en vez de reemplazarlas).
+            $validKeys = collect($lessonExercises)->map(fn($e) => $e['type'] . '|' . $e['sort_order']);
+            Exercise::where('lesson_id', $lesson->id)->get()->each(function ($existing) use ($validKeys, $language) {
+                $key = $existing->type . '|' . $existing->sort_order;
+                if ($existing->language !== $language || ! $validKeys->contains($key)) {
+                    $existing->delete();
+                }
+            });
 
             foreach ($lessonExercises as $attrs) {
                 Exercise::updateOrCreate(
