@@ -32,7 +32,6 @@ class LessonExerciseViewModel(
 
     fun loadExercises(lessonId: String) {
         viewModelScope.launch {
-            _uiState.value = LessonExerciseState.Loading
             Log.d("LESSON_DEBUG", "loadExercises: input=$lessonId")
 
             try {
@@ -47,15 +46,28 @@ class LessonExerciseViewModel(
 
                 Log.d("LESSON_DEBUG", "Final slug for API request: $slug")
 
-                val response = lessonRepository.fetchExercisesForLesson(slug)
-                if (response != null) {
+                // Room primero: si ya se descargó esta lección antes, se muestra al instante
+                // mientras se actualiza en segundo plano. Si no hay nada cacheado, sí
+                // mostramos el loading (no hay otra cosa que mostrar).
+                val cached = lessonRepository.getCachedExercises(slug)
+                if (cached != null) {
                     val savedIndex = lessonRepository.loadExerciseProgress(userId, slug)
-                    Log.d("LESSON_DEBUG", "Exercises loaded for slug=$slug count=${response.exercises.size} savedIndex=$savedIndex")
-                    _uiState.value = LessonExerciseState.Success(response.lesson, response.exercises, savedIndex)
+                    Log.d("LESSON_DEBUG", "Mostrando ejercicios cacheados para slug=$slug count=${cached.exercises.size}")
+                    _uiState.value = LessonExerciseState.Success(cached.lesson, cached.exercises, savedIndex)
                 } else {
-                    Log.e("LESSON_DEBUG", "Failed to load exercises for slug=$slug (null response)")
+                    _uiState.value = LessonExerciseState.Loading
+                }
+
+                val fresh = lessonRepository.fetchAndCacheExercises(slug)
+                if (fresh != null) {
+                    val savedIndex = lessonRepository.loadExerciseProgress(userId, slug)
+                    Log.d("LESSON_DEBUG", "Exercises loaded for slug=$slug count=${fresh.exercises.size} savedIndex=$savedIndex")
+                    _uiState.value = LessonExerciseState.Success(fresh.lesson, fresh.exercises, savedIndex)
+                } else if (cached == null) {
+                    Log.e("LESSON_DEBUG", "Failed to load exercises for slug=$slug (sin red ni cache)")
                     _uiState.value = LessonExerciseState.Error("No se pudieron cargar los ejercicios")
                 }
+                // Si fresh falló pero había cache, nos quedamos con lo que ya se mostró.
             } catch (e: Exception) {
                 Log.e("LESSON_DEBUG", "Exception in loadExercises for lessonId=$lessonId", e)
                 _uiState.value = LessonExerciseState.Error("Error: ${e.message}")

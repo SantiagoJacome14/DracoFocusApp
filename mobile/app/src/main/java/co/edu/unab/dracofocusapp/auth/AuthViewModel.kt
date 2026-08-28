@@ -55,6 +55,8 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             tokenManager?.clearAuthData()
             FirebaseAuth.getInstance().signOut()
+            co.edu.unab.dracofocusapp.viewmodel.ProfileViewModel.clearCache()
+            co.edu.unab.dracofocusapp.viewmodel.AvancesViewModel.clearCache()
         }
         uiState = uiState.copy(
             isSuccessLogin = false,

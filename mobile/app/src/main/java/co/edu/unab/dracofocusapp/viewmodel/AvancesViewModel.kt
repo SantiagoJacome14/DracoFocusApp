@@ -64,6 +64,11 @@ class AvancesViewModel(private val apiService: ApiService) : ViewModel() {
     companion object {
         @Volatile private var memoryCache: UserStatsDto? = null
 
+        /** Limpia el caché en memoria. Debe llamarse en logout (ver ProfileViewModel.clearCache). */
+        fun clearCache() {
+            memoryCache = null
+        }
+
         fun factory(apiService: ApiService): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")

@@ -2,9 +2,14 @@ package co.edu.unab.dracofocusapp.data.repo
 
 import co.edu.unab.dracofocusapp.data.local.DracoDatabase
 import co.edu.unab.dracofocusapp.data.local.LessonEntity
+import co.edu.unab.dracofocusapp.data.local.LessonExerciseCacheEntity
 import co.edu.unab.dracofocusapp.data.local.LessonExerciseProgressEntity
 import co.edu.unab.dracofocusapp.data.remote.ApiService
+import co.edu.unab.dracofocusapp.data.remote.ExerciseDto
 import co.edu.unab.dracofocusapp.data.remote.LessonDto
+import co.edu.unab.dracofocusapp.data.remote.LessonExercisesResponse
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import retrofit2.Response
 
 class LessonRepository(
@@ -13,6 +18,9 @@ class LessonRepository(
 ) {
     private val lessonDao get() = db.lessonDao()
     private val exerciseProgressDao get() = db.lessonExerciseProgressDao()
+    private val exerciseCacheDao get() = db.lessonExerciseCacheDao()
+    private val gson = Gson()
+    private val jsonMapType = object : TypeToken<Map<String, Any>>() {}.type
 
     suspend fun fetchLessonsFromApi(): List<LessonDto> {
         return try {
@@ -97,4 +105,58 @@ class LessonRepository(
             null
         }
     }
+
+    /**
+     * Lee los ejercicios de una lección SOLO desde Room (sin red). Devuelve null si nunca
+     * se descargó/cacheó esa lección. Permite abrirla al instante en visitas posteriores.
+     */
+    suspend fun getCachedExercises(slug: String): LessonExercisesResponse? {
+        val cachedExercises = exerciseCacheDao.getForLesson(slug)
+        if (cachedExercises.isEmpty()) return null
+        val lessonEntity = lessonDao.getBySlug(slug) ?: return null
+
+        return LessonExercisesResponse(
+            lesson = LessonDto(
+                id = lessonEntity.id,
+                slug = lessonEntity.slug,
+                title = lessonEntity.title,
+                xpReward = lessonEntity.xpReward,
+            ),
+            exercises = cachedExercises.map { it.toDto() },
+        )
+    }
+
+    /**
+     * Pide los ejercicios al backend y, si responde bien, los guarda en Room para la
+     * próxima vez. Es la misma llamada de red de siempre (fetchExercisesForLesson) más
+     * el guardado en caché.
+     */
+    suspend fun fetchAndCacheExercises(slug: String): LessonExercisesResponse? {
+        val response = fetchExercisesForLesson(slug)
+        if (response != null) {
+            saveLessonsInRoom(listOf(response.lesson))
+            exerciseCacheDao.clearForLesson(slug)
+            exerciseCacheDao.insertAll(response.exercises.map { it.toEntity(slug) })
+        }
+        return response
+    }
+
+    private fun LessonExerciseCacheEntity.toDto(): ExerciseDto = ExerciseDto(
+        id = exerciseId,
+        type = type,
+        question = question,
+        data = dataJson?.let { gson.fromJson<Map<String, Any>>(it, jsonMapType) },
+        hint = hint,
+        sortOrder = sortOrder,
+    )
+
+    private fun ExerciseDto.toEntity(lessonSlug: String): LessonExerciseCacheEntity = LessonExerciseCacheEntity(
+        lessonSlug = lessonSlug,
+        exerciseId = id,
+        type = type,
+        question = question,
+        dataJson = data?.let { gson.toJson(it) },
+        hint = hint,
+        sortOrder = sortOrder,
+    )
 }

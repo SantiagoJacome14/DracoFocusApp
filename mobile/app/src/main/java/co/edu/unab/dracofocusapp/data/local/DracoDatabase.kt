@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import co.edu.unab.dracofocusapp.data.local.dao.CompletedLessonDao
 import co.edu.unab.dracofocusapp.data.local.dao.LessonDao
+import co.edu.unab.dracofocusapp.data.local.dao.LessonExerciseCacheDao
 import co.edu.unab.dracofocusapp.data.local.dao.LessonExerciseProgressDao
 import co.edu.unab.dracofocusapp.data.local.dao.LessonRewardClaimsDao
 import co.edu.unab.dracofocusapp.data.local.dao.MuseumUnlockDao
@@ -20,8 +21,9 @@ import co.edu.unab.dracofocusapp.data.local.dao.RewardFlagsDao
         LessonEntity::class,
         LessonExerciseProgressEntity::class,
         LessonRewardClaimEntity::class,
+        LessonExerciseCacheEntity::class,
     ],
-    version = 5  // bumped: added lesson_reward_claims table
+    version = 6  // bumped: added lesson_exercises_cache table (cache local de ejercicios)
 )
 abstract class DracoDatabase : RoomDatabase() {
 
@@ -31,6 +33,7 @@ abstract class DracoDatabase : RoomDatabase() {
     abstract fun lessonDao(): LessonDao
     abstract fun lessonExerciseProgressDao(): LessonExerciseProgressDao
     abstract fun lessonRewardClaimsDao(): LessonRewardClaimsDao
+    abstract fun lessonExerciseCacheDao(): LessonExerciseCacheDao
 
     companion object {
         @Volatile

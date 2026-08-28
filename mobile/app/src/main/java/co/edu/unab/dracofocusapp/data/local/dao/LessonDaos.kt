@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import co.edu.unab.dracofocusapp.data.local.CompletedLessonEntity
 import co.edu.unab.dracofocusapp.data.local.LessonEntity
+import co.edu.unab.dracofocusapp.data.local.LessonExerciseCacheEntity
 import co.edu.unab.dracofocusapp.data.local.LessonExerciseProgressEntity
 import co.edu.unab.dracofocusapp.data.local.LessonRewardClaimEntity
 import co.edu.unab.dracofocusapp.data.local.MuseumUnlockEntity
@@ -96,6 +97,22 @@ interface LessonDao {
     @Query("SELECT id FROM lessons WHERE slug = :slug")
     suspend fun getIdBySlug(slug: String): Int?
 
+    @Query("SELECT * FROM lessons WHERE slug = :slug LIMIT 1")
+    suspend fun getBySlug(slug: String): LessonEntity?
+
     @Query("DELETE FROM lessons")
     suspend fun clearAll()
+}
+
+@Dao
+interface LessonExerciseCacheDao {
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(exercises: List<LessonExerciseCacheEntity>)
+
+    @Query("SELECT * FROM lesson_exercises_cache WHERE lessonSlug = :lessonSlug ORDER BY sortOrder ASC")
+    suspend fun getForLesson(lessonSlug: String): List<LessonExerciseCacheEntity>
+
+    @Query("DELETE FROM lesson_exercises_cache WHERE lessonSlug = :lessonSlug")
+    suspend fun clearForLesson(lessonSlug: String)
 }

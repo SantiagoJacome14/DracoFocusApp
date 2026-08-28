@@ -220,6 +220,15 @@ class ProfileViewModel(private val apiService: ApiService) : ViewModel() {
     companion object {
         @Volatile private var memoryCache: UiState? = null
 
+        /**
+         * Limpia el caché en memoria. Debe llamarse en logout: si no, un usuario B que
+         * inicia sesión sin cerrar la app vería por un instante el perfil del usuario A
+         * (el caché es estático, sobrevive a que se recree el ViewModel).
+         */
+        fun clearCache() {
+            memoryCache = null
+        }
+
         fun factory(apiService: ApiService): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
