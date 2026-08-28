@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.data.local.datastore.SettingsDataStore
 import co.edu.unab.dracofocusapp.ui.components.ModernTopBar
 import co.edu.unab.dracofocusapp.auth.TokenManager
 import co.edu.unab.dracofocusapp.viewmodel.ProfileViewModel
@@ -54,7 +55,8 @@ fun MyProfileScreen(
     // Refresca XP cada vez que el usuario regresa a esta pantalla
     LaunchedEffect(Unit) { profileVm.load() }
 
-    var notificationsEnabled by remember { mutableStateOf(true) }
+    val settingsDataStore = remember { SettingsDataStore(context) }
+    val notificationsEnabled by settingsDataStore.notificationsEnabled.collectAsState(initial = true)
     var soundEnabled by remember { mutableStateOf(true) }
 
     val gradientBackground = Brush.verticalGradient(
@@ -206,9 +208,11 @@ fun MyProfileScreen(
                     SettingCard(
                         icon = Icons.Default.Notifications,
                         title = "Notificaciones",
-                        description = "Recordatorios de estudio",
+                        description = "Avisos de cambio de fase del Dracomodoro",
                         isChecked = notificationsEnabled,
-                        onCheckedChange = { notificationsEnabled = it }
+                        onCheckedChange = { enabled ->
+                            scope.launch { settingsDataStore.setNotificationsEnabled(enabled) }
+                        }
                     )
 
                     SettingCard(

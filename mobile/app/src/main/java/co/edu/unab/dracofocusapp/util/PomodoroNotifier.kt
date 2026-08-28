@@ -10,6 +10,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import co.edu.unab.dracofocusapp.R
+import co.edu.unab.dracofocusapp.data.local.datastore.SettingsDataStore
+import kotlinx.coroutines.flow.first
 
 object PomodoroNotifier {
     private const val CHANNEL_ID = "pomodoro_channel"
@@ -29,7 +31,10 @@ object PomodoroNotifier {
         }
     }
 
-    fun notifyPhaseFinished(context: Context, title: String, message: String) {
+    suspend fun notifyPhaseFinished(context: Context, title: String, message: String) {
+        val notificationsEnabled = SettingsDataStore(context).notificationsEnabled.first()
+        if (!notificationsEnabled) return
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val granted = ContextCompat.checkSelfPermission(
                 context, Manifest.permission.POST_NOTIFICATIONS
