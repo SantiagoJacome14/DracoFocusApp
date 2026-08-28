@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.main.BottomNavItem
@@ -75,6 +78,49 @@ fun HomeScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
+            // ---------- SALUDO PERSONALIZADO ----------
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(modifier = Modifier.size(48.dp)) {
+                    if (profileState.avatarUrl.isNullOrBlank()) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_avatar),
+                            contentDescription = "Avatar",
+                            modifier = Modifier.fillMaxSize().clip(CircleShape),
+                        )
+                    } else {
+                        AsyncImage(
+                            model = profileState.avatarUrl,
+                            contentDescription = "Avatar",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize().clip(CircleShape),
+                        )
+                    }
+                }
+
+                Spacer(Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (profileState.name.isNotBlank()) "¡Hola, ${profileState.name.substringBefore(" ")}! 🎉" else "¡Bienvenido de nuevo! 🎉",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                    if (profileState.currentStreak > 0) {
+                        Text(
+                            text = "🔥 ${profileState.currentStreak} día${if (profileState.currentStreak == 1) "" else "s"} seguidos",
+                            color = Color(0xFFB0BEC5),
+                            fontSize = 13.sp,
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             // CARD INICIAL
             Card(
                 modifier = Modifier
@@ -103,15 +149,6 @@ fun HomeScreen(navController: NavController) {
                     Spacer(Modifier.height(12.dp))
 
                     Text(
-                        text = "¡Bienvenido de nuevo! 🎉",
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-
-                    Spacer(Modifier.height(6.dp))
-
-                    Text(
                         text = dracoPhrase,
                         color = Color(0xFFBBD8F4),
                         fontSize = 14.sp,
@@ -127,7 +164,7 @@ fun HomeScreen(navController: NavController) {
             Text("Objetivo Diario", color = Color(0xFF22DDF2), fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
             LinearProgressIndicator(
-                progress = dailyProgress,
+                progress = { dailyProgress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(10.dp)
