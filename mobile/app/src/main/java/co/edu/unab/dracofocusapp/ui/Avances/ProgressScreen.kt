@@ -1,9 +1,12 @@
 package co.edu.unab.dracofocusapp.ui.Avances
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,11 +36,17 @@ import co.edu.unab.dracofocusapp.DracoFocusApplication
 import co.edu.unab.dracofocusapp.R
 import co.edu.unab.dracofocusapp.data.remote.BadgeDto
 import co.edu.unab.dracofocusapp.data.remote.CompletedLessonStatsDto
+import co.edu.unab.dracofocusapp.data.remote.PomodoroSessionDto
 import co.edu.unab.dracofocusapp.data.remote.UserStatsDto
 import co.edu.unab.dracofocusapp.viewmodel.AvancesViewModel
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
+import java.time.DayOfWeek
+import java.time.LocalDate
 import java.util.Locale
 import java.util.TimeZone
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -126,12 +135,40 @@ private fun AvancesContent(stats: UserStatsDto) {
 
     Spacer(Modifier.height(20.dp))
 
-    // Fila de stats: XP | Nivel | Racha
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    // Fila de stats: XP | Nivel | Racha | Minutos de enfoque
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         MiniStatCard(value = "${stats.totalXp}", label = "XP Total", modifier = Modifier.weight(1f))
         MiniStatCard(value = "Niv. ${stats.level}", label = "Nivel", modifier = Modifier.weight(1f))
         MiniStatCard(value = "${stats.currentStreak}", label = "Racha", modifier = Modifier.weight(1f))
+        MiniStatCard(value = "${stats.totalFocusMinutes}", label = "Min. Enfoque", modifier = Modifier.weight(1f))
     }
+
+    Spacer(Modifier.height(18.dp))
+
+    // Actividad de la semana: XP real ganado día a día (últimos 7 días)
+    WeeklyBarChart(
+        title = "Actividad de la semana",
+        byDay = xpByDay(stats.completedLessons),
+        unitLabel = "XP",
+        barColor = Color(0xFF22DDF2),
+        emptyMessage = "Aún no registras XP esta semana. ¡Completa una lección!",
+    )
+
+    Spacer(Modifier.height(18.dp))
+
+    // Minutos de enfoque real del Dracomodoro, día a día (últimos 7 días)
+    WeeklyBarChart(
+        title = "Minutos de enfoque",
+        byDay = minutesByDay(stats.pomodoroSessions),
+        unitLabel = "min",
+        barColor = Color(0xFFB388FF),
+        emptyMessage = "Aún no completas sesiones esta semana. ¡Arranca el Dracomodoro!",
+    )
+
+    Spacer(Modifier.height(18.dp))
+
+    // Mapa de constancia: estilo "contribuciones" con intensidad según XP real de cada día
+    ActivityHeatmap(stats.completedLessons, stats.currentStreak)
 
     Spacer(Modifier.height(18.dp))
 
@@ -302,6 +339,222 @@ private fun RecentLessonRow(lesson: CompletedLessonStatsDto) {
             )
         }
     }
+}
+
+// ---------- GRÁFICAS NUEVAS (datos reales de stats.completedLessons) ---------- //
+
+private fun parseDateOnly(isoString: String): LocalDate? = try {
+    LocalDate.parse(isoString.take(10))
+} catch (e: Exception) {
+    null
+}
+
+private fun xpByDay(lessons: List<CompletedLessonStatsDto>): Map<LocalDate, Int> {
+    val map = mutableMapOf<LocalDate, Int>()
+    lessons.forEach { lesson ->
+        val date = lesson.completedAt?.let(::parseDateOnly) ?: return@forEach
+        map[date] = (map[date] ?: 0) + lesson.xpReward
+    }
+    return map
+}
+
+private fun minutesByDay(sessions: List<PomodoroSessionDto>): Map<LocalDate, Int> {
+    val map = mutableMapOf<LocalDate, Int>()
+    sessions.forEach { session ->
+        val date = session.completedAt?.let(::parseDateOnly) ?: return@forEach
+        map[date] = (map[date] ?: 0) + session.minutes
+    }
+    return map
+}
+
+private fun dayLetter(date: LocalDate): String = when (date.dayOfWeek) {
+    DayOfWeek.MONDAY -> "L"
+    DayOfWeek.TUESDAY -> "M"
+    DayOfWeek.WEDNESDAY -> "X"
+    DayOfWeek.THURSDAY -> "J"
+    DayOfWeek.FRIDAY -> "V"
+    DayOfWeek.SATURDAY -> "S"
+    DayOfWeek.SUNDAY -> "D"
+}
+
+@Composable
+private fun WeeklyBarChart(
+    title: String,
+    byDay: Map<LocalDate, Int>,
+    unitLabel: String,
+    barColor: Color,
+    emptyMessage: String,
+) {
+    val today = remember { LocalDate.now() }
+    val weekData = remember(byDay) {
+        (6 downTo 0).map { offset ->
+            val date = today.minusDays(offset.toLong())
+            date to (byDay[date] ?: 0)
+        }
+    }
+    val previousWeekTotal = remember(byDay) {
+        (13 downTo 7).sumOf { offset -> byDay[today.minusDays(offset.toLong())] ?: 0 }
+    }
+    val maxValue = (weekData.maxOfOrNull { it.second } ?: 0).coerceAtLeast(1)
+    val weekTotal = weekData.sumOf { it.second }
+
+    NeonCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(title, color = Color(0xFF22DDF2), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text("$weekTotal $unitLabel", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        }
+        Spacer(Modifier.height(4.dp))
+        WeekComparisonChip(currentTotal = weekTotal, previousTotal = previousWeekTotal)
+        Spacer(Modifier.height(14.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth().height(110.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            weekData.forEachIndexed { index, (date, value) ->
+                DailyBar(
+                    fraction = value.toFloat() / maxValue.toFloat(),
+                    label = dayLetter(date),
+                    isToday = date == today,
+                    hasActivity = value > 0,
+                    delayMillis = index * 80,
+                    barColor = barColor,
+                )
+            }
+        }
+        if (weekTotal == 0) {
+            Spacer(Modifier.height(10.dp))
+            Text(
+                emptyMessage,
+                color = Color(0xFFB0BEC5),
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeekComparisonChip(currentTotal: Int, previousTotal: Int) {
+    if (previousTotal <= 0 && currentTotal <= 0) return
+
+    val text: String
+    val color: Color
+    if (previousTotal <= 0) {
+        text = "¡Primera semana activa! 🎉"
+        color = Color(0xFF58FF99)
+    } else {
+        val diffPercent = (((currentTotal - previousTotal).toFloat() / previousTotal.toFloat()) * 100).roundToInt()
+        val isUp = diffPercent >= 0
+        text = "${if (isUp) "▲" else "▼"} ${abs(diffPercent)}% vs. semana pasada"
+        color = if (isUp) Color(0xFF58FF99) else Color(0xFFFF6B6B)
+    }
+    Text(text, color = color, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+}
+
+@Composable
+private fun DailyBar(fraction: Float, label: String, isToday: Boolean, hasActivity: Boolean, delayMillis: Int, barColor: Color) {
+    val animatedFraction = remember { Animatable(0f) }
+    LaunchedEffect(fraction) {
+        delay(delayMillis.toLong())
+        animatedFraction.animateTo(fraction.coerceIn(0f, 1f), tween(600))
+    }
+    val todayColor = Color(0xFF58FF99)
+    val activeColor = if (isToday) todayColor else barColor
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(26.dp)) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(fraction = animatedFraction.value.coerceIn(0.04f, 1f))
+                    .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
+                    .background(if (hasActivity) activeColor else barColor.copy(alpha = 0.15f)),
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            label,
+            color = if (isToday) todayColor else Color(0xFFB0BEC5),
+            fontSize = 11.sp,
+            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+        )
+    }
+}
+
+@Composable
+private fun ActivityHeatmap(lessons: List<CompletedLessonStatsDto>, currentStreak: Int) {
+    val totalDays = 63 // 9 semanas
+    val today = remember { LocalDate.now() }
+    val byDay = remember(lessons) { xpByDay(lessons) }
+    val days = remember(byDay) {
+        (totalDays - 1 downTo 0).map { offset -> today.minusDays(offset.toLong()) }
+    }
+    val maxXp = (byDay.values.maxOrNull() ?: 0).coerceAtLeast(1)
+    val columns = (days.size + 6) / 7
+
+    NeonCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Mapa de constancia", color = Color(0xFF22DDF2), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text("🔥 $currentStreak d", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        }
+        Spacer(Modifier.height(14.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            for (col in 0 until columns) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    for (row in 0 until 7) {
+                        val index = col * 7 + row
+                        if (index < days.size) {
+                            val date = days[index]
+                            HeatmapCell(xp = byDay[date] ?: 0, maxXp = maxXp, isToday = date == today)
+                        } else {
+                            Box(modifier = Modifier.size(13.dp))
+                        }
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "Últimos $totalDays días · más brillante = más XP ese día",
+            color = Color(0xFFB0BEC5),
+            fontSize = 11.sp,
+        )
+    }
+}
+
+@Composable
+private fun HeatmapCell(xp: Int, maxXp: Int, isToday: Boolean) {
+    val intensity = if (xp <= 0) 0f else (0.25f + 0.75f * (xp.toFloat() / maxXp.toFloat())).coerceIn(0.25f, 1f)
+    val color = if (xp <= 0) Color(0xFF1C2541) else Color(0xFF22DDF2).copy(alpha = intensity)
+    Box(
+        modifier = Modifier
+            .size(13.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(color)
+            .then(
+                if (isToday) Modifier.border(1.dp, Color(0xFF58FF99), RoundedCornerShape(3.dp))
+                else Modifier
+            ),
+    )
 }
 
 // ---------- COMPONENTES COMPARTIDOS ---------- //

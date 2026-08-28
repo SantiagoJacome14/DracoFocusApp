@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
+use App\Models\PomodoroSession;
 use App\Models\UserProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -79,6 +80,11 @@ class ProgressController extends Controller
             ->orderBy('completed_at', 'desc')
             ->get();
 
+        $pomodoroSessions = PomodoroSession::where('user_id', $user->id)
+            ->orderBy('completed_at', 'desc')
+            ->limit(200)
+            ->get();
+
         $totalLessons = Lesson::count();
         $completedCount = $completedProgress->count();
         $progressPercent = $totalLessons > 0
@@ -116,6 +122,11 @@ class ProgressController extends Controller
                 'xp_reward'    => $p->lesson?->xp_reward ?? 0,
             ])->filter(fn($item) => $item['slug'] !== null)->values(),
             'badges'     => $badges,
+            'pomodoro_sessions' => $pomodoroSessions->map(fn($s) => [
+                'minutes'      => $s->minutes,
+                'completed_at' => $s->completed_at?->toIso8601String(),
+            ])->values(),
+            'total_focus_minutes' => (int) $pomodoroSessions->sum('minutes'),
             'chart_data' => [
                 'completed'       => $completedCount,
                 'pending'         => max(0, $totalLessons - $completedCount),

@@ -85,7 +85,19 @@ data class UserStatsDto(
     @SerializedName("progress_percent") val progressPercent: Int = 0,
     @SerializedName("completed_lessons") val completedLessons: List<CompletedLessonStatsDto> = emptyList(),
     val badges: List<BadgeDto> = emptyList(),
+    @SerializedName("pomodoro_sessions") val pomodoroSessions: List<PomodoroSessionDto> = emptyList(),
+    @SerializedName("total_focus_minutes") val totalFocusMinutes: Int = 0,
     @SerializedName("chart_data") val chartData: ChartDataDto? = null,
+)
+
+// Dracomodoro DTOs
+data class PomodoroSessionRequest(
+    val minutes: Int,
+)
+
+data class PomodoroSessionDto(
+    val minutes: Int,
+    @SerializedName("completed_at") val completedAt: String?,
 )
 
 // Lesson DTO for dynamic slug mapping

@@ -45,4 +45,7 @@ interface ApiService {
 
     @POST("api/museum/rewards/claim")
     suspend fun claimMuseumReward(@Body request: MuseumClaimRequest): Response<MuseumClaimResponse>
+
+    @POST("api/pomodoro/sessions")
+    suspend fun logPomodoroSession(@Body request: PomodoroSessionRequest): Response<Unit>
 }

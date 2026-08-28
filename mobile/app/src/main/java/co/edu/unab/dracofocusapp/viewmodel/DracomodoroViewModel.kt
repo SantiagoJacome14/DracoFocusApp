@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.edu.unab.dracofocusapp.data.local.datastore.PomodoroDataStore
 import co.edu.unab.dracofocusapp.data.local.datastore.PomodoroStatePrefs
+import co.edu.unab.dracofocusapp.data.remote.ApiService
+import co.edu.unab.dracofocusapp.data.remote.PomodoroSessionRequest
 import co.edu.unab.dracofocusapp.domain.util.Clock
 import co.edu.unab.dracofocusapp.util.PomodoroNotifier
 import com.google.firebase.auth.FirebaseAuth
@@ -34,7 +36,8 @@ data class DracomodoroUiState(
 class DracomodoroViewModel(
     private val dataStore: PomodoroDataStore,
     private val clock: Clock,
-    private val appContext: Context
+    private val appContext: Context,
+    private val apiService: ApiService
 ) : ViewModel() {
 
     var uiState by mutableStateOf(DracomodoroUiState())
@@ -177,6 +180,7 @@ class DracomodoroViewModel(
         viewModelScope.launch {
             if (mode == PomodoroMode.WORK) {
                 registrarEstudioEnFirebase()
+                registrarSesionEnLaravel(uiState.workMinutes)
             }
 
             // Cambio automático de modo: el ciclo sigue solo, como un Pomodoro real
@@ -243,6 +247,24 @@ class DracomodoroViewModel(
             }
         } catch (e: Exception) {
             Log.e("POMODORO_SYNC", "Fallo crítico en Firebase", e)
+        }
+    }
+
+    /**
+     * Registra la sesión de trabajo completada en el backend Laravel para
+     * que aparezca en Avances. Silencioso: si falla (sin conexión, etc.),
+     * no interrumpe el ciclo del Pomodoro.
+     */
+    private suspend fun registrarSesionEnLaravel(minutes: Int) {
+        try {
+            val response = apiService.logPomodoroSession(PomodoroSessionRequest(minutes))
+            if (response.isSuccessful) {
+                Log.d("POMODORO_SYNC", "Sesión registrada en Laravel")
+            } else {
+                Log.e("POMODORO_SYNC", "Laravel devolvió error ${response.code()} al registrar sesión")
+            }
+        } catch (e: Exception) {
+            Log.e("POMODORO_SYNC", "Fallo de conexión al registrar sesión en Laravel", e)
         }
     }
 }

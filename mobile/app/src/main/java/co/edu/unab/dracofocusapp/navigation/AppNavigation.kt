@@ -117,7 +117,7 @@ fun AppNavigation() {
 
         composable(AppRoutes.DRACOMODORO) {
             val pomodoroViewModel: DracomodoroViewModel = viewModel(
-                factory = DracomodoroViewModelFactory(pomodoroDataStore, clock, app.applicationContext)
+                factory = DracomodoroViewModelFactory(pomodoroDataStore, clock, app.applicationContext, app.apiService)
             )
             DracomodoroScreen(
                 viewModel = pomodoroViewModel,
